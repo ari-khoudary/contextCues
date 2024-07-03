@@ -8,7 +8,7 @@ clc;
 
 % get subject & block numbers
 subID = input('Subject number: ');
-block = input('Block: '); 
+block = input('Block: ');
 
 % use subject ID to set the random seed
 rng(subID)
@@ -31,19 +31,73 @@ vizAccuracy = 0.7;
 
 %% output setup
 
-setup_output;
+output_setup;
 
 %% keyboard setup
 
-setup_keyboard;
+% unify responses across operating systems
+KbName('UnifyKeyNames');
+
+% response keys
+resps         = [KbName('1!') KbName('2@') KbName('3#') KbName('4$')];
+respQuit    = KbName('x');
+actKeys     = [resps respQuit];
+imageResponseKeys = resps(1:2);
+confidenceResponseKeys = resps;
+rightKey = KbName('RightArrow');
+leftKey = KbName('LeftArrow');
+spaceKey = KbName('space');
+
+% clear any presses from device memory
+FlushEvents('keyDown');
+
+% load KbCheck into memory now so later RTs are uniform
+[keyIsDown, secs, keyCode] = KbCheck;
 
 %% screen setup
 
-setup_screen;
+screen_setup;
 
 %% load & prep stimuli
 
-setup_stimuli;
+% get filepaths
+imageList = dir('images/S*.jpg');
+maskList = dir('images/mask*_s*.jpg');
+% store
+imageTex = zeros(length(imageList),1);
+maskTex = zeros(length(maskList),1);
+
+% get scene images
+for i = 1:length(imageList)
+    tempMat = imread(['images/' imageList(i).name]);
+    imageTex(i,1) = Screen('MakeTexture', mainWindow, tempMat);
+end
+
+% get masks
+for m = 1:length(maskList)
+    tempMat = imread(['images/' maskList(m).name]);
+    maskTex(m,1) = Screen('MakeTexture', mainWindow, tempMat);
+end
+
+% randomly choose pair of images for participant
+if rand < 0.5
+    randImageTex(1,1) = imageTex(1);
+    randImageTex(2,1) = imageTex(2);
+    randMaskTex(1,1) = maskTex(1);
+    randMaskTex(2,1) = maskTex(2);
+    imagePath = {imageList(1).name; imageList(2).name};
+else
+    randImageTex(1,1) = imageTex(3);
+    randImageTex(2,1) = imageTex(4);
+    randMaskTex(1,1) = maskTex(3);
+    randMaskTex(2,1) = maskTex(4);
+    imagePath = {imageList(3).name; imageList(4).name};
+end
+
+% randomize indices to randomize key presses across participants
+shuffledIdx = Shuffle([1,2]);
+randImageTex = randImageTex(shuffledIdx);
+imagePath = imagePath(shuffledIdx);
 
 %% task settings for each phase of the experiment
 
@@ -86,13 +140,67 @@ inferenceITI = 1;
 inferenceISI = 0.75;
 confidenceDuration = 3;
 
-%% set up trial structures for learning & inference
+%% create learning & inference trial structures
 
-setup_trials;
+%%% make matrix of transition probabilities for each cue
+cueLevels = [memReliability 1-memReliability; ... % cue in favor of imgIdx1
+    1-memReliability memReliability; ... % cue in favor of imgIdx 2
+    0.5 0.5];
 
+%%% choose colored borders 
+% randomly choose a different set of border colors for each block
+if block == 1
+    border_set = randi([1,2]);
+else
+    border_set = 3 - border_set;
+end
+% randomize which colors are assigned to which probabilities
+cueColors = Shuffle(border_array{border_set}, 2);
 
-%% generate probabilistic cue & noise durations
+%%% organize learning trials
+learnTrials = round(cueLevels*learnTrialN / nCues);
+% make array of cue indices for learning
+learnCue = [repelem(1, learnTrialN/nCues) repelem(2, learnTrialN/nCues) repelem(3, learnTrialN/nCues)];
+% populate image array in proportion to cue reliability; each row corresponds to cue index
+learnImg = NaN(nCues, sum(learnTrials(1,:)));
 
+for cueIdx=1:nCues
+    learnImg(cueIdx, :) = [ones(1, learnTrials(cueIdx,1)) repelem(2, learnTrials(cueIdx,2))];
+end
+
+% randomize order of cue presentation & targets following each cue
+learnCue = Shuffle(learnCue);
+learnImg = Shuffle(learnImg, 1);
+
+%%% organize inference trials
+inferenceTrials = round(cueLevels*inferenceTrialN / nCues);
+% make array of cue indices for inference
+inferenceCue = [repelem(1, inferenceTrialN/nCues) repelem(2, inferenceTrialN/nCues) repelem(3, (inferenceTrialN/nCues)/2)]; %cut number of neutral trials in half to save time
+% populate image array in proportion to cue reliability; each row corresponds to cue index
+inferenceImg = NaN(nCues, sum(inferenceTrials(1,:)));
+
+for cueIdx=1:nCues
+    if cueIdx==3 % get rid of half the neutral trials
+        if rand < 0.5
+            inferenceImg(cueIdx, :) = [repelem(1, ceil(inferenceTrials(cueIdx,1)/2)) repelem(2, floor(inferenceTrials(cueIdx,2)/2)) zeros([1 inferenceTrials(cueIdx)])];
+        else
+            inferenceImg(cueIdx, :) = [repelem(1, floor(inferenceTrials(cueIdx,1)/2)) repelem(2, ceil(inferenceTrials(cueIdx,2)/2)) zeros([1 inferenceTrials(cueIdx)])];
+        end
+    else
+        inferenceImg(cueIdx, :) = [repelem(1, inferenceTrials(cueIdx,1)) repelem(2, inferenceTrials(cueIdx,2))];
+    end
+end
+
+% randomize order
+randImg = Shuffle(1:inferenceTrialN/nCues);
+randImgNeut = [Shuffle(1:inferenceTrials(6)) inferenceTrials(6)+1:length(inferenceImg)];
+inferenceImg(1,:) = inferenceImg(1,randImg);
+inferenceImg(2,:) = inferenceImg(2,randImg);
+inferenceImg(3,:) = inferenceImg(3,randImgNeut);
+inferenceTrialOrder = Shuffle(1:length(inferenceCue));
+inferenceCue = inferenceCue(inferenceTrialOrder);
+
+% generate probabilistic cue & noise durations
 makeNoiseDistributions;
 
 %% block loop
