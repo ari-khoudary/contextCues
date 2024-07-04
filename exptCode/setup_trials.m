@@ -23,7 +23,15 @@ learnCue = [repelem(1, learnTrialN/nCues) repelem(2, learnTrialN/nCues) repelem(
 learnImg = NaN(nCues, sum(learnTrials(1,:)));
 
 for cueIdx=1:nCues
-    learnImg(cueIdx, :) = [ones(1, learnTrials(cueIdx,1)) repelem(2, learnTrials(cueIdx,2))];
+    if cueIdx == 3
+        if rand <0.5
+            learnImg(cueIdx, :) = [ones(1, learnTrials(cueIdx,1)-1) repelem(2, learnTrials(cueIdx,2))];
+        else
+            learnImg(cueIdx, :) = [ones(1, learnTrials(cueIdx,1)) repelem(2, learnTrials(cueIdx,2)-1)];
+        end
+    else
+        learnImg(cueIdx, :) = [ones(1, learnTrials(cueIdx,1)) repelem(2, learnTrials(cueIdx,2))];
+    end
 end
 
 % randomize order of cue presentation & targets following each cue
@@ -52,3 +60,4 @@ end
 % randomize order
 inferenceImg(1:2, :) = Shuffle(inferenceImg(1:2,:), 1);
 inferenceImg(3, 1:inferenceTrials(6)) = Shuffle(inferenceImg(3, 1:inferenceTrials(6)));
+inferenceCue = Shuffle(inferenceCue);
