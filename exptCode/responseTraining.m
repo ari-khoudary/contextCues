@@ -26,9 +26,9 @@ pracFileName = [datadir filesep 'block' num2str(block) '_responseTraining.mat'];
 while needToTrain
 
     % reset counters
-    imageCount = zeros(1,numImages);
-    numCorrect = zeros(1,numImages);
-    accByImage = zeros(1,numImages);
+    imageCount = zeros(1,nImages);
+    numCorrect = zeros(1,nImages);
+    accByImage = zeros(1,nImages);
 
     % randomize images for presentation
     imagesForTraining = [ones(1,trialsPerImage) repmat(2,1,trialsPerImage)];
@@ -166,7 +166,7 @@ while needToTrain
         end
 
         % write stuff in text file
-        fprintf(trainingFile, '\n %i, %i, %i, %s, %i, %i, %i, %.2f', ...
+        fprintf(trainingFile, '\n %i, %i, %i, %s, %i, %i, %i, %i, %.5f', ...
             subID, block, trainTrial, imageList(thisTrainImage).name, firstTrainResp, trainCorrResp, accuracy, trainRT);
     end % for trainTrial ...
 

@@ -119,6 +119,7 @@ for block = 1:nBlocks
     rightPosition = screenX-350;
     leftPosition = screenX - 1200;
 
+    if debug==0
     % make welcome screen
     welcString{1} = ['Welcome! \n\n' ...
         'This is an experiment about how people make decisions on the basis of noisy evidence. \n\n'...
@@ -177,110 +178,109 @@ for block = 1:nBlocks
         end
         WaitSecs(0.05);
     end
+    end
 
     % initiate response training
     responseTraining;
 
-    % phase pivot
-    pivotString = ['Nice work! You learned the correct response mappings. \n\n' ...
-        'Press spacebar to proceed to the next part of the experiment'];
-    DrawFormattedText(mainWindow, pivotString, 'center', 'center', textColor, 80);
-    Screen('Flip', mainWindow);
-    FlushEvents('keyDown');
-    while(1)
-        [~,~,keyCode] = KbCheck;
-        if keyCode(spaceKey)
-            break;
-        end
-        WaitSecs(0.05);
-    end
-
-    % flicker practice instructions
-    pracString{1} = ['In this part of the experiment, you will practice the "flicker" part of the task: deciding which of the two images was presented more frequently in a rapidly alternating image stream. \n\n' ...
-        'Indicate which image you think was dominant by pressing the button you just learned to associate with that image. \n'];
-    pracString{2} = ['To make sure you are comfortable with this task, we will start off quite easy and give you feedback on your responses.\n\n' ...
-        'Press spacebar when you feel ready to begin.'];
-
-    page = 1;
-    while page < length(pracString) + 1
-        DrawFormattedText(mainWindow, pracString{page}, 'center', 'center', textColor, 80);
-        if page == 1
-            DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
-        end
-        if page > 1
-            DrawFormattedText(mainWindow, leftString, leftPosition, screenY-100, textColor);
-        end
-        Screen('Flip', mainWindow);
-        WaitSecs(0.05);
-        [~,~,keyCode] = KbCheck;
-        if page < 3 && keyCode(rightKey)
-            page = page + 1;
-            FlushEvents('keyDown');
-            WaitSecs(0.5);
-        elseif page > 1 && keyCode(leftKey)
-            page = page - 1;
-            FlushEvents('keyDown');
-            WaitSecs(0.5);
-        elseif page==max(size(pracString)) && keyCode(spaceKey)
-            break
-        end
-    end
-
-    % initiate flicker practice
     if debug==0
-        flickerPractice;
-    end
-
-    % phase pivot
-    instructString = 'Practice complete! Press spacebar to continue to the next phase of the experiment.';
-    DrawFormattedText(mainWindow, instructString, 'center', 'center', textColor, 80);
-    Screen('Flip', mainWindow);
-    FlushEvents('keyDown');
-    while(1)
-        temp = GetChar;
-        if (temp == ' ')
-            break;
-        end
-        WaitSecs(0.05)
-    end
-
-    if debug == 0
-        % calibration instructions
-        calString1 = ['You will now complete more trials of the flicker task. \n\n' ...
-            'You will no longer receive feedback on your responses, and the difficulty will continue to change from trial to trial. \n\n' ...
-            'Please do your best to respond as accurately and quickly as possible.'];
-        DrawFormattedText(mainWindow, calString1, 'center', 'center', textColor, 80);
-        DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
-        Screen('Flip', mainWindow);
-        FlushEvents('keyDown');
-
-        while(1)
-            [~, ~, keyCode] = KbCheck;
-            if keyCode(rightKey)
-                break
+            % phase pivot
+            pivotString = ['Nice work! You learned the correct response mappings. \n\n' ...
+                'Press spacebar to proceed to the next part of the experiment'];
+            DrawFormattedText(mainWindow, pivotString, 'center', 'center', textColor, 80);
+            Screen('Flip', mainWindow);
+            FlushEvents('keyDown');
+            while(1)
+                [~,~,keyCode] = KbCheck;
+                if keyCode(spaceKey)
+                    break;
+                end
+                WaitSecs(0.05);
             end
-            WaitSecs(0.05);
-        end
-
-        % pre-calibration button reminder
-        buttonReminder;
-
-        % initiate calibration with spacebar press
-        instructString = 'Press spacebar to begin the flicker task.';
-        DrawFormattedText(mainWindow, instructString, 'center', 'center', textColor, 80);
-        Screen('Flip', mainWindow);
-        while(1)
-            temp = GetChar;
-            if (temp == ' ')
-                break;
+    
+            % flicker practice instructions
+            pracString{1} = ['In this part of the experiment, you will practice the "flicker" part of the task: deciding which of the two images was presented more frequently in a rapidly alternating image stream. \n\n' ...
+                'Indicate which image you think was dominant by pressing the button you just learned to associate with that image. \n'];
+            pracString{2} = ['To make sure you are comfortable with this task, we will start off quite easy and give you feedback on your responses.\n\n' ...
+                'Press spacebar when you feel ready to begin.'];
+    
+            page = 1;
+            while page < length(pracString) + 1
+                DrawFormattedText(mainWindow, pracString{page}, 'center', 'center', textColor, 80);
+                if page == 1
+                    DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
+                end
+                if page > 1
+                    DrawFormattedText(mainWindow, leftString, leftPosition, screenY-100, textColor);
+                end
+                Screen('Flip', mainWindow);
+                WaitSecs(0.05);
+                [~,~,keyCode] = KbCheck;
+                if page < 3 && keyCode(rightKey)
+                    page = page + 1;
+                    FlushEvents('keyDown');
+                    WaitSecs(0.5);
+                elseif page > 1 && keyCode(leftKey)
+                    page = page - 1;
+                    FlushEvents('keyDown');
+                    WaitSecs(0.5);
+                elseif page==max(size(pracString)) && keyCode(spaceKey)
+                    break
+                end
             end
-            WaitSecs(0.05)
-        end
-
-        calibration;
-        coherence = calibratedCoherence;
-    else % if debug==1
-        calibratedCoherence = [0.5 0.5];
+    
+            % initiate flicker practice
+            flickerPractice;
+    
+            % phase pivot
+            instructString = 'Practice complete! Press spacebar to continue to the next phase of the experiment.';
+            DrawFormattedText(mainWindow, instructString, 'center', 'center', textColor, 80);
+            Screen('Flip', mainWindow);
+            FlushEvents('keyDown');
+            while(1)
+                temp = GetChar;
+                if (temp == ' ')
+                    break;
+                end
+                WaitSecs(0.05)
+            end
+    
+            % calibration instructions
+            calString1 = ['You will now complete more trials of the flicker task. \n\n' ...
+                'You will no longer receive feedback on your responses, and the difficulty will continue to change from trial to trial. \n\n' ...
+                'Please do your best to respond as accurately and quickly as possible.'];
+            DrawFormattedText(mainWindow, calString1, 'center', 'center', textColor, 80);
+            DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
+            Screen('Flip', mainWindow);
+            FlushEvents('keyDown');
+    
+            while(1)
+                [~, ~, keyCode] = KbCheck;
+                if keyCode(rightKey)
+                    break
+                end
+                WaitSecs(0.05);
+            end
+    
+            % pre-calibration button reminder
+            buttonReminder;
+    
+            % initiate calibration with spacebar press
+            instructString = 'Press spacebar to begin the flicker task.';
+            DrawFormattedText(mainWindow, instructString, 'center', 'center', textColor, 80);
+            Screen('Flip', mainWindow);
+            while(1)
+                temp = GetChar;
+                if (temp == ' ')
+                    break;
+                end
+                WaitSecs(0.05)
+            end
+    
+            calibration;
+            coherence = calibratedCoherence;
+        else % if debug==1
+            coherence = [0.5 0.5];
     end
 
     % phase pivot screen & learning instructions

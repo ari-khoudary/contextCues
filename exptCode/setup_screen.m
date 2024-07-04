@@ -22,10 +22,6 @@ mainWindow = Screen(screenNumber, 'OpenWindow',backgroundColor);
 centerX  = screenX/2;
 centerY = screenY/2;
 
-% manually specify refresh rate (interflip interval)
-ifi = 1/60;
-waitframes = 1;
-
 % retrieve maximum priority number
 topPriorityLevel = MaxPriority(mainWindow);
 

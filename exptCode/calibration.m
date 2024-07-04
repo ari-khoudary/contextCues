@@ -34,16 +34,16 @@ tGuess(1) = 0.6;
 tGuess(2) = 0.5;
 
 % For each stimulus, staircase, and calibration trial, record the value tested
-stair1Thresh    = zeros(numImages, calibrationTrialsPerImage);
+stair1Thresh    = zeros(nImages, calibrationTrialsPerImage);
 stair2Thresh    = stair1Thresh;
 % Tracks # presentations of each stimulus, staircase
-stair1Counter  = zeros(numImages, 1);
+stair1Counter  = zeros(nImages, 1);
 stair2Counter = stair1Counter;
 
 % set up stimulus / staircase testing order
 stim_ind = [];
 
-for stimIdx = 1:numImages
+for stimIdx = 1:nImages
     % instantiating quest staircase
     q1{stimIdx} = QuestCreate(tGuess(1), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
     q2{stimIdx} = QuestCreate(tGuess(2), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
@@ -171,7 +171,7 @@ end
 save([datadir filesep 'block' num2str(block) '_calibrationVars.mat']);
 
 %stairConvergThresh = 0.1;
-for stimIdx = 1:numImages
+for stimIdx = 1:nImages
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
     validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
     endq1 = validq1(end);
@@ -186,19 +186,19 @@ end
 
 %% plot staircase values
 figure;
-for stimIdx = 1:numImages
+for stimIdx = 1:nImages
     subplot(1,2,stimIdx)
     hold on;
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
     validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
-    plot(1:length(validq1), validq1);
-    plot(1:length(validq2), validq2);
+    ylim([0.3 0.9]);
+    plot(1:length(validq1), validq1, '-.');
+    plot(1:length(validq2), validq2, '-.');
     titleString = sprintf('Staircases for stimulus %i', stimIdx);
     title(titleString);
     xlabel('trial');
     ylabel('coherence');
     legend({'staircase1', 'staircase2'});
-    %saveas(gcf, [datadir filesep 'block' num2str(block) '_calibrationCheck.png']);
     hold off
 end
 
