@@ -1,4 +1,4 @@
-% main script for running the experiment ContextCues 
+% main script for running the experiment ContextCues
 
 %=========================================================================================
 % Author: Ari Khoudary (2023-2024), adapting code originally written by Mariam Aly, Aaron M. Bornstein, Sam Feng (2015)
@@ -8,7 +8,8 @@ clc;
 
 % get subject & block numbers
 subID = input('Subject number: ');
-block = input('Block: '); 
+block = input('Block: ');
+debug = input('debug?: ');
 
 % use subject ID to set the random seed
 rng(subID)
@@ -22,12 +23,15 @@ nImages = 2; % unique images on which decisions are to be made, per block
 
 % evidence reliabilities
 memReliability = 0.8;
-vizAccuracy = 0.7; 
+vizAccuracy = 0.7;
 % vision reliability is technically given by the evidence coherence. to
 % control for differences in how the images are processed by different
 % people, we use QUEST staircasing to identify coherence values for each image that result in
 % vizAccuracy level of performance
 
+% visual evidence presentation rate (interflip interval)
+ifi = 1/60;
+waitframes = 1;
 
 %% output setup
 
@@ -52,6 +56,9 @@ criterion = 0.8; % required accuracy level on button mappings
 trialsPerImage = 10;
 trainTrialDuration = 2; % seconds
 trainITI = 1;
+if debug
+    trialsPerImage = 1;
+end
 
 %%% flicker practice
 practiceCoherences = 0.95:-0.05:0.5;
@@ -64,19 +71,23 @@ calibrationTrialsPerImage = 50; % staircase trials per image
 calibrationTrialN = nImages * calibrationTrialsPerImage;
 
 %%% cue learning
-learnTrialN = nCues * 10;
+learningCriterion = 0.8; % what level of accuracy per cue is needed to move on from cue learning
+learnTrialN = nCues * 25;
 learnITI = 1;
 learnImgDuration = 2;
 % cue colors
-red = [250 77 79];
-blue = [77 178 240];
-yellow = [240 238 76];
+red = [240 37 33];
+blue = [10 144 240];
+yellow = [240 239 10];
 borders1 = [red; blue; yellow];
-purple = [75 66 245];
-green = [86 245 54];
-orange = [245 115 41];
+purple = [181 10 240];
+green = [10 240 94];
+orange = [240 168 10];
 borders2 = [purple; green; orange];
 border_array = {borders1, borders2};
+if debug
+    learnTrialN = nCues * 5;
+end
 
 %%% cued inference
 inferenceTrialN = nCues * 100;
@@ -85,6 +96,9 @@ flickerRate = 60; % Hz
 inferenceITI = 1;
 inferenceISI = 0.75;
 confidenceDuration = 3;
+if debug
+    inferenceTrialN = nCues * 10;
+end
 
 %% set up trial structures for learning & inference
 
@@ -93,7 +107,7 @@ setup_trials;
 
 %% generate probabilistic cue & noise durations
 
-makeNoiseDistributions;
+setup_durations;
 
 %% block loop
 
@@ -117,7 +131,7 @@ for block = 1:nBlocks
         'Finally, you will perform more visual decision trials, this time with the help of the colored borders. \n\n'];
 
     welcString{3} = ['Each phase will have its own instruction screens, and you are encouraged to take brief breaks during this time. \n\n' ...
-        'Use the break time to rest your eyes, stretch, drink water, etc; please do not use your phone during this time so as to keep the experiment on track. \n\n' ... 
+        'Use the break time to rest your eyes, stretch, drink water, etc; please do not use your phone during this time so as to keep the experiment on track. \n\n' ...
         'If you have questions at any point, please do not hesitate to ask the experimenter. The whole experiment will take no longer than 1 hour to complete. \n\n' ...
         'Press spacebar to receive instructions for the first phase of the experiment.'];
 
@@ -213,7 +227,9 @@ for block = 1:nBlocks
     end
 
     % initiate flicker practice
-    flickerPractice;
+    if debug==0
+        flickerPractice;
+    end
 
     % phase pivot
     instructString = 'Practice complete! Press spacebar to continue to the next phase of the experiment.';
@@ -228,41 +244,44 @@ for block = 1:nBlocks
         WaitSecs(0.05)
     end
 
-    % calibration instructions
-    calString1 = ['You will now complete more trials of the flicker task. \n\n' ...
-        'You will no longer receive feedback on your responses, and the difficulty will continue to change from trial to trial. \n\n' ...
-        'Please do your best to respond as accurately and quickly as possible.'];
-    DrawFormattedText(mainWindow, calString1, 'center', 'center', textColor, 80);
-    DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
-    Screen('Flip', mainWindow);
-    FlushEvents('keyDown');
+    if debug == 0
+        % calibration instructions
+        calString1 = ['You will now complete more trials of the flicker task. \n\n' ...
+            'You will no longer receive feedback on your responses, and the difficulty will continue to change from trial to trial. \n\n' ...
+            'Please do your best to respond as accurately and quickly as possible.'];
+        DrawFormattedText(mainWindow, calString1, 'center', 'center', textColor, 80);
+        DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
+        Screen('Flip', mainWindow);
+        FlushEvents('keyDown');
 
-    while(1)
-        [~, ~, keyCode] = KbCheck;
-        if keyCode(rightKey)
-            break
+        while(1)
+            [~, ~, keyCode] = KbCheck;
+            if keyCode(rightKey)
+                break
+            end
+            WaitSecs(0.05);
         end
-        WaitSecs(0.05);
-    end
 
-    % pre-calibration button reminder
-    buttonReminder;
+        % pre-calibration button reminder
+        buttonReminder;
 
-    % initiate calibration with spacebar press
-    instructString = 'Press spacebar to begin the flicker task.';
-    DrawFormattedText(mainWindow, instructString, 'center', 'center', textColor, 80);
-    Screen('Flip', mainWindow);
-    while(1)
-        temp = GetChar;
-        if (temp == ' ')
-            break;
+        % initiate calibration with spacebar press
+        instructString = 'Press spacebar to begin the flicker task.';
+        DrawFormattedText(mainWindow, instructString, 'center', 'center', textColor, 80);
+        Screen('Flip', mainWindow);
+        while(1)
+            temp = GetChar;
+            if (temp == ' ')
+                break;
+            end
+            WaitSecs(0.05)
         end
-        WaitSecs(0.05)
-    end
 
-    calibration;
-    coherence = calibratedCoherence;
-    % coherence = [0.5 0.5];
+        calibration;
+        coherence = calibratedCoherence;
+    else % if debug==1
+        calibratedCoherence = [0.5 0.5];
+    end
 
     % phase pivot screen & learning instructions
     learnString = ['Nice work! In the next phase, you will get a small break from doing the flicker task. \n\n' ...
