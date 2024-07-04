@@ -12,8 +12,12 @@ if block == 1
 else
     border_set = 3 - border_set;
 end
+cueColors = border_array{border_set};
+cueStrings = border_array_string{border_set};
 % randomize which colors are assigned to which probabilities
-cueColors = Shuffle(border_array{border_set}, 2);
+cueOrder = Shuffle(1:nCues);
+cueColors = cueColors(cueOrder, :);
+cueStrings = cueStrings(cueOrder, :);
 
 %%% organize learning trials
 learnTrials = round(cueLevels*learnTrialN / nCues);

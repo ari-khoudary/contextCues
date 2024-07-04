@@ -75,19 +75,10 @@ learningCriterion = 0.8; % what level of accuracy per cue is needed to move on f
 learnTrialN = nCues * 25;
 learnITI = 1;
 learnImgDuration = 2;
-% cue colors
-red = [240 37 33];
-blue = [10 144 240];
-yellow = [240 239 10];
-borders1 = [red; blue; yellow];
-purple = [181 10 240];
-green = [10 240 94];
-orange = [240 168 10];
-borders2 = [purple; green; orange];
-border_array = {borders1, borders2};
 if debug
     learnTrialN = nCues * 5;
 end
+setup_colors;
 
 %%% cued inference
 inferenceTrialN = nCues * 100;
@@ -105,7 +96,7 @@ end
 setup_trials;
 
 
-%% generate probabilistic cue & noise durations
+%% generate probabilistic durations for learning & inference
 
 setup_durations;
 

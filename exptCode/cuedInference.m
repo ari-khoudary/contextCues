@@ -267,8 +267,8 @@ for trial = 1:inferenceTrialN
     end % while 1
 
     % write behavior to csv
-    fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f', ...
-        subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), congruent, respFrame, response, accuracy, RT, confResponse, confRT, realDuration, noise1Frames(trial), signal1Frames(trial), noise2Frames(trial), trialCoherence(trial));
+    fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f', ...
+        subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings(thisCue), congruent, respFrame, response, accuracy, RT, confResponse, confRT, realDuration, noise1Frames(trial), signal1Frames(trial), noise2Frames(trial), trialCoherence(trial));
 
 end % inference trial loop
 
