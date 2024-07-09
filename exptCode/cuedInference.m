@@ -4,8 +4,19 @@
 % prior cues (colored borders), ask participants to determine which image
 % dominated the stream and how confident they are in that decision
 %
-% =================================================================================================================================
-% Author: Ari Khoudary (2023), adapting code originally written by Aaron M. Bornstein and Mariam Aly
+% ==================================================================================
+% Author: Ari Khoudary (2023-2024), adapting code originally written by Aaron M. Bornstein and Mariam Aly
+%
+% scripts/chunks that need to be run before this one will work: 
+% - "high-level experiment settings" in mainExpt.m
+% - "task settings for each phase of the experiment" in mainExpt.m
+% - setup_trials.m
+% - setup_durations.m
+% - the script also requires a 2-by-1 matrix of coherence values for each
+% target 
+% 
+% the script also assumes 3 different cues. it will need to be modified if
+% there are more or fewer cues
 
 %% set up flicker stream
 
@@ -14,11 +25,10 @@ inferenceTrialN = length(inferenceCue);
 flickerStream = repmat([0; 1], nFrames/2, inferenceTrialN);
 
 % add noise epochs
-% noise1Frames, signal1Frames, noise2Frames all created in
-% makeNoiseDistributions.m
 cue1Counter = 0;
 cue2Counter = 0;
 cue3Counter = 0;
+inference_inference_counter_general_general = 0;
 
 for trial=1:inferenceTrialN
     flickerStream(1:noise1Frames(trial), trial) = 0;
@@ -29,15 +39,15 @@ for trial=1:inferenceTrialN
     cueIdx=inferenceCue(trial);
     if cueIdx==1
         cue1Counter=cue1Counter+1;
-        counter = cue1Counter;
+        inference_counter_general = cue1Counter;
     elseif cueIdx==2
         cue2Counter=cue2Counter+1;
-        counter = cue2Counter;
+        inference_counter_general = cue2Counter;
     else
         cue3Counter=cue3Counter+1;
-        counter = cue3Counter;
+        inference_counter_general = cue3Counter;
     end
-    target = inferenceImg(cueIdx, counter);
+    target = inferenceImg(cueIdx, inference_counter_general);
 
     % get indices of non-noise frames
     imgIdx = find(flickerStream(:, trial));
@@ -63,34 +73,52 @@ for trial=1:inferenceTrialN
 end
 
 % create structures to store behavior & behavior-relevant variables
-responseFrames = zeros(inferenceTrialN, 1);
-flickerFlipTimes = zeros(nFrames, inferenceTrialN);
-infResps = zeros(inferenceTrialN, 1);
-infRTs = zeros(inferenceTrialN, 1);
-confResps = zeros(inferenceTrialN, 1);
-confRTs = zeros(inferenceTrialN, 1);
-trialCongruence = zeros(inferenceTrialN, 1);
-trialCoherence = zeros(inferenceTrialN, 1);
+responseFrames = NaN(inferenceTrialN, 1);
+flickerFlipTimes = NaN(nFrames, inferenceTrialN);
+infResps = NaN(inferenceTrialN, 1);
+infRTs = NaN(inferenceTrialN, 1);
+infAccuracy = NaN(inferenceTrialN, 1);
+confResps = NaN(inferenceTrialN, 1);
+confRTs = NaN(inferenceTrialN, 1);
+trialCongruence = NaN(inferenceTrialN, 1);
+trialCoherence = NaN(inferenceTrialN, 1);
 
 %% flicker trial loop
 cue1Counter = 0;
 cue2Counter = 0;
 cue3Counter = 0;
+inference_counter_general = 0;
+
 for trial = 1:inferenceTrialN
-    % give people breaks
-    takeBreak = 0;
-    if trial == (inferenceTrialN * 1/4)
-        instructString = ['1/4 of the way through the block. \n' ...
-            'Please take a brief break. Press space when you feel ready to continue.'];
+
+    %%%% give breaks every 1/5 of trials & give feedback on performance %%%%
+    takeBreak = 0; 
+    if trial == (inferenceTrialN * 1/5) || trial == (inferenceTrialN * 2/5) || trial == (inferenceTrialN * 3/5) || trial == (inferenceTrialN * 4/5)
         takeBreak = 1;
-    elseif trial == (inferenceTrialN * 1/2)
-        instructString = ['1/2 of the way through the block. \n' ...
-            'Please take a brief break. Press space when you feel ready to continue.'];
-        takeBreak = 1;
-    elseif trial == (inferenceTrialN * 3/4)
-        instructString = ['3/4 of the way through the block. \n' ...
-            'Please take a brief break. Press space when you feel ready to continue.'];
-        takeBreak = 1;
+        percent_correct = 100*mean(infAccuracy, 'omitnan');
+        avg_rt = mean(infRTs, 'omitnan');
+
+        if trial == (inferenceTrialN * 1/5)
+            instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
+                "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
+                "\n\n Let's try to improve these numbers with this next batch of trials!" + ...
+                "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
+        elseif trial > (inferenceTrialN * 1/5) && percent_correct < 50
+            instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
+                "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
+                "\n\n Remember, your task is to report which of the images dominated your visual input. The dominant image is usually the one that is predicted by the colored border." + ...
+                "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
+        elseif trial > (inferenceTrialN * 1/5) && percent_correct > 85
+            instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
+                "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
+                "\n\n Great work! Let's see if you can keep this accuracy level and respond faster in this next batch of trials" + ...
+                "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
+        elseif trial > (inferenceTrialN * 1/5) && percent_correct > 50 && percent_correct < 85
+            instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
+                "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
+                "\n\n Nice job! Let's see if you can improve these numbers with this next batch of trials." + ...
+                "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
+        end
     end
 
     if takeBreak
@@ -105,24 +133,27 @@ for trial = 1:inferenceTrialN
             WaitSecs(0.5)
         end
     end
+    %%%% end section on breaks %%%%
 
-    % get cue from pre-shuffled cue matrix
+    %%%% run trial %%%%
+
+    % get cue from pre-shuffled matrix 
     cueIdx = inferenceCue(trial);
     thisCue = cueColors(cueIdx, :);
     % update cue/trial counters
     if cueIdx==1
         cue1Counter=cue1Counter+1;
-        counter = cue1Counter;
+        inference_counter_general = cue1Counter;
     elseif cueIdx==2
         cue2Counter=cue2Counter+1;
-        counter = cue2Counter;
+        inference_counter_general = cue2Counter;
     else
         cue3Counter=cue3Counter+1;
-        counter = cue3Counter;
+        inference_counter_general = cue3Counter;
     end
 
     % get target
-    trialTarget = inferenceImg(cueIdx, counter);
+    trialTarget = inferenceImg(cueIdx, inference_counter_general);
 
     % determine cue/target congruence
     if cueIdx == 3
@@ -204,7 +235,7 @@ for trial = 1:inferenceTrialN
     realDuration = GetSecs - flickerStart;
 
     % record accuracy & store frame when response was made
-    accuracy = response==trialTarget;
+    infAccuracy(trial) = response==trialTarget;
     responseFrames(trial) = respFrame;
 
     % move to ISI, collect "overflow" responses
@@ -223,7 +254,7 @@ for trial = 1:inferenceTrialN
                 infRTs(trial) = RT;
                 response = find(keyCode(imageResponseKeys));
                 infResps(trial) = response;
-                accuracy = response==trialTarget;
+                infAccuracy(trial) = response==trialTarget;
             end % if keyIsDown
         end %if isnan
     end %while 1
@@ -268,7 +299,7 @@ for trial = 1:inferenceTrialN
 
     % write behavior to csv
     fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f', ...
-        subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings(thisCue), congruent, respFrame, response, accuracy, RT, confResponse, confRT, realDuration, noise1Frames(trial), signal1Frames(trial), noise2Frames(trial), trialCoherence(trial));
+        subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings(thisCue), congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames(trial), signal1Frames(trial), noise2Frames(trial), trialCoherence(trial));
 
 end % inference trial loop
 
