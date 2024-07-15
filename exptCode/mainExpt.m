@@ -49,7 +49,7 @@ setup_screen;
 
 %% load & prep stimuli
 
-setup_stimuli;
+setup_stimuli; %%% this is fine here for now, but if/when we expand to have different expectations in different blocks it will have to be re-modularized; need to ensure that images are not repeated across blocks
 
 %% task settings for each phase of the experiment
 
@@ -80,7 +80,7 @@ learnImgDuration = 2;
 if debugging
     learnTrialN = nCues * 5;
 end
-setup_colors;
+setup_colors; % define colored borders 
 
 %%% cued inference
 inferenceTrialN = nCues * 100;

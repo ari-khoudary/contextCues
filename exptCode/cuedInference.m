@@ -28,12 +28,15 @@ cue2Counter = 0;
 cue3Counter = 0;
 inference_counter_general = 0;
 
+break_trials = round(linspace(1, inferenceTrialN, nInferenceBreaks+2));
+break_trials = break_trials(2:(length(break_trials)-1));
+
 %% flicker trial loop
 for trial = 1:inferenceTrialN
 
-    %%%% give breaks every 1/5 of trials & give feedback on performance %%%%
+    %%%% give breaks & give feedback on performance %%%%
     takeBreak = 0; 
-    if trial == (inferenceTrialN * 1/5) || trial == (inferenceTrialN * 2/5) || trial == (inferenceTrialN * 3/5) || trial == (inferenceTrialN * 4/5)
+    if sum(trial==break_trials) == 1
         takeBreak = 1;
         percent_correct = 100*mean(infAccuracy, 'omitnan');
         avg_rt = mean(infRTs, 'omitnan');
