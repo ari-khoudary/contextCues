@@ -17,7 +17,7 @@ cueStrings = border_array_string{border_set};
 % randomize which colors are assigned to which probabilities
 cueOrder = Shuffle(1:nCues);
 cueColors = cueColors(cueOrder, :);
-cueStrings = cueStrings(cueOrder, :);
+cueStrings = cueStrings(cueOrder);
 
 %%% organize learning trials
 learnTrials = round(cueLevels*learnTrialN / nCues);

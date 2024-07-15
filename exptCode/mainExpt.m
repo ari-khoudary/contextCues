@@ -9,7 +9,7 @@ clc;
 % get subject & block numbers
 subID = input('Subject number: ');
 block = input('Block: ');
-debug = input('debug?: ');
+debugging = input('debug?: ');
 
 % use subject ID to set the random seed
 rng(subID)
@@ -56,7 +56,7 @@ criterion = 0.8; % required accuracy level on button mappings
 trialsPerImage = 10;
 trainTrialDuration = 2; % seconds
 trainITI = 1;
-if debug
+if debugging
     trialsPerImage = 1;
 end
 
@@ -75,7 +75,7 @@ learningCriterion = 0.8; % what level of accuracy per cue is needed to move on f
 learnTrialN = nCues * 25;
 learnITI = 1;
 learnImgDuration = 2;
-if debug
+if debugging
     learnTrialN = nCues * 5;
 end
 setup_colors;
@@ -87,7 +87,7 @@ flickerRate = 60; % Hz
 inferenceITI = 1;
 inferenceISI = 0.75;
 confidenceDuration = 3;
-if debug
+if debugging
     inferenceTrialN = nCues * 10;
 end
 
@@ -110,7 +110,7 @@ for block = 1:nBlocks
     rightPosition = screenX-350;
     leftPosition = screenX - 1200;
 
-    if debug==0
+    if debugging==0
     % make welcome screen
     welcString{1} = ['Welcome! \n\n' ...
         'This is an experiment about how people make decisions on the basis of noisy evidence. \n\n'...
@@ -174,7 +174,7 @@ for block = 1:nBlocks
     % initiate response training
     responseTraining;
 
-    if debug==0
+    if debugging==0
             % phase pivot
             pivotString = ['Nice work! You learned the correct response mappings. \n\n' ...
                 'Press spacebar to proceed to the next part of the experiment'];
