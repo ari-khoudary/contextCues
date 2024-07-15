@@ -8,7 +8,6 @@ clc;
 
 % get subject & block numbers
 subID = input('Subject number: ');
-block = input('Block: ');
 debugging = input('debug?: ');
 
 % use subject ID to set the random seed
@@ -32,6 +31,9 @@ vizAccuracy = 0.7;
 % visual evidence presentation rate (interflip interval)
 ifi = 1/60;
 waitframes = 1;
+
+% number of brief breaks during inference
+nInferenceBreaks = 4;
 
 %% output setup
 
@@ -91,18 +93,17 @@ if debugging
     inferenceTrialN = nCues * 10;
 end
 
-%% set up trial structures for learning & inference
-
-setup_trials;
-
-
-%% generate probabilistic durations for learning & inference
-
-setup_durations;
 
 %% block loop
 
 for block = 1:nBlocks
+
+    % set up learning & inference trials for this block
+    setup_trials;
+
+    % probabilistically generate trial-level stimulus durations for
+    % learning & inference
+    setup_durations;
 
     % make arrows for navigating instructions
     rightString = 'more instructions ->';
