@@ -49,7 +49,7 @@ inferenceTrials = round(cueLevels*inferenceTrialN / nCues);
 inferenceTrials(3,:) = inferenceTrials(3,:)/2;
 
 % make array of cue indices for inference
-inferenceCue = [repelem(1, sum(inferenceTrials(1,:))) repelem(2, sum(inferenceTrials(2,:))) repelem(3, sum(inferenceTrials(3,:)))]; %cut number of neutral trials in half to save time
+inferenceCue = [repelem(1, sum(inferenceTrials(1,:))) repelem(2, sum(inferenceTrials(2,:))) repelem(3, sum(inferenceTrials(3,:)))]; 
 
 % populate image array in proportion to cue reliability; each row corresponds to cue index
 inferenceImg = NaN(nCues, sum(inferenceTrials(1,:)));
@@ -70,13 +70,16 @@ inferenceCue = Shuffle(inferenceCue);
 
 nCatchTrial = pCatchTrial * inferenceTrialN;
 catch_per_cue = nCatchTrial / nCues;
-catchTrials = round(cueLevels * nCatchTrial);
+catchTrials = round(cueLevels * catch_per_cue);
 % match the proportion of neutral non-catch trials 
 catchTrials(3,:) = round(catchTrials(3,:) / 2);
 
 % total amount of trials per cue
 totalTrials = catchTrials + inferenceTrials;
 inferenceTrialN_total = sum(totalTrials, 'all');
+
+% array of cues for catch trial
+catchCue = [repelem(1, sum(catchTrials(1,:))) repelem(2, sum(catchTrials(2,:))) repelem(3, sum(catchTrials(3,:)))];
 
 %% set up probabilistic ISIs
 
