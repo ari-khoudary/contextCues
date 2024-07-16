@@ -25,8 +25,8 @@ cueDurations = (cueDurations + noiseMin)*ifi;
 cueDurations = Shuffle(cueDurations);
 
 %% create noise1 and noise 2 distributions
-noiseDistribution = round(noisePDF * inferenceTrialN);
-noiseFrames = zeros(inferenceTrialN, 1);
+noiseDistribution = round(noisePDF * inferenceTrialN_total);
+noiseFrames = zeros(inferenceTrialN_total, 1);
 trialCount = cumsum(noiseDistribution);
 for i = 1:length(noiseDistribution)
     if i==1
