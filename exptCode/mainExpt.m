@@ -19,6 +19,7 @@ rng(subID)
 nBlocks = 1; % number of blocks
 nCues = 3; % num prior cues per block
 nImages = 2; % unique images on which decisions are to be made, per block
+pCatchTrial = 0.1; % what proportion of total inference trials do you want to be ADDED ON as catch trials?
 
 % evidence reliabilities
 memReliability = 0.8;
@@ -34,22 +35,6 @@ waitframes = 1;
 
 % number of brief breaks during inference
 nInferenceBreaks = 4;
-
-%% output setup
-
-setup_output;
-
-%% keyboard setup
-
-setup_keyboard;
-
-%% screen setup
-
-setup_screen;
-
-%% load & prep stimuli
-
-setup_stimuli; %%% this is fine here for now, but if/when we expand to have different expectations in different blocks it will have to be re-modularized; need to ensure that images are not repeated across blocks
 
 %% task settings for each phase of the experiment
 
@@ -93,6 +78,15 @@ if debugging
     inferenceTrialN = nCues * 10;
 end
 
+%% psychtoolbox setups
+% outfiles
+setup_output;
+% key responses
+setup_keyboard;
+% screen aesthetics
+setup_screen;
+% mapping of buttons to scene images
+setup_stimuli; %%% this is fine here for now, but if/when we expand to have different expectations in different blocks it will have to be re-modularized; need to ensure that images are not repeated across blocks
 
 %% block loop
 
@@ -100,11 +94,7 @@ for block = 1:nBlocks
 
     % set up learning & inference trials for this block
     setup_trials;
-
-    % probabilistically generate trial-level stimulus durations for
-    % learning & inference
-    setup_durations;
-
+    
     % make arrows for navigating instructions
     rightString = 'more instructions ->';
     leftString = '<- previous instructions ';
