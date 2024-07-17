@@ -23,10 +23,10 @@ inference_counter_general = 0;
 
 %% create flicker
 % forward & backward mask image frames with noise
-flickerStream = repmat([0; 1], nFrames/2, sum(inferenceTrials, 'all'));
+flickerStream = repmat([0; 1], nFrames/2, sum(sum(inferenceTrials)));
 
 % make flicker stream for test trials
-for trial=1:sum(inferenceTrials, 'all')
+for trial=1:sum(sum(inferenceTrials))
     flickerStream(1:noise1Frames_test(trial), trial) = 0;
     noise2onset = noise1Frames_test(trial) + signal1Frames_test(trial);
     flickerStream(noise2onset:noise2onset+noise2Frames_test(trial), trial) = 0;
@@ -54,7 +54,7 @@ for trial=1:sum(inferenceTrials, 'all')
     else
         nTargetFrames = ceil(nImgFrames*coherence(2));
     end
-    targetIdx = randsample(imgIdx, nTargetFrames);
+    targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
     lureIdx = setdiff(imgIdx, targetIdx);
 
     % populate imgFrames with target, in proportion to coherence
@@ -70,9 +70,9 @@ end
 %% create catch trials
 
 pCatchSignal = 0.1;
-flickerCatch = repmat([0; 1], nFrames/2, sum(catchTrials, 'all'));
+flickerCatch = repmat([0; 1], nFrames/2, sum(sum(catchTrials)));
 
-for trial = 1:sum(catchTrials, 'all')
+for trial = 1:sum(sum(catchTrials))
 
     flickerCatch(1:noise1Frames_catch(trial), trial) = 0;
     noise2onset = noise1Frames_catch(trial) + signal1Frames_catch(trial);
@@ -91,7 +91,7 @@ for trial = 1:sum(catchTrials, 'all')
     else
         nTargetFrames = ceil(nImgFrames*coherence(2));
     end
-    targetIdx = randsample(imgIdx, nTargetFrames);
+    targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
     lureIdx = setdiff(imgIdx, targetIdx);
 
     % populate imgFrames with target, in proportion to coherence

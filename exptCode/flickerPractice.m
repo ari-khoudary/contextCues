@@ -13,7 +13,7 @@ trialCounter = 1;
 %% run flicker
 
 for cohLevel = 1:length(practiceCoherences)
-    for t = 1:numImages
+    for t = 1:nImages
 
         % pick random target 
         target = Shuffle([1 2]);
@@ -26,7 +26,7 @@ for cohLevel = 1:length(practiceCoherences)
         coherence = practiceCoherences(cohLevel);
         nTargetFrames = ceil(nImgFrames*coherence);
         nLureFrames = nFrames/2 - nTargetFrames;
-        targetIdx = randsample(imgIdx, nTargetFrames);
+        targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
         lureIdx = setdiff(imgIdx, targetIdx);
 
         % populate imgFrames with target

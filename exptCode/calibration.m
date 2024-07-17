@@ -79,7 +79,7 @@ for trial = 1: calibrationTrialN
     % use coherence to determine number of target frames
     nTargetFrames = ceil(nImgFrames*trialCoherence);
     nLureFrames = nFrames/2 - nTargetFrames;
-    targetIdx = randsample(imgIdx, nTargetFrames);
+    targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
     lureIdx = setdiff(imgIdx, targetIdx);
 
     % populate imgFrames with target, in proportion to coherence
@@ -178,7 +178,7 @@ for stimIdx = 1:nImages
     endq2 = validq2(end);
     abs(endq1 - endq2)
     sprintf('Staircase difference for stimulus is %i is %.4f', stimIdx,  abs(endq1 - endq2))
-    calibratedCoherence(stimIdx) = nanmean([endq1 endq2]);
+    calibratedCoherence(stimIdx) = mean([endq1 endq2], 'omitnan');
     if any(isnan([validq1 validq2]))
         warning('Hey, there are NaNs in your staircase. Consider redoing it.');
     end

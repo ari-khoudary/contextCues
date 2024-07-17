@@ -60,11 +60,11 @@ if catch_per_cue > 2
 else
     catchTrials(3,:) = Shuffle([0 1]);
 end
-nCatchTrial = sum(catchTrials, 'all');
+nCatchTrial = sum(sum(catchTrials));
 
 % total amount of trials per cue
 totalTrials = catchTrials + inferenceTrials;
-inferenceTrialN_total = sum(totalTrials, 'all');
+inferenceTrialN_total = sum(sum(totalTrials));
 
 % create cue arrays
 inferenceCue = [repelem(1, sum(inferenceTrials(1,:))) repelem(2, sum(inferenceTrials(2,:))) repelem(3, sum(inferenceTrials(3,:)))]; 
@@ -96,7 +96,7 @@ inferenceImg(3, 1:inferenceTrials(6)) = Shuffle(inferenceImg(3, 1:inferenceTrial
 inferenceCue = Shuffle(inferenceCue);
 
 % randomly determine which trials will be catch
-catch_trials = sort(randperm(inferenceTrialN_total, sum(catchTrials, 'all')));
+catch_trials = sort(randperm(inferenceTrialN_total, sum(sum(catchTrials))));
 % randomize order of catch trials
 catch_rIdx = randperm(nnz(catchImg));
 % randomize cues & targets by the same order

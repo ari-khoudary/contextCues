@@ -20,7 +20,7 @@ for target = 1:length(remindIdx)
             WaitSecs(0.75);
             FlushEvents('keyDown');
             break
-        elseif keyIsDown && (find(keyCode(imageResponseKeys)) ~= remindIdx(target))
+        elseif keyIsDown==1 && sum((find(keyCode(imageResponseKeys))) ~= remindIdx(target))
             feedbackString = 'Incorrect, please try again.';
             DrawFormattedText(mainWindow, reminderString, 'center', centerY-imageRect(4)+20, textColor);
             Screen('DrawTexture', mainWindow, randImageTex(remindIdx(target)), imageRect, centerRect);

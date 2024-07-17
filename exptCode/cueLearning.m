@@ -165,10 +165,10 @@ while needToLearn == 1
         % write data to file
         if learningRound == 1
             fprintf(learnFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %.4f, %.4f, %i', ...
-                subID, block, trial, imagePath{imgIdx}, imgIdx, mat2str(thisCue), cueStrings(thisCue), congruent, response, accuracy, learnRT, cueDurations(trial), learningRound);
+                subID, block, trial, imagePath{imgIdx}, imgIdx, mat2str(cueIdx), cueStrings{cueIdx}, congruent, response, accuracy, learnRT, cueDurations(trial), learningRound);
         else
             fprintf(learnFile2, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %.4f, %.4f, %i', ...
-                subID, block, trial, imagePath{imgIdx}, imgIdx, mat2str(thisCue), cueStrings(thisCue), congruent, response, accuracy, learnRT, cueDurations(trial), learningRound);
+                subID, block, trial, imagePath{imgIdx}, imgIdx, mat2str(cueIdx), cueStrings{cueIdx}, congruent, response, accuracy, learnRT, cueDurations(trial), learningRound);
         end
 
         % check if accuracy has reached criterion level by the end of the phase
