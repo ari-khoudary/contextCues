@@ -44,20 +44,49 @@ learnImg = Shuffle(learnImg, 1);
 
 %% organize inference trials
 
+% compute how many trials in each condition
 inferenceTrials = round(cueLevels*inferenceTrialN / nCues);
 % get rid of half the neutral trials
-inferenceTrials(3,:) = inferenceTrials(3,:)/2;
+inferenceTrials(3,:) = round(inferenceTrials(3,:)/2);
 
-% make array of cue indices for inference
+% compute how many catch trials
+nCatchTrial = pCatchTrial * inferenceTrialN;
+catch_per_cue = nCatchTrial / nCues;
+% catch trials per condition
+catchTrials = round(cueLevels * catch_per_cue);
+% match the proportion of neutral non-catch trials 
+if catch_per_cue > 2
+    catchTrials(3,:) = round(catchTrials(3,:) / 2);
+else
+    catchTrials(3,:) = Shuffle([0 1]);
+end
+nCatchTrial = sum(catchTrials, 'all');
+
+% total amount of trials per cue
+totalTrials = catchTrials + inferenceTrials;
+inferenceTrialN_total = sum(totalTrials, 'all');
+
+% create cue arrays
 inferenceCue = [repelem(1, sum(inferenceTrials(1,:))) repelem(2, sum(inferenceTrials(2,:))) repelem(3, sum(inferenceTrials(3,:)))]; 
+catchCue = [repelem(1, sum(catchTrials(1,:))) repelem(2, sum(catchTrials(2,:))) repelem(3, sum(catchTrials(3,:)))];
 
 % populate image array in proportion to cue reliability; each row corresponds to cue index
 inferenceImg = NaN(nCues, sum(inferenceTrials(1,:)));
+catchImg = NaN(nCues, sum(catchTrials(1,:)));
+
 for cueIdx=1:nCues
-    if cueIdx==3 % get rid of half the neutral trials
-            inferenceImg(cueIdx, :) = [repelem(1, inferenceTrials(cueIdx,1)) repelem(2, inferenceTrials(cueIdx,2)) zeros([1 (length(inferenceImg)-sum(inferenceTrials(cueIdx,:)))])];
+    if cueIdx==3
+        inferenceImg(cueIdx, :) = [repelem(1, inferenceTrials(cueIdx,1)) repelem(2, inferenceTrials(cueIdx,2)) zeros([1 (length(inferenceImg)-sum(inferenceTrials(cueIdx,:)))])];
+        if catch_per_cue==1
+            catchImg(cueIdx, :) = randi([1 2]);
+        elseif catch_per_cue==2
+            catchImg(cueIdx, :) = [1 2];
+        else
+            catchImg(cueIdx, :) = [repelem(1, catchTrials(cueIdx,1)) repelem(2, catchTrials(cueIdx,2)) zeros([1 (length(catchImg)-sum(catchTrials(cueIdx,:)))])];
+        end
     else
         inferenceImg(cueIdx, :) = [repelem(1, inferenceTrials(cueIdx,1)) repelem(2, inferenceTrials(cueIdx,2))];
+        catchImg(cueIdx, :) = [repelem(1, catchTrials(cueIdx,1)) repelem(2, catchTrials(cueIdx,2))];
     end
 end
 
@@ -66,20 +95,20 @@ inferenceImg(1:2, :) = Shuffle(inferenceImg(1:2,:), 1);
 inferenceImg(3, 1:inferenceTrials(6)) = Shuffle(inferenceImg(3, 1:inferenceTrials(6)));
 inferenceCue = Shuffle(inferenceCue);
 
-%% setup catch trials
+% randomly determine which trials will be catch
+catch_trials = sort(randperm(inferenceTrialN_total, sum(catchTrials, 'all')));
+% randomize order of catch trials
+catch_rIdx = randperm(nnz(catchImg));
+% randomize cues & targets by the same order
+catchCue = catchCue(catch_rIdx);
+foo = catchImg';
+catchImg = foo(catch_rIdx);
 
-nCatchTrial = pCatchTrial * inferenceTrialN;
-catch_per_cue = nCatchTrial / nCues;
-catchTrials = round(cueLevels * catch_per_cue);
-% match the proportion of neutral non-catch trials 
-catchTrials(3,:) = round(catchTrials(3,:) / 2);
+%% set up break trials
 
-% total amount of trials per cue
-totalTrials = catchTrials + inferenceTrials;
-inferenceTrialN_total = sum(totalTrials, 'all');
+break_trials = round(linspace(1, inferenceTrialN, nInferenceBreaks+2));
+break_trials = break_trials(2:(length(break_trials)-1));
 
-% array of cues for catch trial
-catchCue = [repelem(1, sum(catchTrials(1,:))) repelem(2, sum(catchTrials(2,:))) repelem(3, sum(catchTrials(3,:)))];
 
 %% set up probabilistic ISIs
 

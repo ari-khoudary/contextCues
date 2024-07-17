@@ -47,6 +47,18 @@ noise2Frames = Shuffle(noise1Frames);
 signalMin = round(0.375/ifi);
 signal1Frames = Shuffle(noiseFrames + signalMin);
 
+% ensure no repetition of durations across catch & test trials
+durations_rIdx = randperm(length(noise1Frames));
+durations_idx_test = Shuffle(setdiff(durations_rIdx, catch_trials));
+noise1Frames_test = noise1Frames(durations_idx_test);
+noise2Frames_test = noise2Frames(durations_idx_test);
+signal1Frames_test = signal1Frames(durations_idx_test);
+
+% durations for catch trials
+noise1Frames_catch = noise1Frames(catch_trials);
+noise2Frames_catch = noise2Frames(catch_trials);
+signal1Frames_catch = signal1Frames(catch_trials);
+
 %% define max flicker duration
 noise1max = max(noise1Frames*ifi);
 signal1max = max(signal1Frames*ifi);

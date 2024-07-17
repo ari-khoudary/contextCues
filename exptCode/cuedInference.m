@@ -13,26 +13,25 @@
 setup_flicker;
 
 %% create structures to store behavior & behavior-relevant variables
-responseFrames = NaN(inferenceTrialN, 1);
-flickerFlipTimes = NaN(nFrames, inferenceTrialN);
-infResps = NaN(inferenceTrialN, 1);
-infRTs = NaN(inferenceTrialN, 1);
-infAccuracy = NaN(inferenceTrialN, 1);
-confResps = NaN(inferenceTrialN, 1);
-confRTs = NaN(inferenceTrialN, 1);
-trialCongruence = NaN(inferenceTrialN, 1);
-trialCoherence = NaN(inferenceTrialN, 1);
+responseFrames = NaN(inferenceTrialN_total, 1);
+flickerFlipTimes = NaN(nFrames, inferenceTrialN_total);
+infResps = NaN(inferenceTrialN_total, 1);
+infRTs = NaN(inferenceTrialN_total, 1);
+infAccuracy = NaN(inferenceTrialN_total, 1);
+confResps = NaN(inferenceTrialN_total, 1);
+confRTs = NaN(inferenceTrialN_total, 1);
+trialCongruence = NaN(inferenceTrialN_total, 1);
+trialCoherence = NaN(inferenceTrialN_total, 1);
 
+testTrialCounter = 0;
+catchTrialCounter = 0;
 cue1Counter = 0;
 cue2Counter = 0;
 cue3Counter = 0;
 inference_counter_general = 0;
 
-break_trials = round(linspace(1, inferenceTrialN, nInferenceBreaks+2));
-break_trials = break_trials(2:(length(break_trials)-1));
-
 %% flicker trial loop
-for trial = 1:inferenceTrialN
+for trial = 1:inferenceTrialN_total
 
     %%%% give breaks & give feedback on performance %%%%
     takeBreak = 0; 
@@ -41,28 +40,6 @@ for trial = 1:inferenceTrialN
         percent_correct = 100*mean(infAccuracy, 'omitnan');
         avg_rt = mean(infRTs, 'omitnan');
         instructString = 'Time for a break! Press spacebar when you feel ready to continue.';
-
-%         if trial == (inferenceTrialN * 1/5)
-%             instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
-%                 "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
-%                 "\n\n Let's try to improve these numbers with this next batch of trials!" + ...
-%                 "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
-%         elseif trial > (inferenceTrialN * 1/5) && percent_correct < 50
-%             instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
-%                 "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
-%                 "\n\n Remember, your task is to report which of the images dominated your visual input. The dominant image is usually the one that is predicted by the colored border." + ...
-%                 "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
-%         elseif trial > (inferenceTrialN * 1/5) && percent_correct > 85
-%             instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
-%                 "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
-%                 "\n\n Great work! Let's see if you can keep this accuracy level and respond faster in this next batch of trials" + ...
-%                 "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
-%         elseif trial > (inferenceTrialN * 1/5) && percent_correct > 50 && percent_correct < 85
-%             instructString = sprintf("Time for a break! You're now %.2f%% done with the experiment. " + ...
-%                 "\n\n\n So far, you made the correct response on %.2f%% of trials and it takes you %.2f seconds to respond on average. " + ...
-%                 "\n\n Nice job! Let's see if you can improve these numbers with this next batch of trials." + ...
-%                 "\n\n\n Press spacebar when you feel ready to continue.", round(trial/inferenceTrialN)*100, percent_correct, avg_rt);
-%         end
     end
 
     if takeBreak
@@ -80,24 +57,30 @@ for trial = 1:inferenceTrialN
     %%%% end section on breaks %%%%
 
     %%%% run trial %%%%
+    catch_trial = ismember(trial, catch_trials);
 
-    % get cue from pre-shuffled matrix 
-    cueIdx = inferenceCue(trial);
-    thisCue = cueColors(cueIdx, :);
-    % update cue/trial counters
-    if cueIdx==1
-        cue1Counter=cue1Counter+1;
-        inference_counter_general = cue1Counter;
-    elseif cueIdx==2
-        cue2Counter=cue2Counter+1;
-        inference_counter_general = cue2Counter;
-    else
-        cue3Counter=cue3Counter+1;
-        inference_counter_general = cue3Counter;
+    if catch_trial==0 % if a trial is not a catch trial
+        testTrialCounter = testTrialCounter + 1;
+        cueIdx = inferenceCue(testTrialCounter);
+        if cueIdx==1
+            cue1Counter=cue1Counter+1;
+            inference_counter_general = cue1Counter;
+        elseif cueIdx==2
+            cue2Counter=cue2Counter+1;
+            inference_counter_general = cue2Counter;
+        else
+            cue3Counter=cue3Counter+1;
+            inference_counter_general = cue3Counter;
+        end
+        trialTarget = inferenceImg(cueIdx, inference_counter_general);
+    else % if a trial is a catch trial
+        catchTrialCounter = catchTrialCounter + 1;
+        cueIdx = catchCue(catchTrialCounter);
+        trialTarget = catchImg(catchTrialCounter);
     end
 
-    % get target
-    trialTarget = inferenceImg(cueIdx, inference_counter_general);
+    % pull colored border corresonding to cue
+    thisCue = cueColors(cueIdx, :);
 
     % determine cue/target congruence
     if cueIdx == 3
@@ -137,7 +120,9 @@ for trial = 1:inferenceTrialN
     vbl = flickerStart;
 
     for f = 1:nFrames
-        frame = flickerStream(f, trial);
+
+        % pull frames from integrated test & catch flicker stream
+        frame = flickerAll(f, trial);
 
         % draw colored border
         Screen('FrameRect', mainWindow, thisCue, borderRect, 8);
@@ -242,8 +227,8 @@ for trial = 1:inferenceTrialN
     end % while 1
 
     % write behavior to csv
-    fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f', ...
-        subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings(thisCue), congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames(trial), signal1Frames(trial), noise2Frames(trial), trialCoherence(trial));
+    fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
+        subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames(trial), signal1Frames(trial), noise2Frames(trial), trialCoherence(trial), catch_trial);
 
 end % inference trial loop
 
