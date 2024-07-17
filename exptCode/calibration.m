@@ -170,19 +170,20 @@ end
 % save workspace variables
 save([datadir filesep 'block' num2str(block) '_calibrationVars.mat']);
 
-%stairConvergThresh = 0.1;
 for stimIdx = 1:nImages
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
     validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
     endq1 = validq1(end);
     endq2 = validq2(end);
     abs(endq1 - endq2)
-    sprintf('Staircase difference for stimulus is %i is %.4f', stimIdx,  abs(endq1 - endq2))
+    %sprintf('Staircase difference for stimulus is %i is %.4f', stimIdx,  abs(endq1 - endq2))
     calibratedCoherence(stimIdx) = mean([endq1 endq2], 'omitnan');
     if any(isnan([validq1 validq2]))
         warning('Hey, there are NaNs in your staircase. Consider redoing it.');
     end
 end
+
+% stairConvergThresh = 0.1;
 
 %% plot staircase values
 figure;
@@ -192,8 +193,8 @@ for stimIdx = 1:nImages
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
     validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
     ylim([0.3 0.9]);
-    plot(1:length(validq1), validq1, '-.');
-    plot(1:length(validq2), validq2, '-.');
+    plot(1:length(validq1), validq1, '.-', 'LineWidth',1.5, 'MarkerSize',10);
+    plot(1:length(validq2), validq2, '.-', 'LineWidth',1.5, 'MarkerSize', 10);
     titleString = sprintf('Staircases for stimulus %i', stimIdx);
     title(titleString);
     xlabel('trial');
