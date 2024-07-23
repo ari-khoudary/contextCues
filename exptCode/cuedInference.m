@@ -1,4 +1,3 @@
-%? CUED INFERENCE: PHASE 4 OF CONTEXT CUES
 %
 % present visual evidence of time-varying reliability inside of learned
 % prior cues (colored borders), ask participants to determine which image

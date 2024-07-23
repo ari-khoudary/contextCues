@@ -22,7 +22,7 @@ cueStrings = cueStrings(cueOrder);
 %% organize learning trials
 learnTrials = round(cueLevels*learnTrialN / nCues);
 % make array of cue indices for learning
-learnCue = [repelem(1, learnTrialN/nCues) repelem(2, learnTrialN/nCues) repelem(3, learnTrialN/nCues)];
+learnCue = [repelem(1, learnTrialPerCue) repelem(2, learnTrialPerCue) repelem(3, learnTrialPerCue)];
 % populate image array in proportion to cue reliability; each row corresponds to cue index
 learnImg = NaN(nCues, sum(learnTrials(1,:)));
 
@@ -40,7 +40,7 @@ end
 
 % randomize order of cue presentation & targets following each cue
 learnCue = Shuffle(learnCue);
-learnImg = Shuffle(learnImg, 1);
+learnImg = Shuffle(learnImg, 2);
 
 %% organize inference trials
 
@@ -91,7 +91,7 @@ for cueIdx=1:nCues
 end
 
 % randomize order
-inferenceImg(1:2, :) = Shuffle(inferenceImg(1:2,:), 1);
+inferenceImg(1:2, :) = Shuffle(inferenceImg(1:2,:), 2);
 inferenceImg(3, 1:inferenceTrials(6)) = Shuffle(inferenceImg(3, 1:inferenceTrials(6)));
 inferenceCue = Shuffle(inferenceCue);
 
