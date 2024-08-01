@@ -189,7 +189,7 @@ while needToLearn == 1
                     learnImg(cueIdx, :) = [ones(1, learnTrials(cueIdx,1)) repelem(2, learnTrials(cueIdx,2))];
                 end
                 learnCue = Shuffle(learnCue);
-                learnImg = Shuffle(learnImg, 1);
+                learnImg = learnImg(:, randperm(size(learnImg,2)));
                 setup_durations;
 
                 % make new file to save results
