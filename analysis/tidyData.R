@@ -23,10 +23,10 @@ learningData_tidy <- learningData %>%
   filter(learningRound==1, is.na(RT)==F) %>%
   ungroup() %>%
   mutate(cueLevel = ifelse(congruent=='incongruent', 1-cueLevel, cueLevel),
-         learning_time = ifelse(trial >= learn_quantiles[1] & trial < learn_quantiles[2], 1,
-                                ifelse(trial >= learn_quantiles[2] & trial < learn_quantiles[3], 2,
-                                       ifelse(trial >= learn_quantiles[3] & trial < learn_quantiles[4], 3,
-                                              ifelse(trial >= learn_quantiles[4] & trial <= learn_quantiles[5], 4, NA))))) %>%
+         learning_time = case_when(trial >= learn_quantiles[1] & trial < learn_quantiles[2] ~ 1,
+                                   trial >= learn_quantiles[2] & trial < learn_quantiles[3] ~ 2,
+                                   trial >= learn_quantiles[3] & trial < learn_quantiles[4] ~ 3,
+                                   trial >= learn_quantiles[4] ~ 4)) %>%
   group_by(subID) %>%
   mutate(logRT = log(RT),
          zlogRT = scale(logRT))
@@ -47,12 +47,12 @@ inferenceData_tidy <- inferenceData %>%
          pilotGroup = ifelse(subID==101 | subID==10 | subID==11, 'group1', 'group2'), # make a column telling us if people had the buggy version of the expt
          subID = ifelse(subID==101, 9, subID),
          totalNoise = noise1frames + noise2frames,
-         cueIdx = ifelse(targetIdx==1 & congruent == 'congruent', 1,
-                         ifelse(targetIdx==1 & congruent == 'incongruent', 2,
-                                ifelse(congruent == 'neutral', 3, 
-                                       ifelse(targetIdx==1 & congruent=='incongruent', 2,
-                                              ifelse(targetIdx==2 & congruent =='congruent', 2, 
-                                                     ifelse(targetIdx==2 & congruent=='incongruent', 1, NA)))))),
+         cueIdx = case_when(targetIdx == 1 & congruent == 'congruent' ~ 1,
+                            targetIdx == 1 & congruent == 'incongruent' ~ 2,
+                            congruent == 'neutral' ~ 3,
+                            targetIdx == 1 & congruent == 'incongruent' ~ 2,
+                            targetIdx == 2 & congruent =='congruent' ~ 2,
+                            targetIdx == 2 & congruent=='incongruent' ~ 1),
          firstNoiseRT = ifelse(respFrame <= noise1frames, 1, 0),
          secondNoiseRT = ifelse(respFrame > (noise1frames+signal1frames) & respFrame <= (noise1frames+signal1frames+noise2frames),
                                 1, 0),
@@ -62,25 +62,34 @@ inferenceData_tidy <- inferenceData %>%
          respPeriod = ifelse(firstSignalRT==1, 2, respPeriod),
          respPeriod = ifelse(secondNoiseRT==1, 3, respPeriod),
          respPeriod = ifelse(secondSignalRT==1, 4, respPeriod),
-         firstNoise_quartile = ifelse(noise1frames >= inference_quartiles[1] & noise1frames < inference_quartiles[2], 1, 
-                                      ifelse(noise1frames >= inference_quartiles[2] & noise1frames < inference_quartiles[3], 2,
-                                             ifelse(noise1frames >= inference_quartiles[3] & noise1frames < inference_quartiles[4], 3,
-                                                    ifelse(noise1frames >= inference_quartiles[4] & noise1frames <= inference_quartiles[5], 4, NA)))),
-         secondNoise_quartile = ifelse(noise2frames >= inference_quartiles[1] & noise2frames < inference_quartiles[2], 1, 
-                                       ifelse(noise2frames >= inference_quartiles[2] & noise2frames < inference_quartiles[3], 2,
-                                              ifelse(noise2frames >= inference_quartiles[3] & noise2frames < inference_quartiles[4], 3,
-                                                     ifelse(noise2frames >= inference_quartiles[4] & noise2frames <= inference_quartiles[5], 4, NA)))),
-         totalNoise_quartile = ifelse(totalNoise >= totalNoise_quartiles[1] & totalNoise < totalNoise_quartiles[2], 1, 
-                                      ifelse(totalNoise >= totalNoise_quartiles[2] & totalNoise < totalNoise_quartiles[3], 2,
-                                             ifelse(totalNoise >= totalNoise_quartiles[3] & totalNoise < totalNoise_quartiles[4], 3,
-                                                    ifelse(totalNoise >= totalNoise_quartiles[4] & totalNoise <= totalNoise_quartiles[5], 4, NA))))) %>%
+         firstNoise_quartile = case_when(inference_quartiles[1] & noise1frames < inference_quartiles[2] ~ 1,
+                                         noise1frames >= inference_quartiles[2] & noise1frames < inference_quartiles[3] ~ 2,
+                                         noise1frames >= inference_quartiles[3] & noise1frames < inference_quartiles[4] ~ 3,
+                                         noise1frames >= inference_quartiles[4] ~ 4), 
+         secondNoise_quartile = case_when(noise2frames >= inference_quartiles[1] & noise2frames < inference_quartiles[2] ~ 1,
+                                          noise2frames >= inference_quartiles[2] & noise2frames < inference_quartiles[3] ~ 2,
+                                          noise2frames >= inference_quartiles[3] & noise2frames < inference_quartiles[4] ~ 3,
+                                          noise2frames >= inference_quartiles[4] ~ 4),
+         totalNoise_quartile = case_when(totalNoise_quartiles[1] & totalNoise < totalNoise_quartiles[2] ~ 1,
+                                         totalNoise >= totalNoise_quartiles[2] & totalNoise < totalNoise_quartiles[3] ~ 2,
+                                         totalNoise >= totalNoise_quartiles[3] & totalNoise < totalNoise_quartiles[4] ~ 3,
+                                         totalNoise >= totalNoise_quartiles[4] ~ 4)) %>% 
   left_join(select(cueLevels, c(subID,cueIdx,congruent,cueLevel)), by=c('subID', 'congruent', 'cueIdx')) %>% # add transition probabilities from learning
   filter(catch_trial==0, is.na(RT)==F, is.na(confRT)==F) %>% # remove catch trials, trials with no decision response, trials with no confidence response 
   group_by(subID) %>%
   mutate(logRT = log(RT),
          zlogRT = scale(logRT),
+         zConf = scale(confResp),
          logConfRT = log(confRT),
          zlogconfRT = scale(logConfRT))
+
+# add RT quartiles now that RTs have been zlogged
+rt_quartiles = quantile(inferenceData_tidy$zlogRT, names=F)
+inferenceData_tidy <- inferenceData_tidy %>%
+  mutate(rt_quartile = case_when(zlogRT >= rt_quartiles[1] & zlogRT < rt_quartiles[2] ~ 1,
+                                 zlogRT >= rt_quartiles[2] & zlogRT < rt_quartiles[3] ~ 2,
+                                 zlogRT >= rt_quartiles[3] & zlogRT < rt_quartiles[4] ~ 3,
+                                 zlogRT >= rt_quartiles[4]~ 4))
 
 
 ########## write out tidied CSVs ############### 
