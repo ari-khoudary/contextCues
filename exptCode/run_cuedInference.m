@@ -6,11 +6,6 @@
 % ==================================================================================
 % Author: Ari Khoudary (2023-2024), adapting code originally written by Aaron M. Bornstein and Mariam Aly
 
-
-%% set up flicker stream
-
-setup_flicker;
-
 %% create structures to store behavior & behavior-relevant variables
 responseFrames = NaN(inferenceTrialN_total, 1);
 flickerFlipTimes = NaN(nFrames, inferenceTrialN_total);
