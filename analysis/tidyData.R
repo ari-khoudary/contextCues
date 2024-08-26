@@ -87,4 +87,4 @@ inference_df_tidy <- inference_df %>%
 ########## write out tidied CSVs ############### 
 outdir <- '../data/tidied/'
 write.csv(learning_df_tidy, paste0(outdir, 'learning_data.csv'), row.names=F)
-write.csv(inferenceData_tidy, paste0(outdir, 'inference_data.csv'), row.names=F)
+write.csv(inference_df_tidy, paste0(outdir, 'inference_data.csv'), row.names=F)
