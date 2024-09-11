@@ -1,7 +1,24 @@
 Pilot analyses: version 3
 ================
 
-## data processing
+- [data tidying](#data-tidying)
+- [RT analyses](#rt-analyses)
+  - [effect of cue type on RT across all test
+    trials](#effect-of-cue-type-on-rt-across-all-test-trials)
+  - [for responses made after noise1, effect of noise1 duration +
+    cueType on
+    RT](#for-responses-made-after-noise1-effect-of-noise1-duration--cuetype-on-rt)
+  - [for signal 2 responses only, effect of noise2 duration + cueType on
+    zlogRT](#for-signal-2-responses-only-effect-of-noise2-duration--cuetype-on-zlogrt)
+- [Response probability analyses](#response-probability-analyses)
+  - [for noise 1 responses only, probability of making cue-based
+    response as a function of noise1
+    duration](#for-noise-1-responses-only-probability-of-making-cue-based-response-as-a-function-of-noise1-duration)
+  - [For signal 2 responses only, probability of making cue-based
+    response as a function of noise2
+    duration](#for-signal-2-responses-only-probability-of-making-cue-based-response-as-a-function-of-noise2-duration)
+
+# data tidying
 
 ``` r
 inferenceData_tidy <- inferenceData %>%
@@ -50,7 +67,9 @@ inferenceData_tidy <- inferenceData %>%
   ungroup()
 ```
 
-## Effect of cue type on RT across all test trials
+# RT analyses
+
+## effect of cue type on RT across all test trials
 
 ``` r
 # run model
@@ -109,7 +128,180 @@ summary(m)
     ## Multiple R-squared:  0.0167, Adjusted R-squared:  0.0162 
     ## F-statistic: 33.55 on 1 and 1976 DF,  p-value: 8.058e-09
 
-## For noise 1 responses only, probability of making cue-based response as a function of noise1 duration
+## for responses made after noise1, effect of noise1 duration + cueType on RT
+
+``` r
+# run model
+m <- inferenceData_tidy %>%
+  filter(respPeriod != 'noise1') %>%
+  lm(vizLocked_respFrame_t ~ noise1frames_behav + cueType, ., contrasts = list(cueType = contr.sum))
+
+# extract coefficient values
+estimates <- as.data.frame(stack(coef(m)))
+
+# compute expected marginal means
+emm <- emmeans(m, eff ~ noise1frames_behav | cueType, cov.reduce=range)
+
+# quick plot
+emmip(m,  ~ noise1frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+```
+
+![](pilot_analysis_files/figure-gfm/zlogRT%20~%20noise1frames%20+%20cueType-1.png)<!-- -->
+
+``` r
+# save plot-formatted emmeans
+emm_df <- emmip(m,  ~ noise1frames_behav | cueType, CIs=T, plotit=F,
+                at=list(noise1frames_behav = unique(inferenceData_tidy$noise1frames_behav)))
+
+# plot emmeans above raw data
+inferenceData_tidy %>%
+  ggplot(aes(x = noise1frames_behav, y = zlogRT)) +
+  theme_bw() +
+  facet_wrap(~ cueType, scales = 'free') +
+  geom_hline(yintercept=0) +
+  geom_point(aes(color=cueType), alpha=0.15, color='black') +
+  geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=cueType), emm_df, color=NA, alpha=0.5) +
+  geom_line(aes(x=xvar, y=yvar), data=emm_df) +
+  labs(title = 'effect of cue type & noise1 duration on RTs')
+```
+
+![](pilot_analysis_files/figure-gfm/zlogRT%20~%20noise1frames%20+%20cueType-2.png)<!-- -->
+
+``` r
+summary(m)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = vizLocked_respFrame_t ~ noise1frames_behav + cueType, 
+    ##     data = ., contrasts = list(cueType = contr.sum))
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -2.5324 -1.3524 -0.3342  1.1996  5.0998 
+    ## 
+    ## Coefficients:
+    ##                      Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)         2.5402930  0.2201861  11.537   <2e-16 ***
+    ## noise1frames_behav -0.0002238  0.0022983  -0.097    0.922    
+    ## cueType1           -0.0280396  0.0478469  -0.586    0.558    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 1.693 on 1772 degrees of freedom
+    ## Multiple R-squared:  0.0002001,  Adjusted R-squared:  -0.0009284 
+    ## F-statistic: 0.1773 on 2 and 1772 DF,  p-value: 0.8375
+
+## for signal 2 responses only, effect of noise2 duration + cueType on zlogRT
+
+``` r
+# fit model
+m <- inferenceData_tidy %>%
+  filter(respPeriod == 'signal2') %>%
+  lm(vizLocked_sig2Resp ~ noise2frames_behav + cueType, ., contrasts = list(cueType = contr.sum))
+
+
+# extract coefficient values
+estimates <- as.data.frame(stack(coef(m)))
+
+# compute expected marginal means
+emm <- emmeans(m, eff ~ noise2frames_behav | cueType, cov.reduce=quantile)
+
+# quick plot
+emmip(m,  ~ noise2frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+```
+
+![](pilot_analysis_files/figure-gfm/vizLocked_sig2Resp%20~%20noise2frames_behav%20+%20cueType-1.png)<!-- -->
+
+``` r
+# save plot-formatted emmeans
+emm_df <- emmip(m,  ~ noise2frames_behav | cueType, CIs=T, plotit=F,
+                at=list(noise2frames_behav = unique(inferenceData_tidy$noise2frames_behav)))
+
+# plot emmeans above raw data
+inferenceData_tidy %>%
+  ggplot(aes(x = noise2frames_behav, y = zlogRT)) +
+  theme_bw() +
+  facet_wrap(~ cueType, scales = 'free') +
+  geom_hline(yintercept=0) +
+  geom_point(aes(color=cueType), alpha=0.15, color='black') +
+  geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=cueType), emm_df, color=NA, alpha=0.5) +
+  geom_line(aes(x=xvar, y=yvar), data=emm_df) +
+  labs(title = 'signal2 RTs locked to onset of signal2 visual evidence')
+```
+
+![](pilot_analysis_files/figure-gfm/vizLocked_sig2Resp%20~%20noise2frames_behav%20+%20cueType-2.png)<!-- -->
+
+``` r
+summary(m)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = vizLocked_sig2Resp ~ noise2frames_behav + cueType, 
+    ##     data = ., contrasts = list(cueType = contr.sum))
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -1.7842 -0.9492 -0.2359  0.7227  3.9880 
+    ## 
+    ## Coefficients:
+    ##                     Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)         1.948175   0.219745   8.866   <2e-16 ***
+    ## noise2frames_behav -0.002726   0.002279  -1.196    0.232    
+    ## cueType1           -0.062531   0.048679  -1.285    0.199    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 1.198 on 865 degrees of freedom
+    ## Multiple R-squared:  0.003685,   Adjusted R-squared:  0.001381 
+    ## F-statistic:   1.6 on 2 and 865 DF,  p-value: 0.2026
+
+``` r
+print(emm)
+```
+
+    ## $emmeans
+    ## cueType = 50% cue:
+    ##  noise2frames_behav emmean     SE  df lower.CL upper.CL
+    ##                  75   1.68 0.0968 865    1.491     1.87
+    ##                  81   1.66 0.0912 865    1.486     1.84
+    ##                  88   1.65 0.0870 865    1.475     1.82
+    ##                 101   1.61 0.0868 865    1.440     1.78
+    ##                 195   1.35 0.2439 865    0.875     1.83
+    ## 
+    ## cueType = 80% cue:
+    ##  noise2frames_behav emmean     SE  df lower.CL upper.CL
+    ##                  75   1.81 0.0621 865    1.684     1.93
+    ##                  81   1.79 0.0540 865    1.684     1.90
+    ##                  88   1.77 0.0477 865    1.677     1.86
+    ##                 101   1.74 0.0495 865    1.638     1.83
+    ##                 195   1.48 0.2366 865    1.015     1.94
+    ## 
+    ## Confidence level used: 0.95 
+    ## 
+    ## $contrasts
+    ## cueType = 50% cue:
+    ##  contrast                     estimate     SE  df t.ratio p.value
+    ##  noise2frames_behav75 effect    0.0900 0.0752 865   1.196  0.2321
+    ##  noise2frames_behav81 effect    0.0736 0.0615 865   1.196  0.2321
+    ##  noise2frames_behav88 effect    0.0545 0.0456 865   1.196  0.2321
+    ##  noise2frames_behav101 effect   0.0191 0.0160 865   1.196  0.2321
+    ##  noise2frames_behav195 effect  -0.2371 0.1983 865  -1.196  0.2321
+    ## 
+    ## cueType = 80% cue:
+    ##  contrast                     estimate     SE  df t.ratio p.value
+    ##  noise2frames_behav75 effect    0.0900 0.0752 865   1.196  0.2321
+    ##  noise2frames_behav81 effect    0.0736 0.0615 865   1.196  0.2321
+    ##  noise2frames_behav88 effect    0.0545 0.0456 865   1.196  0.2321
+    ##  noise2frames_behav101 effect   0.0191 0.0160 865   1.196  0.2321
+    ##  noise2frames_behav195 effect  -0.2371 0.1983 865  -1.196  0.2321
+    ## 
+    ## P value adjustment: fdr method for 5 tests
+
+# Response probability analyses
+
+## for noise 1 responses only, probability of making cue-based response as a function of noise1 duration
 
 ``` r
 # filter data & fit model
@@ -125,7 +317,7 @@ emm <- emmeans(m, ~ noise1frames_behav, type='response', cov.reduce=quantile)
 emmip(m, ~ noise1frames_behav, type='response', CIs=T, cov.reduce=F)
 ```
 
-![](pilot_analysis_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
+![](pilot_analysis_files/figure-gfm/cueCongChoice_signal1%20~%20noise1frames_behav-1.png)<!-- -->
 
 ``` r
 # save plot-formatted emmeans
@@ -145,7 +337,7 @@ inferenceData_tidy %>%
   labs(title = 'in noise1, probability of responding according to cue (80% cues only)')
 ```
 
-![](pilot_analysis_files/figure-gfm/unnamed-chunk-1-2.png)<!-- -->
+![](pilot_analysis_files/figure-gfm/cueCongChoice_signal1%20~%20noise1frames_behav-2.png)<!-- -->
 
 ``` r
 summary(m)
@@ -190,77 +382,45 @@ print(emm)
     ## Confidence level used: 0.95 
     ## Intervals are back-transformed from the logit scale
 
-## For signal 2 responses only, probability of making cue-based response
+## For signal 2 responses only, probability of making cue-based response as a function of noise2 duration
 
 ``` r
 # filter data & fit model
-# m <- test_trials %>% 
-#   filter(...) %>%
-#   lm(...)
-# 
-# # compute expected marginal means
-# emm <- emmeans()
-# 
-# # quick plot
-# emmip(,
-#       CIs=T, cov.reduce=F)
-# 
-# # save plot-formatted emmeans
-# emm_df <- emmip(,
-#                 CIs=T, plotit=F, cov.reduce=F)
-# 
-# # plot emmeans above raw data
-# test_trials %>%
-#   filter() %>%
-#   ggplot(aes(x = noise1frames_behav, y = cueCongChoice)) +
-#   theme_bw() + 
-#   geom_hline(yintercept=0.5, linetype='dashed') +
-#   geom_point(shape = '|') +
-#   # add emmeans
-#   geom_ribbon(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL), data=emm_df, alpha=0.1) +
-#   geom_line(aes(x=xvar, y=yvar), data=emm_df) +
-#   labs(title = 'in noise1, probability of responding according to cue (80% cues only)')
-# 
-# summary(m)
-# print(emm)
-```
-
-``` r
-# run model
 m <- inferenceData_tidy %>%
-  lm(zlogRT ~ noise1frames_behav + cueType, ., contrasts = list(cueType = contr.sum))
-
-# extract coefficient values
-estimates <- as.data.frame(stack(coef(m)))
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>%
+  glm(cueCongChoice ~ noise2frames_behav, ., family='binomial')
 
 # compute expected marginal means
-emm <- emmeans(m, eff ~ noise1frames_behav | cueType, cov.reduce=range)
+emm <- emmeans(m, ~ noise2frames_behav, type='response', cov.reduce=quantile)
 
 # quick plot
-emmip(m,  ~ noise1frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+emmip(m, ~ noise2frames_behav, type='response', at=quantile,
+      CIs=T, cov.reduce=F)
 ```
 
-![](pilot_analysis_files/figure-gfm/zlogRT%20~%20noise1frames%20*%20cueType-1.png)<!-- -->
+![](pilot_analysis_files/figure-gfm/cueCongChoice_signal2%20~%20noise2frames_behav-1.png)<!-- -->
 
 ``` r
 # save plot-formatted emmeans
-emm_df <- emmip(m,  ~ noise1frames_behav | cueType, CIs=T, plotit=F, 
-                at=list(noise1frames_behav = unique(inferenceData_tidy$noise1frames_behav)))
-
+emm_df <- emmip(m, ~ noise2frames_behav, type='response', at=quantile,
+                CIs=T, plotit=F, cov.reduce=F)
 
 # plot emmeans above raw data
-inferenceData_tidy %>%
-  ggplot(aes(x = noise1frames_behav, y = zlogRT)) +
-  theme_bw() + 
-  facet_wrap(~ cueType, scales = 'free') +
-  geom_hline(yintercept=0) +
-  geom_point(aes(color=cueType), alpha=0.15, color='black') +
-  geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=cueType), emm_df, color=NA, alpha=0.5) +
+ inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>% 
+  ggplot(aes(x = noise2frames_behav, y = cueCongChoice)) +
+  theme_bw() +
+  geom_hline(yintercept=0.5, linetype='dashed') +
+  geom_point(shape = '|') +
+  # add emmeans
+  geom_ribbon(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL), data=emm_df, alpha=0.1) +
   geom_line(aes(x=xvar, y=yvar), data=emm_df) +
-  labs(title = 'effect of cue type & noise1 duration on RTs')
+  labs(title = 'for signal2 responses only, probability of making cueCongruent response as a function of noise2 duration (80% cues only)')
 ```
 
-![](pilot_analysis_files/figure-gfm/zlogRT%20~%20noise1frames%20*%20cueType-2.png)<!-- -->
+![](pilot_analysis_files/figure-gfm/cueCongChoice_signal2%20~%20noise2frames_behav-2.png)<!-- -->
 
 ``` r
 summary(m)
@@ -268,21 +428,37 @@ summary(m)
 
     ## 
     ## Call:
-    ## lm(formula = zlogRT ~ noise1frames_behav + cueType, data = ., 
-    ##     contrasts = list(cueType = contr.sum))
+    ## glm(formula = cueCongChoice ~ noise2frames_behav, family = "binomial", 
+    ##     data = .)
     ## 
-    ## Residuals:
-    ##     Min      1Q  Median      3Q     Max 
-    ## -3.5103 -0.5789  0.0531  0.6306  2.5029 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -1.6299  -1.4167   0.9210   0.9493   0.9652  
     ## 
     ## Coefficients:
-    ##                      Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)        -1.4291497  0.0746927  -19.13  < 2e-16 ***
-    ## noise1frames_behav  0.0172457  0.0007989   21.59  < 2e-16 ***
-    ## cueType1            0.0980497  0.0241490    4.06 5.08e-05 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##                    Estimate Std. Error z value Pr(>|z|)
+    ## (Intercept)        0.210443   0.472188   0.446    0.656
+    ## noise2frames_behav 0.004154   0.005020   0.828    0.408
     ## 
-    ## Residual standard error: 0.8987 on 2182 degrees of freedom
-    ## Multiple R-squared:  0.1904, Adjusted R-squared:  0.1897 
-    ## F-statistic: 256.6 on 2 and 2182 DF,  p-value: < 2.2e-16
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 809.43  on 621  degrees of freedom
+    ## Residual deviance: 808.74  on 620  degrees of freedom
+    ##   (173 observations deleted due to missingness)
+    ## AIC: 812.74
+    ## 
+    ## Number of Fisher Scoring iterations: 4
+
+``` r
+print(emm)
+```
+
+    ##  noise2frames_behav  prob     SE  df asymp.LCL asymp.UCL
+    ##                  75 0.628 0.0284 Inf     0.570     0.681
+    ##                  80 0.632 0.0244 Inf     0.583     0.679
+    ##                  88 0.640 0.0200 Inf     0.600     0.678
+    ##                 100 0.652 0.0208 Inf     0.610     0.691
+    ##                 195 0.735 0.1015 Inf     0.500     0.885
+    ## 
+    ## Confidence level used: 0.95 
+    ## Intervals are back-transformed from the logit scale
