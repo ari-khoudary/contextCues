@@ -18,6 +18,10 @@ Pilot analyses: version 3
     response as a function of noise2
     duration](#for-signal-2-responses-only-probability-of-making-cue-based-response-as-a-function-of-noise2-duration)
 
+hello! if you are looking for the source code to produce the results
+displayed below, you should navigate to the `.Rmd` version of this
+document.
+
 # data tidying
 
 ``` r
@@ -133,6 +137,7 @@ summary(m)
 ``` r
 # run model
 m <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
   filter(respPeriod != 'noise1') %>%
   lm(vizLocked_respFrame_t ~ noise1frames_behav + cueType, ., contrasts = list(cueType = contr.sum))
 
@@ -178,25 +183,26 @@ summary(m)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -2.5324 -1.3524 -0.3342  1.1996  5.0998 
+    ## -2.5507 -1.3533 -0.3217  1.2028  5.0783 
     ## 
     ## Coefficients:
-    ##                      Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)         2.5402930  0.2201861  11.537   <2e-16 ***
-    ## noise1frames_behav -0.0002238  0.0022983  -0.097    0.922    
-    ## cueType1           -0.0280396  0.0478469  -0.586    0.558    
+    ##                     Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)         2.602010   0.231176  11.256   <2e-16 ***
+    ## noise1frames_behav -0.000862   0.002415  -0.357    0.721    
+    ## cueType1           -0.039539   0.050427  -0.784    0.433    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 1.693 on 1772 degrees of freedom
-    ## Multiple R-squared:  0.0002001,  Adjusted R-squared:  -0.0009284 
-    ## F-statistic: 0.1773 on 2 and 1772 DF,  p-value: 0.8375
+    ## Residual standard error: 1.688 on 1602 degrees of freedom
+    ## Multiple R-squared:  0.00047,    Adjusted R-squared:  -0.0007778 
+    ## F-statistic: 0.3767 on 2 and 1602 DF,  p-value: 0.6862
 
 ## for signal 2 responses only, effect of noise2 duration + cueType on zlogRT
 
 ``` r
 # fit model
 m <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
   filter(respPeriod == 'signal2') %>%
   lm(vizLocked_sig2Resp ~ noise2frames_behav + cueType, ., contrasts = list(cueType = contr.sum))
 
@@ -243,19 +249,19 @@ summary(m)
     ## 
     ## Residuals:
     ##     Min      1Q  Median      3Q     Max 
-    ## -1.7842 -0.9492 -0.2359  0.7227  3.9880 
+    ## -1.7703 -0.9411 -0.2309  0.7216  4.0020 
     ## 
     ## Coefficients:
     ##                     Estimate Std. Error t value Pr(>|t|)    
-    ## (Intercept)         1.948175   0.219745   8.866   <2e-16 ***
-    ## noise2frames_behav -0.002726   0.002279  -1.196    0.232    
-    ## cueType1           -0.062531   0.048679  -1.285    0.199    
+    ## (Intercept)         1.948306   0.227038   8.581   <2e-16 ***
+    ## noise2frames_behav -0.002809   0.002348  -1.196    0.232    
+    ## cueType1           -0.054900   0.051016  -1.076    0.282    
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
-    ## Residual standard error: 1.198 on 865 degrees of freedom
-    ## Multiple R-squared:  0.003685,   Adjusted R-squared:  0.001381 
-    ## F-statistic:   1.6 on 2 and 865 DF,  p-value: 0.2026
+    ## Residual standard error: 1.185 on 792 degrees of freedom
+    ## Multiple R-squared:  0.003461,   Adjusted R-squared:  0.0009443 
+    ## F-statistic: 1.375 on 2 and 792 DF,  p-value: 0.2534
 
 ``` r
 print(emm)
@@ -264,38 +270,38 @@ print(emm)
     ## $emmeans
     ## cueType = 50% cue:
     ##  noise2frames_behav emmean     SE  df lower.CL upper.CL
-    ##                  75   1.68 0.0968 865    1.491     1.87
-    ##                  81   1.66 0.0912 865    1.486     1.84
-    ##                  88   1.65 0.0870 865    1.475     1.82
-    ##                 101   1.61 0.0868 865    1.440     1.78
-    ##                 195   1.35 0.2439 865    0.875     1.83
+    ##                  75   1.68 0.1022 792    1.482     1.88
+    ##                  81   1.67 0.0963 792    1.477     1.85
+    ##                  88   1.65 0.0918 792    1.466     1.83
+    ##                 101   1.61 0.0910 792    1.431     1.79
+    ##                 195   1.35 0.2504 792    0.854     1.84
     ## 
     ## cueType = 80% cue:
     ##  noise2frames_behav emmean     SE  df lower.CL upper.CL
-    ##                  75   1.81 0.0621 865    1.684     1.93
-    ##                  81   1.79 0.0540 865    1.684     1.90
-    ##                  88   1.77 0.0477 865    1.677     1.86
-    ##                 101   1.74 0.0495 865    1.638     1.83
-    ##                 195   1.48 0.2366 865    1.015     1.94
+    ##                  75   1.79 0.0635 792    1.668     1.92
+    ##                  81   1.78 0.0552 792    1.667     1.88
+    ##                  88   1.76 0.0489 792    1.660     1.85
+    ##                 101   1.72 0.0511 792    1.619     1.82
+    ##                 195   1.46 0.2443 792    0.976     1.94
     ## 
     ## Confidence level used: 0.95 
     ## 
     ## $contrasts
     ## cueType = 50% cue:
     ##  contrast                     estimate     SE  df t.ratio p.value
-    ##  noise2frames_behav75 effect    0.0900 0.0752 865   1.196  0.2321
-    ##  noise2frames_behav81 effect    0.0736 0.0615 865   1.196  0.2321
-    ##  noise2frames_behav88 effect    0.0545 0.0456 865   1.196  0.2321
-    ##  noise2frames_behav101 effect   0.0191 0.0160 865   1.196  0.2321
-    ##  noise2frames_behav195 effect  -0.2371 0.1983 865  -1.196  0.2321
+    ##  noise2frames_behav75 effect    0.0927 0.0775 792   1.196  0.2320
+    ##  noise2frames_behav81 effect    0.0758 0.0634 792   1.196  0.2320
+    ##  noise2frames_behav88 effect    0.0562 0.0470 792   1.196  0.2320
+    ##  noise2frames_behav101 effect   0.0197 0.0164 792   1.196  0.2320
+    ##  noise2frames_behav195 effect  -0.2444 0.2043 792  -1.196  0.2320
     ## 
     ## cueType = 80% cue:
     ##  contrast                     estimate     SE  df t.ratio p.value
-    ##  noise2frames_behav75 effect    0.0900 0.0752 865   1.196  0.2321
-    ##  noise2frames_behav81 effect    0.0736 0.0615 865   1.196  0.2321
-    ##  noise2frames_behav88 effect    0.0545 0.0456 865   1.196  0.2321
-    ##  noise2frames_behav101 effect   0.0191 0.0160 865   1.196  0.2321
-    ##  noise2frames_behav195 effect  -0.2371 0.1983 865  -1.196  0.2321
+    ##  noise2frames_behav75 effect    0.0927 0.0775 792   1.196  0.2320
+    ##  noise2frames_behav81 effect    0.0758 0.0634 792   1.196  0.2320
+    ##  noise2frames_behav88 effect    0.0562 0.0470 792   1.196  0.2320
+    ##  noise2frames_behav101 effect   0.0197 0.0164 792   1.196  0.2320
+    ##  noise2frames_behav195 effect  -0.2444 0.2043 792  -1.196  0.2320
     ## 
     ## P value adjustment: fdr method for 5 tests
 
