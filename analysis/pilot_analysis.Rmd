@@ -362,10 +362,6 @@ m <- inferenceData_tidy %>%
     # fit model
     glm(cueCongChoice ~ noise2frames_behav * signal1_cueEv, ., family = 'binomial')
 
-# define noise quantiles 
-df <- inferenceData_tidy %>% filter(catch_trial==0, respPeriod == 'signal2', cueIdx < 3) %>%
-  quantile(noise2frames_behav, na.rm=T)
-
 # compute expected marginal means, including a contrast for the effect of noise at each quantile of signal1_cueEv
 emm <-emmeans(m, consec ~ noise2frames_behav | signal1_cueEv, type='response', cov.reduce=quantile)
 
