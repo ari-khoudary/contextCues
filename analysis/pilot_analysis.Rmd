@@ -199,7 +199,7 @@ modelData <- modelData %>%
 
 ## effect of cue type on RT across all test trials
 ### human data
-```{r zlogRT ~ cueType: humans}
+```{r zlogRT ~ cueType: humans, echo=F}
 # run model
 m <- inferenceData_tidy %>%
   filter(catch_trial == 0) %>%
@@ -230,7 +230,7 @@ summary(m)
 ```
 
 ### model data
-```{r zlogRT ~ cueType: model}
+```{r zlogRT ~ cueType: model, echo=F}
 # fit linear model
 m <- modelData %>%
   lm(zlogRT ~ cueType, ., contrasts=list(cueType=contr.sum))
@@ -260,7 +260,7 @@ summary(m)
 
 ## effect of noise1 duration + cueType on RT for responses made after noise1
 ### human data
-```{r zlogRT ~ noise1frames + cueType}
+```{r zlogRT ~ noise1frames + cueType, echo=F}
 
 # run model
 m <- inferenceData_tidy %>%
@@ -299,7 +299,7 @@ emtrends(m, pairwise ~ cueType, var='noise1frames_behav')
 
 
 ### model data
-```{r zlogRT ~ noise1frames + cueType: model}
+```{r zlogRT ~ noise1frames + cueType: model, echo=F}
 
 # run model
 m <- modelData %>%
@@ -336,7 +336,7 @@ emtrends(m, consec ~ cueType, var='noise1frames_behav')
 
 ## effect of noise2 duration + cueType on zlogRT in signal2 
 ### human data
-```{r vizLocked_sig2Resp ~ noise2frames_behav + cueType}
+```{r vizLocked_sig2Resp ~ noise2frames_behav + cueType: humans, echo=F}
 # fit model
 m <- inferenceData_tidy %>%
   filter(catch_trial == 0) %>%
@@ -350,7 +350,7 @@ emm <- emmeans(m, consec ~ noise2frames_behav | cueType, cov.reduce=quantile)
 noise_vals <- unique(summary(emm)$emmeans$noise2frames_behav)
 
 # quick plot
-emmip(m,  ~ noise2frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+# emmip(m,  ~ noise2frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
 
 # save plot-formatted emmeans
 emm_df <- emmip(m,  ~ noise2frames_behav | cueType, CIs=T, plotit=F,
@@ -369,14 +369,14 @@ inferenceData_tidy %>%
   labs(title = 'signal2 RTs locked to onset of signal2 visual evidence')
 
 summary(m)
-print(emm)
+# print(emm)
 #emmeans(m, pairwise ~ cueType | noise2frames_behav, cov.reduce=range)$contrasts
 emtrends(m, pairwise ~ cueType, var='noise2frames_behav')
 ```
 
 ## effect of noise2 duration + cueType on zlogRT in signal2 
 ### model data
-```{r vizLocked_sig2Resp ~ noise2frames_behav + cueType: model}
+```{r vizLocked_sig2Resp ~ noise2frames_behav + cueType: model, echo=F}
 # fit model
 m <- modelData %>%
   filter(respPeriod == 'signal2') %>%
@@ -407,7 +407,7 @@ modelData %>%
   labs(title = 'signal2 RTs locked to onset of signal2 visual evidence')
 
 summary(m)
-print(emm)
+#print(emm)
 emtrends(m, pairwise ~ cueType, var='noise2frames_behav')
 ```
 
@@ -415,7 +415,7 @@ emtrends(m, pairwise ~ cueType, var='noise2frames_behav')
 
 ## for noise 1 responses only, probability of making cue-based response as a function of noise1 duration
 ### human data
-```{r cueCongChoice_signal1 ~ noise1frames_behav}
+```{r cueCongChoice_signal1 ~ noise1frames_behav: humans, echo=F}
 
 # filter data & fit model
 m <- inferenceData_tidy %>%
@@ -424,7 +424,7 @@ m <- inferenceData_tidy %>%
   glm(cueCongChoice ~ noise1frames_behav, ., family='binomial')
 
 # compute expected marginal means
-emm <- emmeans(m, consec ~ noise1frames_behav, type='response', cov.reduce=quantile)
+emm <- emmeans(m, consec ~ noise1frames_behav, type='response', cov.reduce=range)
 
 # get noise values from emmeans call
 noise_vals <- unique(summary(emm)$emmeans$noise1frames_behav)
@@ -453,7 +453,7 @@ print(emm)
 ```
 
 ### model data
-```{r cueCongChoice_signal1 ~ noise1frames_behav: model}
+```{r cueCongChoice_signal1 ~ noise1frames_behav: model, echo=F}
 
 # filter data & fit model
 m <- modelData %>%
@@ -461,7 +461,7 @@ m <- modelData %>%
   glm(forcedChoice ~ noise1frames_behav, ., family='binomial')
 
 # compute expected marginal means
-emm <- emmeans(m, consec ~ noise1frames_behav, type='response', cov.reduce=quantile)
+emm <- emmeans(m, consec ~ noise1frames_behav, type='response', cov.reduce=range)
 
 # get noise values from emmeans call
 noise_vals <- unique(summary(emm)$emmeans$noise1frames_behav)
@@ -491,7 +491,7 @@ print(emm)
 
 ## For signal 2 responses only, probability of making cue-based response as a function of noise2 duration
 ### human data
-```{r cueCongChoice_signal2 ~ noise2frames_behav}
+```{r cueCongChoice_signal2 ~ noise2frames_behav: humans, echo=F}
 # filter data & fit model
 m <- inferenceData_tidy %>%
   filter(catch_trial == 0) %>%
@@ -499,7 +499,7 @@ m <- inferenceData_tidy %>%
   glm(cueCongChoice ~ noise2frames_behav, ., family='binomial')
 
 # compute expected marginal means
-emm <- emmeans(m, consec ~ noise2frames_behav, type='response', cov.reduce=quantile)
+emm <- emmeans(m, consec ~ noise2frames_behav, type='response', cov.reduce=range)
 
 # get noise values from emmeans call
 noise_vals <- unique(summary(emm)$emmean$noise2frames_behav)
@@ -530,14 +530,14 @@ print(emm)
 ```
 
 ### model data
-```{r cueCongChoice_signal2 ~ noise2frames_behav: model}
+```{r cueCongChoice_signal2 ~ noise2frames_behav: model, echo=F}
 # filter data & fit model
 m <- modelData %>%
   filter(respPeriod == 'signal2', cue==0.8) %>%
   glm(forcedChoice ~ noise2frames_behav, ., family='binomial')
 
 # compute expected marginal means
-emm <- emmeans(m, consec ~ noise2frames_behav, type='response', cov.reduce=quantile)
+emm <- emmeans(m, consec ~ noise2frames_behav, type='response', cov.reduce=range)
 
 # get noise values from emmeans call
 noise_vals <- unique(summary(emm)$emmean$noise2frames_behav)
@@ -568,7 +568,7 @@ print(emm)
 
 ## Effect of signal1 evidence + noise2 duration on choice probabilities in signal2: 80% cues
 ### human data
-```{r cueCongChoice_signal2 ~ noise2frames_behav * signal1Ev - continuous color: human}
+```{r cueCongChoice_signal2 ~ noise2frames_behav * signal1Ev - continuous color: human, echo=F}
 # fit model
 m <- inferenceData_tidy %>%
     filter(catch_trial==0) %>%
@@ -604,10 +604,12 @@ inferenceData_tidy %>%
   # add emmeans
   geom_line(aes(xvar, yvar, color=signal1_cueEv, group=signal1_cueEv), emm_df, linewidth=0.5) +
   labs(title = 'Probability of making a cue-congruent choice as a function of signal1 evidence & noise 2 duration')
+
+emmeans(m, eff ~ noise2frames_behav | signal1_cueEv, type='response', cov.reduce=range)
 ```
 
 ### model data
-```{r cueCongChoice_signal2 ~ noise2frames_behav * signal1Ev - continuous color: model}
+```{r cueCongChoice_signal2 ~ noise2frames_behav * signal1Ev - continuous color: model, echo=F}
 # filter data
 m <- modelData %>%
     filter(respPeriod == 'signal2', cue==0.8) %>% 
@@ -634,6 +636,8 @@ modelData %>%
   # add emmeans
   geom_line(aes(xvar, yvar, color=signal1_vizEv, group=signal1_vizEv), emm_df, linewidth=0.5) +
   labs(title = 'Probability of making a cue-congruent choice as a function of signal1 evidence & noise 2 duration')
+
+emmeans(m, eff ~ noise2frames_behav | signal1_vizEv, type='response', cov.reduce=range)
 ```
 
 
