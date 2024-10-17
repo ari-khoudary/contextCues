@@ -40,7 +40,7 @@ end
 
 % randomize order of cue presentation & targets following each cue
 learnCue = Shuffle(learnCue);
-learnImg = Shuffle(learnImg, 2);
+learnImg = learnImg(:, randperm(size(learnImg,2)));
 
 %% organize inference trials
 
@@ -91,8 +91,8 @@ for cueIdx=1:nCues
 end
 
 % randomize order
-inferenceImg(1:2, :) = Shuffle(inferenceImg(1:2,:), 2);
-inferenceImg(3, 1:inferenceTrials(6)) = Shuffle(inferenceImg(3, 1:inferenceTrials(6)));
+inferenceImg(1:2, :) = inferenceImg(1:2, randperm(size(inferenceImg, 2))); % non-neutral cues
+inferenceImg(3, 1:nnz(inferenceImg(3,:))) = inferenceImg(3, randperm(nnz(inferenceImg(3,:))));
 inferenceCue = Shuffle(inferenceCue);
 
 % randomly determine which trials will be catch
@@ -113,8 +113,6 @@ break_trials = break_trials(2:(length(break_trials)-1));
 %% set up probabilistic ISIs
 
 setup_durations;
-
-%% set up flicker streams
 
 
 %% set up flicker stream
