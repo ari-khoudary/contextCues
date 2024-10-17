@@ -54,7 +54,8 @@ for trial=1:sum(sum(inferenceTrials))
     else
         nTargetFrames = ceil(nImgFrames*coherence(2));
     end
-    targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
+    rIdx = randperm(numel(imgIdx));
+    targetIdx = imgIdx(rIdx(1:nTargetFrames));
     lureIdx = setdiff(imgIdx, targetIdx);
 
     % populate imgFrames with target, in proportion to coherence
@@ -91,7 +92,8 @@ for trial = 1:sum(sum(catchTrials))
     else
         nTargetFrames = ceil(nImgFrames*coherence(2));
     end
-    targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
+    rIdx = randperm(numel(imgIdx));
+    targetIdx = imgIdx(rIdx(1:nTargetFrames));
     lureIdx = setdiff(imgIdx, targetIdx);
 
     % populate imgFrames with target, in proportion to coherence
