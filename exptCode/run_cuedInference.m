@@ -16,6 +16,7 @@ confResps = NaN(inferenceTrialN_total, 1);
 confRTs = NaN(inferenceTrialN_total, 1);
 trialCongruence = NaN(inferenceTrialN_total, 1);
 trialCoherence = NaN(inferenceTrialN_total, 1);
+trialTargets = NaN(inferenceTrialN_total, 1);
 
 testTrialCounter = 0;
 catchTrialCounter = 0;
@@ -72,6 +73,9 @@ for trial = 1:inferenceTrialN_total
         cueIdx = catchCue(catchTrialCounter);
         trialTarget = catchImg(catchTrialCounter);
     end
+
+    % save trial target
+    trialTargets(trial) = trialTarget;
 
     % pull colored border corresonding to cue
     thisCue = cueColors(cueIdx, :);
@@ -221,8 +225,14 @@ for trial = 1:inferenceTrialN_total
     end % while 1
 
     % write behavior to csv
-    fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
-        subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames(trial), signal1Frames(trial), noise2Frames(trial), trialCoherence(trial), catch_trial);
+    if catch_trial==0 
+        fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
+            subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_test(trial), signal1Frames_test(trial), noise2Frames_test(trial), trialCoherence(trial), catch_trial);
+    else
+        fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
+            subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_catch(trial), signal1Frames_catch(trial), noise2Frames_catch(trial), trialCoherence(trial), catch_trial);
+    end
+        
 
 end % inference trial loop
 
