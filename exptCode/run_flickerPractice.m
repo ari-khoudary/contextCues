@@ -26,7 +26,8 @@ for cohLevel = 1:length(practiceCoherences)
         coherence = practiceCoherences(cohLevel);
         nTargetFrames = ceil(nImgFrames*coherence);
         nLureFrames = nFrames/2 - nTargetFrames;
-        targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
+        rIdx = randperm(nImgFrames);
+        targetIdx = imgIdx(rIdx(1:nTargetFrames));
         lureIdx = setdiff(imgIdx, targetIdx);
 
         % populate imgFrames with target
@@ -140,7 +141,8 @@ for cohLevel = 1:length(practiceCoherences)
             coherence = practiceCoherences(cohLevel);
             nTargetFrames = ceil(nImgFrames*coherence);
             nLureFrames = nFrames/2 - nTargetFrames;
-            targetIdx = RandSample(imgIdx, [1 nTargetFrames]);
+            rIdx = randperm(nImgFrames);
+            targetIdx = imgIdx(rIdx(1:nTargetFrames));
             lureIdx = setdiff(imgIdx, targetIdx);
 
             % populate imgFrames with target
@@ -246,6 +248,8 @@ for cohLevel = 1:length(practiceCoherences)
     end
 end
 
+%% 
+clear targetIdx lureIdx rIdx
 
 
 

@@ -140,6 +140,6 @@ for t=1:length(catch_trials)
 end
 
 %% 
-clear cue1Counter cue2Counter cue3Counter catchTrialCounter inference_counter_general
+clear cue1Counter cue2Counter cue3Counter catchTrialCounter inference_counter_general targetIdx lureIdx rIdx
 
 

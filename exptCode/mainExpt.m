@@ -9,6 +9,7 @@ clc;
 % get subject & block numbers
 subID = input('Subject number: ');
 debugging = input('debug?: ');
+block = input('block?: ');
 
 % use subject ID to set the random seed
 rng(subID)
@@ -48,13 +49,21 @@ if debugging
 end
 
 %%% flicker practice
-practiceCoherences = 0.95:-0.05:0.5;
+if debugging
+    practiceCoherences = 0.55:-0.05:0.5;
+else
+    practiceCoherences = 0.95:-0.05:0.5;
+end
 practiceTrialN = nImages*length(practiceCoherences);
 feedbackDuration = 3;
 
 %%% calibration
 calibrationITI = 1;
-calibrationTrialsPerImage = 50; % staircase trials per image
+if debugging
+    calibrationTrialsPerImage = 5; % staircase trials per image
+else
+    calibrationTrialsPerImage = 50; % staircase trials per image
+end
 calibrationTrialN = nImages * calibrationTrialsPerImage;
 
 %%% cue learning
@@ -84,20 +93,17 @@ inferenceISI = 0.75;
 confidenceDuration = 3;
 
 
-%% psychtoolbox setups
-block = 1;
-
-% sets up
+% psychtoolbox setups
 setup_ptb;
 
-%% begin chunks of the experiment
+%% run experiment
 
 for block = 1:nBlocks
-    
-    %% set up learning & inference trials for this block
+
+    % set up learning & inference trials for this block
     setup_trials;
     
-    %% make arrows for navigating instructions
+    % display general instructions
     rightString = 'more instructions ->';
     leftString = '<- previous instructions ';
     rightPosition = screenX-350;
@@ -156,7 +162,7 @@ for block = 1:nBlocks
             end
         end
         
-        % response training instructions
+        % display response training instructions
         responseTrainString = ['RESPONSE TRAINING INSTRUCTIONS: \n\n\n' ...
             'In this part of the experiment, your task is to learn the mapping between response keys (1 and 2) and different scene images. \n\n' ...
             'You will be presented with the images one-by-one, and your task is to press the button you are told corresponds to each image. \n\n' ...
@@ -175,11 +181,13 @@ for block = 1:nBlocks
             end
             WaitSecs(0.05);
         end
-        
-        %%%%%%% initiate response training %%%%%%%
+    end
+
+    if debugging==0
+    % run response training
         run_responseTraining;
         
-        % pivot to flicker practice
+   % pivot to flicker practice & give instructions
         pivotString = ['Nice work! You learned the correct response mappings. \n\n' ...
             'Press spacebar to proceed to the next part of the experiment'];
         DrawFormattedText(mainWindow, pivotString, 'center', 'center', textColor, 80);
@@ -225,10 +233,10 @@ for block = 1:nBlocks
             end
         end
         
-        %%%%%%% initiate flicker practice %%%%%%%
+        % run flicker practice
         run_flickerPractice; 
         
-        % pivot to calibration
+        % pivot to calibration and give instructions
         calString1 = ['Now that you have experience with the flicker task, we are going to make things a bit harder. \n\n' ...
             'You will complete more trials of the flicker task, but without feedback on your choices and with greater variability in the difficulty levels of each decision.\n\n' ...
             'Your task is the same: press the button corresponding to the dominant image on each trial. Please try to do so as quickly and accurately as possible. \n\n' ...
@@ -261,11 +269,11 @@ for block = 1:nBlocks
             WaitSecs(0.05)
         end
         
-        %%%%%%% initiate calibration %%%%%%%
+        %% run calibration
         run_calibration;
         coherence = calibratedCoherence;
         
-        % phase pivot to learning
+        % phase pivot to learning & give instructions
         learnString = 'Nice work! You''re all done with Flicker Practice. \n\n Press spacebar when to receive instructions for Border Learning.';
         DrawFormattedText(mainWindow, learnString, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);
@@ -329,10 +337,10 @@ for block = 1:nBlocks
             WaitSecs(0.05)
         end
         
-        %%%%%%% initiate cue learning %%%%%%%
+        % run cue learning
         run_cueLearning;
         
-        % phase pivot
+        % phase pivot and display learning instructions
         pivotString = 'Border Learning complete. \n\n You can use this time to take a short break before proceeding to the final phase of the experiment. \n\n Press spacebar to receive instructions.';
         DrawFormattedText(mainWindow, pivotString, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);
@@ -347,17 +355,18 @@ for block = 1:nBlocks
         
         % inference inference instructions
         infString{1} = ['DECISION MAKING INSTRUCTIONS: \n\n\n'...
-            'In this phase of the experiment, you will perform the flicker task again. \n\n' ...
-            'This time, the flickering stream will be presented inside of the colored borders. \n\n' ...
-            'The correct answer on each trial is usually the one that was presented more frequently with the colored border during Border Learning.' ...
-            'Again, your task is to determine which image dominated the flicker stream on each trial as quickly and accurately as possible.' ...
+            'In this phase of the experiment, you will perform the flicker task again: determining which of the images dominated the flicker stream. \n\n' ...
+            'The flickering stream will be presented inside of the colored borders, and the correct answer on each trial is *usually* the one that more frequently followed that color border during Border Learning. \n\n' ...
+            'Again, your task is to determine which image dominated the flicker stream as quickly and accurately as possible.' ...
             'You might it helpful to integrate what you have learned about the border-image frequencies to help you make your decisions faster.'];
         
         infString{2} = ['DECISION MAKING INSTRUCTIONS: \n\n\n' ...
             'You will not receive feedback on your chioces. \n\n' ...
             'Instead, after each decision, we will ask you to rate how confident you are that you correclty identified the dominant image. \n\n' ...
-            'Don''t overthink this -- just press the rating that feels right and do your best to use all the ratings in the scale: \n\n' ...
-            '1=not confident, 2=somewhat confident, 3=rather confident, 4=very confident. This scale will appear onscreen for each confidence rating.'];
+            'Don''t overthink this. Just press the rating that feels right. \n\n...' ...
+            'This rating scale will appear onscreen each time you have to make a confidene rating: \n\n' ...
+            '1=not confident, 2=somewhat confident, 3=rather confident, 4=very confident. \n\n ...' ...
+            'Please make sure to use all of the responses on the scale when rating confidence in this part of the experiment.'];
         
         infString{3} = ['This is the final and most important part of the experiment. It is crucial that you are alert and engaged when completing the task.\n\n' ...
             'You will get several breaks. During the breaks, we encourage you to rest your eyes, stretch a bit, and drink some water. \n\n' ...
@@ -388,6 +397,7 @@ for block = 1:nBlocks
                 break
             end
         end
+    end
         
         %%%%%%% initiate button reminder %%%%%%%
         run_buttonReminder;
@@ -404,13 +414,12 @@ for block = 1:nBlocks
             WaitSecs(0.05)
         end
         
-        %%%%%%% initiate cued inference %%%%%%%
+        %% run cued inference
         run_cuedInference;
-        
-    end % if debugging==0
+
 end % for block in nBlocks
 
-% goodbye screen
+% display goodbye screen
 goodbyeString = 'Experiment complete! Thanks for your participation. \n\n Please get the experimenter.';
 DrawFormattedText(mainWindow, goodbyeString, 'center', 'center', textColor, 80);
 Screen('Flip', mainWindow);
@@ -422,7 +431,9 @@ while(1)
     WaitSecs(0.05)
 end
 
-%% print out info for debrief
+sca;
+
+% print out info for debrief
 imagePath{3} = 'neither';
 debrief_table = table(cueStrings', [repelem(memReliability*100, 2) 50]', imagePath);
 debrief_table.Properties.VariableNames = {'cue', 'reliability', 'dominant_image'}

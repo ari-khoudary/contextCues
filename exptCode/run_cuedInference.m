@@ -150,6 +150,9 @@ for trial = 1:inferenceTrialN_total
                     RT = secs - flickerStart;
                     infRTs(trial) = RT;
                     response = find(keyCode(imageResponseKeys));
+                    if size(response, 2) > 1
+                        response = 0;
+                    end
                     infResps(trial) = response;
                     respFrame = f;
                     break
@@ -180,6 +183,9 @@ for trial = 1:inferenceTrialN_total
                 RT = secs - flickerStart;
                 infRTs(trial) = RT;
                 response = find(keyCode(imageResponseKeys));
+                if size(response, 2) > 1
+                    response = 0;
+                end
                 infResps(trial) = response;
                 infAccuracy(trial) = response==trialTarget;
             end % if keyIsDown
@@ -217,6 +223,9 @@ for trial = 1:inferenceTrialN_total
                     confRT = secs - confFlip;
                     confRTs(trial) = confRT;
                     confResponse = find(keyCode(confidenceResponseKeys));
+                    if size(confResponse, 2) > 1
+                        confResponse = mean(confResponse);
+                    end
                     confResps(trial) = confResponse;
                     break
                 end % if any...
@@ -227,10 +236,10 @@ for trial = 1:inferenceTrialN_total
     % write behavior to csv
     if catch_trial==0 
         fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
-            subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_test(trial), signal1Frames_test(trial), noise2Frames_test(trial), trialCoherence(trial), catch_trial);
+            subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_test(testTrialCounter), signal1Frames_test(testTrialCounter), noise2Frames_test(testTrialCounter), trialCoherence(trial), catch_trial);
     else
         fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
-            subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_catch(trial), signal1Frames_catch(trial), noise2Frames_catch(trial), trialCoherence(trial), catch_trial);
+            subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_catch(catchTrialCounter), signal1Frames_catch(catchTrialCounter), noise2Frames_catch(catchTrialCounter), trialCoherence(trial), catch_trial);
     end
         
 

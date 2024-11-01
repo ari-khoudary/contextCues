@@ -5,6 +5,7 @@ lambda = 0.05;
 maxFrames = 2/ifi;
 noisePDF = discrete_bounded_hazard_rate(lambda, maxFrames);
 noiseMin = round(1.25/ifi);
+signalMin = round(0.375/ifi);
 
 %% create cue duration distribution for learning
 cueDistribution = round(noisePDF * learnTrialN);
@@ -44,7 +45,6 @@ noise1Frames = Shuffle(noiseFrames + noiseMin);
 noise2Frames = Shuffle(noise1Frames);
 
 % create signal frames
-signalMin = round(0.375/ifi);
 signal1Frames = Shuffle(noiseFrames + signalMin);
 
 % ensure no repetition of durations across catch & test trials
