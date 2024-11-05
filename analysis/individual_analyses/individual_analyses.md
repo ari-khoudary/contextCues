@@ -59,12 +59,12 @@ subject:
 
 ![](individual_analyses_files/figure-gfm/learning%20RTs-1.png)<!-- -->
 
-![](individual_analyses_files/figure-gfm/individual%20learningRTs-1.png)<!-- -->
-
 ------------------------------------------------------------------------
 
 ## inference data
 
-### how do cues affect choice accuracy?
+### what can learning RTs for each cue tell us about how those cues affect decision performance?
 
-![](individual_analyses_files/figure-gfm/inference%20accuracy-1.png)<!-- -->
+![](individual_analyses_files/figure-gfm/group%20inference%20summary-1.png)<!-- -->
+
+![](individual_analyses_files/figure-gfm/individual%20learnRTs%20+%20decision%20accuracy-1.png)<!-- -->

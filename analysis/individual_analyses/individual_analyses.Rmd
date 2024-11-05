@@ -32,10 +32,6 @@ library(sjPlot) # for formatting model result tables
 # library(MetBrewer) # for pretty art-inspired color palettes
 ```
 
-```{r plotting setup: colors, outdir, functions, include=F}
-colors <- c('incongruent' = "#F8766D", 'neutral' = "#00BA38", 'congruent'="#619CFF")
-```
-
 
 ```{r load & tidy calibration data, include=FALSE}
 # get info about which staircase generated which coherence
@@ -91,6 +87,7 @@ knitr::include_graphics("../../imageGrid.png")
 ```{r load & tidy learning data, include=F}
 learning_files = list.files('../../data', full.names = TRUE, pattern='block1_learning.csv', recursive = T)
 learning_keep_idx <- grep('excluded', learning_files, invert=T)
+learning_keep_idx <- learning_keep_idx[1:14]
 learning_df = do.call(rbind, lapply(learning_files[learning_keep_idx], function(x) { read.csv(x, header = TRUE)} )) 
 
 # transform RTs
@@ -98,7 +95,7 @@ learning_df <- learning_df %>%
   group_by(subID) %>%
   mutate(logRT = log(RT),
          zlogRT = scale(logRT),
-         cueIdx = factor(cueIdx))
+         cueLabel = factor(cueIdx, levels=c(3,1,2), labels=c('50% A/B', '80% A', '80% B')))
 ```
 
 ### how accurately were they making button presses during learning?
@@ -118,38 +115,18 @@ learning_df %>%
 ```{r learning RTs, echo = F, fig.dpi=300, fig.height=3}
 # plot group regressions
 learning_df %>%
-  mutate(cueIdx = case_when(cueIdx=='1' ~ '80% A',
-                            cueIdx=='2' ~ '80% B',
-                            cueIdx=='3' ~ '50% A/B')) %>%
-  ggplot(aes(x=trial, y=zlogRT, color=cueIdx)) +
+  ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
   theme_bw() +
-  facet_wrap(~ cueIdx) +
+  facet_wrap(~ cueLabel) +
   geom_hline(yintercept = 0, linetype='dashed') +
   geom_point(alpha=0.25, size=1) +
   geom_smooth(method = 'lm', linewidth=1.5) +
-  labs(title = 'group summary')
-```
-
-```{r individual learningRTs, echo=F, fig.dpi=300, fig.height=15}
-# plot individual subject regressions
-learning_df %>%
-    mutate(cueIdx = case_when(cueIdx=='1' ~ '80% A',
-                            cueIdx=='2' ~ '80% B',
-                            cueIdx=='3' ~ '50% A/B')) %>%
-  ggplot(aes(x=trial, y=zlogRT, color=cueIdx)) +
-  theme_bw() +
-  geom_hline(yintercept = 0, linetype='dashed') +
-  facet_grid(subID ~ cueIdx) +
-  geom_point(size=1, alpha=0.5) +
-  geom_smooth(method = 'lm') +
-  labs(title = 'individual trends')
+  labs(title = 'group summary', subtitle = 'zlogRT ~ cueIdx + trial')
 ```
 
 ***
 
 ## inference data
-
-### how do cues affect choice accuracy?
 
 ```{r load in inference data, echo=F}
 inference_files = list.files('../../data', full.names = TRUE, pattern='block1_inference.csv', recursive = T)
@@ -162,18 +139,52 @@ inference_df <- inference_df %>%
                             targetIdx==1 & congruent==0 ~ 2,
                             targetIdx==2 & congruent==0 ~ 1,
                             is.na(congruent) ~ 3),
-         cueLabel = factor(cueIdx, levels=c(3,1,2), labels=c('50%', '80%A', '80%B')))
+         cueLabel = factor(cueIdx, levels=c(3,1,2), labels=c('50% A/B', '80%A', '80%B')),
+         cue_string = trimws(cue_string))
 ```
 
-```{r inference accuracy, echo=F, fig.width=15, fig.dpi=300}
+### what can learning RTs for each cue tell us about how those cues affect decision performance?
+```{r group inference summary, echo=F, fig.align='center', fig.dpi=300}
 
 inference_df %>%
+  group_by(subID, cueLabel) %>%
+  summarise(propCorrect = mean(accuracy, na.rm=T)) %>%
+  ggplot(aes(x=cueLabel, y=propCorrect, color=cueLabel)) +
+  theme_bw() +
+  geom_hline(yintercept = 0.5, linetype='dashed') +
+  geom_boxplot() +
+  labs(title = 'group summary: decision accuracy', subtitle = 'propCorrect first computed within-subject')
+```
+
+### what can learning RTs for each cue tell us about how those cues affect decision performance?
+```{r individual learnRTs + decision accuracy, echo=F, fig.height=15, fig.width=8, fig.dpi=300}
+
+RTs <- learning_df %>%
+  ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
+  theme_bw() +
+  geom_hline(yintercept=0, linetype='dashed') +
+  geom_point(alpha=0.5, size=1) +
+  geom_smooth(method = 'lm', linewidth=1.5) +
+  facet_grid(subID ~ cueLabel) +
+  scale_x_continuous(n.breaks=4) +
+  labs(title = 'RTs over learning')
+  
+  
+accuracy <- inference_df %>%
   ggplot(aes(x=cueLabel, y=accuracy, color=cueLabel)) +
   theme_bw() +
-  facet_grid(~ subID) +
+  facet_grid(rows='subID') +
   geom_hline(yintercept = 0.5, linetype='dashed') +
   stat_summary(fun.data='mean_se', geom='pointrange') +
   labs(y = 'proportion correct', title = 'inference accuracy') +
-  scale_y_continuous(n.breaks=10)
+  scale_y_continuous(n.breaks=5)
 
+accuracy + RTs + plot_layout(guides = 'collect', widths=c(0.5, 1))
+```
+
+```{r load in subjective probabilities}
+
+psq <- read.csv('../../data/tidied/subjective_probabilities.csv')
+
+f <- left_join(inference_df, psq)
 ```
