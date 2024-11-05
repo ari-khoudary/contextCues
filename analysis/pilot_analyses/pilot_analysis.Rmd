@@ -1,0 +1,968 @@
+---
+title: "Pilot analyses: version 3"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 2
+editor_options: 
+  chunk_output_type: console
+---
+
+hello! if you are looking for the source code to produce the results displayed below, you should navigate to the `.Rmd` version of this document.
+
+# model specs
+model data come from a simulation of 100 subjects performing the task. each simulated subject completes 100 trials for the 80% cue and 50 trials for the 50% cue. RTs were log-transformed and z-scored within subject. all choice data is forced choice (i.e., sign of the accumulator at trial end if a boundary hadn't been reached). 
+
+simulations were run with coherence=0.5395, thinning=12, and threshold=5. coherence & threshold values were determined in a separate "model calibration" analysis linked in my notebook. this combination led to the model performing at 70% accuracy based on visual evidence only without any noise durations, just forward & backward masking of each signal frame with noise
+
+```{r load packages, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+library(tidyverse)
+library(patchwork)
+library(lme4)
+library(lmerTest)
+library(emmeans)
+
+# potentially useful in the future
+library(performance) # for easy model comparisons
+# library(jtools) # for alternative model summaries
+library(sjPlot) # for formatting model result tables
+# library(MetBrewer) # for pretty art-inspired color palettes
+```
+
+```{r plotting setup: colors, outdir, functions, include=F}
+# define plotting colors 
+colors <- c('incongruent' = "#F8766D", 'neutral' = "#00BA38", 'congruent'="#619CFF")
+blues <- RColorBrewer::brewer.pal(9, "Blues")[c(4,5,6,7,8)]
+cueCong_colors <- c('0.8 cue: incongruent vizEv' = "#F8766D", 
+            '0.8 cue: equal vizEv' = "#00BA38", 
+            '0.8 cue: congruent vizEv'="#619CFF",
+            '0.5 cue: imgA vizEv' = 'purple',
+            '0.5 cue: imgB vizEv' = 'orange',
+            '0.5 cue: equal vizEv' = '#00BA38')
+
+# function for plotting effects of continuous predictors
+varRange <- function(df, xVar, precision=1) {
+  return(seq(min(df[,xVar], na.rm=T),
+             max(df[,xVar], na.rm=T),
+             precision))
+}
+
+# where to save plots
+outdir <- 'pilot_analysis_figs/'
+```
+
+```{r load & tidy inference data, include=FALSE}
+evidence_frames <- read.csv('../data/tidied/evidenceFrames.csv')  %>% rename(respFrame = response_frame)
+inference_files = list.files('../data', full.names = TRUE, pattern='block1_inference.csv', recursive = TRUE)
+inference_keep_idx <- grep('excluded', inference_files, invert=T)
+inference_df = do.call(rbind, lapply(inference_files[inference_keep_idx], function(x) { read.csv(x, header = TRUE)} )) 
+
+############### tidy inference data ############### 
+inferenceData <- inference_df %>%
+  filter(subID != 16) %>% # remove sub with no noise frame data, and subs with correct noise frame data
+  rename(trueTarget = targetIdx) %>% 
+  select(-c(noise1frames, noise2frames, signal1frames, block, targetImg, cue_rgb, cue_string)) %>%
+  full_join(., evidence_frames, by=c('subID', 'trial', 'catch_trial', 'congruent', 'respFrame', 'response')) %>%
+  mutate(subID = factor(subID),
+         congruent = factor(as.character(congruent), levels=c("0", "NaN", "1"), labels=c('incongruent', 'neutral', 'congruent')),
+         respFrame = ifelse(is.na(respFrame), 540, respFrame),
+         cueIdx = case_when(trueTarget == 1 & congruent == 'congruent' ~ 1,
+                            trueTarget == 1 & congruent == 'incongruent' ~ 2,
+                            trueTarget == 1 & congruent == 'incongruent' ~ 2,
+                            trueTarget == 2 & congruent =='congruent' ~ 2,
+                            trueTarget == 2 & congruent=='incongruent' ~ 1,
+                            congruent == 'neutral' ~ 3),
+         cueType = ifelse(cueIdx==3, '50% cue', '80% cue'),
+         totalNoise = noise1frames_behav + noise2frames_behav,
+         totalTarget1 = rowSums(across(c(signal1_target1, signal2_target1)), na.rm=T),
+         totalTarget2 = rowSums(across(c(signal1_target2, signal2_target2)), na.rm=T),
+         trialTarget = case_when(totalTarget1 > totalTarget2 ~ 1,
+                                 totalTarget1 < totalTarget2 ~ 2,
+                                 totalTarget1 == totalTarget2 ~ NA),
+         # trialCongruence = case_when(cueIdx == trialTarget ~ 'congruent',
+         #                             cueIdx != trialTarget ~ 'incongruent',
+         #                             totalTarget1 == totalTarget2 ~ 'equal evidence'),
+         # trialCongruence = factor(trialCongruence, levels=c('incongruent', 'equal evidence', 'congruent')),
+         respPeriod = case_when(respFrame >= signal2Onset ~ 'signal2', 
+                                respFrame >= noise2Onset & respFrame < signal2Onset ~ 'noise2',
+                                respFrame > noise1frames_design & respFrame < noise2Onset ~ 'signal1',
+                                respFrame < signal1Onset ~ 'noise1'), 
+         cueCongChoice = case_when(cueIdx==3 ~ NA, cueIdx==response ~ 1, cueIdx!=response ~ 0),
+         noise1_quartile = cut(noise1frames_behav, breaks=quantile(noise1frames_behav, na.rm=T), include.lowest = T, labels=F), 
+         noise2_quartile = cut(noise2frames_behav, breaks=quantile(noise2frames_behav, na.rm=T), include.lowest = T, labels=F), 
+         totalNoise_quartile = cut(totalNoise, breaks=quantile(totalNoise, na.rm=T), include.lowest = T, labels=F),
+         catch_trial_cat = factor(catch_trial, levels=c(0,1), labels=c('test', 'catch'))) %>%
+  group_by(subID) %>%
+  mutate(logRT = log(RT),
+         zlogRT = scale(logRT),
+         zConf = scale(confResp),
+         logConfRT = log(confRT),
+         zlogconfRT = scale(logConfRT), 
+         rt_quartile = cut(zlogRT, breaks=quantile(zlogRT, na.rm=T), include.lowest=T, labels=F),
+         trial_quartile = cut(trial, breaks=quantile(trial), include.lowest=T, labels=F)) %>%
+  ungroup()
+
+rm(inference_files, inference_keep_idx, evidence_frames, inference_df)
+```
+
+```{r load & tidy model data, include=FALSE}
+modelData <- read.csv('steadyState_modelBehavior.csv')
+
+modelData <- modelData %>%
+  mutate(congruent = case_when(cue==0.5 ~ NA,
+                               congruent==0 ~ 'incongruent',
+                               congruent==1 ~ 'congruent'),
+         noise1frames_behav = case_when(RT > noise1Frames ~ noise1Frames,
+                                         RT < noise1Frames ~ RT),
+         noise2frames_behav = case_when(RT > signal2Onsets ~ noise2Frames,
+                                         RT < signal2Onsets & RT > noise2Onsets ~ signal2Onsets - RT),
+         signal1frames_behav = case_when(RT > signal1Onsets + signal1Frames ~ signal1Frames,
+                                         RT < signal1Onsets + signal1Frames ~ noise2Onsets - RT),
+         signal2frames_behav = case_when(RT < signal2Onsets ~ NA,
+                                         RT > signal2Onsets ~ (signal2Onsets+signal2Frames)-RT),
+         respPeriod = case_when(RT >= signal2Onsets ~ 'signal2', 
+                                RT >= noise2Onsets & RT < signal2Onsets ~ 'noise2',
+                                RT > noise1Frames & RT < noise2Onsets ~ 'signal1',
+                                RT < signal1Onsets ~ 'noise1'),
+         cueCongChoice = case_when(congruent == 'congruent' & forcedChoice == 1 ~ 1,
+                                   congruent == 'incongruent' & forcedChoice == 1 ~ 1),
+         noise1_quartile = cut(noise1frames_behav, breaks=quantile(noise1frames_behav, na.rm=T), include.lowest = T, labels=F), 
+         noise2_quartile = cut(noise2frames_behav, breaks=quantile(noise2frames_behav, na.rm=T), include.lowest = T, labels=F)) %>% 
+  group_by(subID) %>%
+  mutate(logRT = log(RT),
+         zlogRT = scale(logRT)) %>%
+  ungroup()
+```
+
+```{r make dfs for analysis, include=FALSE}
+inferenceData_tidy <- inferenceData %>%
+  filter(is.na(response)==F) %>%
+  mutate(cueType = factor(cueType),
+         subID = factor(subID),
+         resp1 = ifelse(response==1, 1, 0),
+         resp2 = ifelse(response==1, 0, 1),
+         respFinger = ifelse(resp1==1, '1', '2'),
+         signal1_cueEv = case_when(cueIdx==1 ~ signal1_target1 - signal1_target2,
+                                   cueIdx==2 ~ signal1_target2 - signal1_target1),
+         # signal1_relEv = case_when(response==1 ~ signal1_target1 - signal1_target2,
+         #                           response==2 ~ signal1_target2 - signal1_target1),
+         # signal1_relEv_z = scale(signal1_relEv),
+         # signal1_cueCong = case_when(cueIdx==1 & (signal1_target1 > signal1_target2) ~ '0.8 cue: congruent vizEv',
+         #                             cueIdx==1 & (signal1_target1 < signal1_target2) ~ '0.8 cue: incongruent vizEv',
+         #                             cueIdx==2 & (signal1_target1 > signal1_target2) ~ '0.8 cue: incongruent vizEv',
+         #                             cueIdx==2 & (signal1_target1 < signal1_target2) ~ '0.8 cue: congruent vizEv',
+         #                             cueIdx<3 & (signal1_target1 == signal1_target2) ~ '0.8 cue: equal vizEv',
+         #                             cueIdx==3 & (signal1_target1 > signal1_target2) ~ '0.5 cue: imgA vizEv',
+         #                             cueIdx==3 & (signal1_target1 < signal1_target2) ~ '0.5 cue: imgB vizEv',
+         #                             cueIdx==3 & (signal1_target1 == signal1_target2) ~ '0.5 cue: equal vizEv'),
+         # signal1_evCongChoice = case_when(signal1_target1 > signal1_target2 & response==1 ~ 1,
+         #                                  signal1_target1 < signal1_target2 & response==2 ~ 1,
+         #                                  signal1_target1 < signal1_target2 & response==1 ~ 0,
+         #                                  signal1_target1 > signal1_target2 & response==2 ~ 0),
+         # signal2_cueCong = case_when(cueIdx==1 & (signal2_target1 > signal2_target2) ~ '0.8 cue: congruent vizEv',
+         #                             cueIdx==1 & (signal2_target1 < signal2_target2) ~ '0.8 cue: incongruent vizEv',
+         #                             cueIdx==2 & (signal2_target1 > signal2_target2) ~ '0.8 cue: incongruent vizEv',
+         #                             cueIdx==2 & (signal2_target1 < signal2_target2) ~ '0.8 cue: congruent vizEv',
+         #                             cueIdx<3 & (signal2_target1 == signal2_target2) ~ '0.8 cue: equal vizEv',
+         #                             cueIdx==3 & (signal2_target1 > signal2_target2) ~ '0.5 cue: imgA ev',
+         #                             cueIdx==3 & (signal2_target1 < signal2_target2) ~ '0.5 cue: imgB ev',
+         #                             cueIdx==3 & (signal2_target1 == signal2_target2) ~ '0.5 cue: equal ev'),
+         # signal2_cueCong = factor(signal2_cueCong),
+         # signal1_cueCong = factor(signal1_cueCong),
+         noise1_seconds = noise1frames_behav * (1/60), 
+         signal1RT = RT - noise1_seconds,
+         vizLocked_respFrame = respFrame - noise1frames_behav,
+         vizLocked_respFrame_t = vizLocked_respFrame / 60,
+         vizLocked_sig2Resp = respFrame - (noise1frames_behav + signal1frames_behav + noise2frames_behav),
+         vizLocked_sig2Resp = vizLocked_sig2Resp/60) %>% 
+  group_by(subID) %>%
+  mutate(zlog_sig1RT = log(signal1RT),
+         zlog_sig1RT = scale(zlog_sig1RT))%>%
+  ungroup()
+
+modelData <- modelData %>% 
+  mutate(cueType = factor(cue, levels=c(0.5, 0.8), labels=c('50% cue', '80% cue')),
+         subID = factor(subID),
+         noise1_seconds = noise1frames_behav * (1/60), 
+         vizLocked_respFrame = RT - noise1frames_behav,
+         vizLocked_respFrame_t = vizLocked_respFrame / 60,
+         vizLocked_sig2Resp = RT - (noise1frames_behav + signal1frames_behav + noise2frames_behav),
+         vizLocked_sig2Resp = vizLocked_sig2Resp/60) 
+```
+
+# RT analyses
+
+### effect of cue type on RT across all test trials
+```{r zlogRT ~ cueType: humans, echo=F}
+# run model
+hm <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  lm(zlogRT ~ cueType, ., contrasts=list(cueType=contr.sum))
+
+# compute expected marginal means
+emm <- emmeans(hm, eff ~ cueType)
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm,  ~ cueType, CIs=T, plotit=F)
+
+# plot emmeans above raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  ggplot(aes(x = cueType, y = zlogRT)) +
+  theme_bw() + 
+  geom_hline(yintercept=0, linetype='dashed') +
+  geom_violin(fill='gray80', scale = 'count', alpha=0.75) +
+  #geom_point(aes(color=cueType), alpha=0.1, color='gray50', position=position_jitter(width=0.1)) +
+  # add emmeans
+  geom_errorbar(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL, color=cueType), data=emm_df, width=0.05, size=1) +
+  labs(title = 'Effect of cue on RT: human data')
+```
+
+```{r zlogRT ~ cueType: model, echo=F}
+# fit linear model
+m <- modelData %>%
+  lm(zlogRT ~ cueType, ., contrasts=list(cueType=contr.sum))
+
+# compute expected marginal means
+emm <- emmeans(m, eff ~ cueType)
+
+# quick plot
+# emmip(m,  ~ cueType, CIs=T, plotit=T) + 
+#   theme_bw() +  geom_hline(yintercept=0, linetype='dashed')
+
+# save plot-formatted emmeans
+emm_df <- emmip(m,  ~ cueType, CIs=T, plotit=F)
+
+# plot emmeans above raw data
+mp <- modelData %>%
+  ggplot(aes(x = cueType, y = zlogRT)) +
+  theme_bw() + 
+  geom_hline(yintercept=0, linetype='dashed') +
+  geom_violin(fill='gray80', scale = 'count', alpha=0.75) +
+  #geom_point(aes(color=cueType), alpha=0.1, color='gray50', position=position_jitter(width=0.1)) +
+  # add emmeans
+  geom_errorbar(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL, color=cueType), data=emm_df, width=0.05, size=1) +
+  ylim(-5, 3) +
+  labs(title = 'Effect of cue on RT: generative model data')
+
+#tab_model(m)
+```
+
+```{r display RT plots, echo=F, fig.width=8, fig.height=6, fig.dpi=300}
+hp + mp + plot_layout(guides = 'collect')
+```
+
+regression coefficients & emmeans info for human data:
+```{r display RT model summary, echo=F}
+tab_model(hm)
+emmeans(hm, eff ~ cueType)
+```
+
+#### effect of noise1 duration * cueType on RT for responses made after noise1
+```{r zlogRT ~ noise1frames * cueType, echo=F}
+
+# run model
+hm <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod != 'noise1') %>%
+  lm(vizLocked_respFrame_t ~ noise1frames_behav * cueType, ., contrasts = list(cueType = contr.sum))
+
+# compute expected marginal means
+emm <- emmeans(hm, consec ~ noise1frames_behav | cueType, cov.reduce=quantile)
+
+# get range of x-values for plotting
+noise_vals <- unique(summary(emm)$emmeans$noise1frames_behav)
+
+# quick plot
+#emmip(m,  ~ noise1frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm,  ~ noise1frames_behav | cueType, CIs=T, plotit=F, cov.reduce=F)
+
+# plot emmeans above raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod != 'noise1', noise1frames_behav >= min(noise_vals)) %>%
+  ggplot(aes(x = noise1frames_behav, y = vizLocked_respFrame_t)) +
+  theme_bw() +
+  geom_point(aes(color=cueType), alpha=0.5, size=1) +
+  geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=cueType), emm_df, color=NA, alpha=0.5) +
+  geom_line(aes(x=xvar, y=yvar, group=cueType), data=emm_df) +
+  labs(title = 'human data',
+       subtitle = 'RT locked to onset of signal1 evidence')
+
+# summary(m)
+# emmeans(m, consec ~ noise1frames_behav | cueType, cov.reduce=range)$contrasts
+```
+
+```{r zlogRT ~ noise1frames * cueType: model, echo=F}
+
+# run model
+m <- modelData %>%
+  filter(respPeriod != 'noise1') %>%
+  lm(vizLocked_respFrame_t ~ noise1frames_behav * cueType, ., contrasts = list(cueType = contr.sum))
+
+# compute expected marginal means
+emm <- emmeans(m, consec ~ noise1frames_behav | cueType, cov.reduce=quantile)
+
+# get range of x-values for plotting
+noise_vals <- unique(summary(emm)$emmeans$noise1frames_behav)
+
+# quick plot
+#emmip(m,  ~ noise1frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+
+# save plot-formatted emmeans
+emm_df <- emmip(m,  ~ noise1frames_behav | cueType, CIs=T, plotit=F, cov.reduce=F)
+
+# plot emmeans above raw data
+mp <- modelData %>%
+  filter(respPeriod != 'noise1', noise1frames_behav >= min(noise_vals)) %>%
+  ggplot(aes(x = noise1frames_behav, y = vizLocked_respFrame_t)) +
+  theme_bw() +
+  geom_point(aes(color=cueType), alpha=0.5, size=0.5) +
+  geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=cueType), emm_df, color=NA, alpha=0.5) +
+  geom_line(aes(x=xvar, y=yvar, group=cueType), data=emm_df) +
+  labs(title = 'model data',
+       subtitle = 'RT locked to onset of signal1 evidence')
+
+# summary(m)
+# emmeans(m, consec ~ noise1frames_behav | cueType, cov.reduce=range)$contrasts
+# emtrends(m, consec ~ cueType, var='noise1frames_behav')
+```
+
+```{r display cue*noise1 plots, echo=F, fig.width=8, fig.height=6, dpi=300}
+hp + mp + plot_layout(guides='collect')
+```
+
+regression coefficients & emmeans info for human data:
+```{r display cue*noise1 summary, echo=F}
+
+tab_model(hm, digits=4)
+emtrends(hm, eff ~ cueType, var='noise1frames_behav')
+
+```
+
+#### effect of noise2 duration + cueType on zlogRT in signal2 
+```{r vizLocked_sig2Resp ~ noise2frames_behav + cueType: humans, echo=F}
+# fit model
+hm <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>%
+  lm(vizLocked_sig2Resp ~ noise2frames_behav * cueType, ., contrasts = list(cueType = contr.sum))
+
+# compute expected marginal means
+emm <- emmeans(hm, consec ~ noise2frames_behav | cueType, cov.reduce=quantile)
+
+# get range of x-values for plotting
+noise_vals <- unique(summary(emm)$emmeans$noise2frames_behav)
+
+# quick plot
+# emmip(m,  ~ noise2frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm,  ~ noise2frames_behav | cueType, CIs=T, plotit=F,
+                at=list(noise2frames_behav = noise_vals))
+
+# plot emmeans above raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>%
+  filter(noise2frames_behav >= min(noise_vals)) %>%
+  ggplot(aes(x = noise2frames_behav, y = vizLocked_sig2Resp)) +
+  theme_bw() +
+  geom_point(aes(color=cueType), alpha=0.5, size=1) +
+  geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=cueType), emm_df, color=NA, alpha=0.5) +
+  geom_line(aes(x=xvar, y=yvar, group=cueType, color=cueType), data=emm_df, linewidth=1.5) +
+  labs(subtitle = 'signal2 RTs locked to onset of signal2 visual evidence', title = 'human data')
+
+# summary(m)
+# print(emm)
+#emmeans(m, pairwise ~ cueType | noise2frames_behav, cov.reduce=range)$contrasts
+#emtrends(m, pairwise ~ cueType, var='noise2frames_behav')
+```
+
+```{r vizLocked_sig2Resp ~ noise2frames_behav + cueType: model, echo=F}
+# fit model
+m <- modelData %>%
+  filter(respPeriod == 'signal2') %>%
+  lm(vizLocked_sig2Resp ~ noise2frames_behav * cueType, ., contrasts = list(cueType = contr.sum))
+
+# compute expected marginal means
+emm <- emmeans(m, consec ~ noise2frames_behav | cueType, cov.reduce=quantile)
+
+# get range of x-values for plotting
+noise_vals <- unique(summary(emm)$emmeans$noise2frames_behav)
+
+# quick plot
+# emmip(m,  ~ noise2frames_behav | cueType, cov.reduce=quantile, CIs=T, plotit=T)
+
+# save plot-formatted emmeans
+emm_df <- emmip(m,  ~ noise2frames_behav | cueType, CIs=T, plotit=F,
+                at=list(noise2frames_behav = noise_vals))
+
+# plot emmeans above raw data
+mp <- modelData %>%
+  filter(respPeriod == 'signal2') %>%
+  filter(noise2frames_behav >= min(noise_vals)) %>%
+  ggplot(aes(x = noise2frames_behav, y = vizLocked_sig2Resp)) +
+  theme_bw() +
+  geom_point(aes(color=cueType), alpha=0.5, size=1) +
+  geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=cueType), emm_df, color=NA, alpha=0.5) +
+  geom_line(aes(x=xvar, y=yvar, group=cueType), data=emm_df) +
+  labs(subtitle = 'signal2 RTs locked to onset of signal2 visual evidence', title='model data')
+
+# summary(m)
+#print(emm)
+# emtrends(m, pairwise ~ cueType, var='noise2frames_behav')
+```
+
+```{r display signal2 RT plots, fig.width=8, fig.dpi=300, echo=F}
+
+hp + mp + plot_layout(guides = 'collect')
+
+```
+
+regression coefficients & emmeans info for human data:
+```{r display signal2 RT summary, echo=F}
+tab_model(hm, digits=4)
+emtrends(hm, eff ~ cueType, var='noise2frames_behav')
+```
+
+#### effect of noise2 duration + signal1cueEv on zlogRT in signal2
+```{r vizLocked_sig2Resp ~ signal1_cueEv * noise2frames_behav: humans, echo=F}
+# fit model
+hm <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>%
+  lm(vizLocked_sig2Resp ~ noise2frames_behav * signal1_cueEv, .)
+
+# compute expected marginal means
+emm <- emmeans(hm, ~ noise2frames_behav | signal1_cueEv, cov.reduce=F)
+
+# quick plot
+# emmip(hm,  ~ noise2frames_behav | signal1_cueEv, CIs=T, plotit=T,
+#       at = list(noise2frames_behav = c(75, 90, 120, 150), signal1_cueEv = c(-8, 0, 14)))
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm,  ~ noise2frames_behav | signal1_cueEv, CIs=T, plotit=F,
+      at = list(noise2frames_behav = c(75, 90, 120, 150), signal1_cueEv = c(-8, 0, 14)))
+
+# plot emmeans above raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>%
+  ggplot(aes(x = noise2frames_behav, y = vizLocked_sig2Resp, group=signal1_cueEv)) +
+  theme_bw() +
+  geom_point(aes(color=signal1_cueEv), alpha=0.5, size=1) +
+  #geom_ribbon(aes(xvar, yvar, ymin=LCL, ymax=UCL, fill=signal1_cueEv), emm_df, color=NA, alpha=0.5) +
+  geom_line(aes(x=xvar, y=yvar, group=signal1_cueEv, color=signal1_cueEv), data=emm_df, linewidth=1.5) +
+  labs(subtitle = 'signal2 RTs locked to onset of signal2 visual evidence', title = 'human data') +
+  scale_color_gradient2() + scale_fill_gradient2() 
+
+# summary(m)
+# print(emm)
+#emmeans(m, pairwise ~ cueType | noise2frames_behav, cov.reduce=range)$contrasts
+#emtrends(m, pairwise ~ cueType, var='noise2frames_behav')
+```
+
+```{r vizLocked_sig2Resp ~ signal1_cueEv * noise2frames_behav: model, echo=F}
+# fit model
+mm <- modelData %>%
+    filter(respPeriod == 'signal2', cue==0.8) %>% 
+  lm(vizLocked_sig2Resp ~ noise2frames_behav * signal1_vizEv, .)
+
+# compute expected marginal means
+emm <- emmeans(mm, ~ noise2frames_behav | signal1_vizEv, 
+               at = list(noise2frames_behav = c(75, 90, 120, 150), signal1_vizEv = c(-20, 0, 20)))
+
+# quick plot
+# emmip(mm,  ~ noise2frames_behav | signal1_vizEv, CIs=T, plotit=T,
+#       at = list(noise2frames_behav = c(75, 90, 120, 150), signal1_vizEv = c(-8, 0, 14)))
+
+# save plot-formatted emmeans
+emm_df <- emmip(mm,  ~ noise2frames_behav | signal1_vizEv, CIs=T, plotit=F,
+      at = list(noise2frames_behav = c(75, 90, 120, 150), signal1_cueEv = c(-20, 0, 20)))
+
+# plot emmeans above raw data
+hp <- modelData %>%
+  filter(respPeriod == 'signal2', cue==0.8) %>% 
+  ggplot(aes(x = noise2frames_behav, y = vizLocked_sig2Resp, group=signal1_vizEv)) +
+  theme_bw() +
+  geom_point(aes(color=signal1_vizEv), alpha=0.5, size=1) +
+  geom_line(aes(x=xvar, y=yvar, group=signal1_vizEv, color=signal1_vizEv), data=emm_df, linewidth=1.5) +
+  labs(subtitle = 'signal2 RTs locked to onset of signal2 visual evidence', title = 'model data') +
+  scale_color_gradient2() + scale_fill_gradient2() 
+
+# summary(m)
+# print(emm)
+#emmeans(m, pairwise ~ cueType | noise2frames_behav, cov.reduce=range)$contrasts
+#emtrends(m, pairwise ~ cueType, var='noise2frames_behav')
+```
+
+
+
+# Response probability analyses
+
+#### for noise 1 responses only, probability of making cue-based response as a function of noise1 duration
+```{r cueCongChoice_signal1 ~ noise1frames_behav: humans, echo=F}
+
+# filter data & fit model
+hm <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'noise1') %>%
+  glm(cueCongChoice ~ noise1frames_behav, ., family='binomial')
+
+# compute expected marginal means
+emm <- emmeans(hm, consec ~ noise1frames_behav, type='response', cov.reduce=range)
+
+# get noise values from emmeans call
+noise_vals <- unique(summary(emm)$emmeans$noise1frames_behav)
+
+# quick plot
+#emmip(m, ~ noise1frames_behav, type='response', CIs=T, at=list(noise1frames_behav=noise_vals))
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm,  ~ noise1frames_behav, type='response', CIs=T, plotit=F, at=list(noise1frames_behav=noise_vals))
+
+# plot emmeans above raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'noise1') %>%
+  ggplot(aes(x = noise1frames_behav, y = cueCongChoice)) +
+  theme_bw() + 
+  geom_hline(yintercept=0.5, linetype='dashed') +
+  geom_point(position=position_jitter(height=0.05)) +
+  # add emmeans
+  geom_ribbon(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL), data=emm_df, alpha=0.1) +
+  geom_line(aes(x=xvar, y=yvar), data=emm_df) +
+  labs(title = 'human data', subtitle = '80% cues only')
+
+# summary(m)
+# print(emm)
+```
+
+```{r cueCongChoice_signal1 ~ noise1frames_behav: model, echo=F}
+
+# filter data & fit model
+m <- modelData %>%
+  filter(respPeriod == 'noise1', cue==0.8) %>%
+  glm(forcedChoice ~ noise1frames_behav, ., family='binomial')
+
+# compute expected marginal means
+emm <- emmeans(m, consec ~ noise1frames_behav, type='response', cov.reduce=range)
+
+# get noise values from emmeans call
+noise_vals <- unique(summary(emm)$emmeans$noise1frames_behav)
+
+# quick plot
+#emmip(m, ~ noise1frames_behav, type='response', CIs=T, at=list(noise1frames_behav=noise_vals))
+
+# save plot-formatted emmeans
+emm_df <- emmip(m,  ~ noise1frames_behav, type='response', CIs=T, plotit=F, at=list(noise1frames_behav=noise_vals))
+
+# plot emmeans above raw data
+mp <- modelData %>%
+  filter(respPeriod == 'noise1', cue==0.8) %>%
+  ggplot(aes(x = noise1frames_behav, y = forcedChoice)) +
+  theme_bw() + 
+  geom_hline(yintercept=0.5, linetype='dashed') +
+  geom_point(position=position_jitter(height=0.05)) +
+  # add emmeans
+  geom_ribbon(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL), data=emm_df, alpha=0.1) +
+  geom_line(aes(x=xvar, y=yvar), data=emm_df) +
+  labs(subtitle = '80% cues only', title = 'model data')
+
+# summary(m)
+# print(emm)
+```
+
+```{r display noise1 plots, echo=F, fig.width=8, fig.dpi=300}
+
+hp + mp + plot_layout(guides = 'collect')
+```
+
+regression coefficients & emmeans info for human data:
+```{r display noise1 summary, echo=F}
+tab_model(hm, digits=4)
+emmeans(hm, ~ noise1frames_behav, type='response', cov.reduce=range)
+```
+
+
+#### For signal 2 responses only, probability of making cue-based response as a function of noise2 duration
+
+```{r cueCongChoice_signal2 ~ noise2frames_behav: humans, echo=F}
+# filter data & fit model
+hm <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>%
+  glm(cueCongChoice ~ noise2frames_behav, ., family='binomial')
+
+# compute expected marginal means
+emm <- emmeans(hm, consec ~ noise2frames_behav, type='response', cov.reduce=range)
+
+# get noise values from emmeans call
+noise_vals <- unique(summary(emm)$emmean$noise2frames_behav)
+
+# quick plot
+# emmip(m, ~ noise2frames_behav, type='response', at=list(noise2frames_behav=noise_vals),
+#       CIs=T, cov.reduce=F)
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm, ~ noise2frames_behav, type='response', at=list(noise2frames_behav=noise_vals),
+                CIs=T, plotit=F, cov.reduce=F)
+
+# plot emmeans above raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0) %>%
+  filter(respPeriod == 'signal2') %>% 
+  ggplot(aes(x = noise2frames_behav, y = cueCongChoice)) +
+  theme_bw() +
+  geom_hline(yintercept=0.5, linetype='dashed') +
+  geom_point(position=position_jitter(height=0.05), size=1) +
+  # add emmeans
+  geom_ribbon(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL), data=emm_df, alpha=0.1) +
+  geom_line(aes(x=xvar, y=yvar), data=emm_df) +
+  labs(title = 'human data', subtitle='80% cues only')
+
+#summary(m)
+#print(emm)
+```
+
+```{r cueCongChoice_signal2 ~ noise2frames_behav: model, echo=F}
+# filter data & fit model
+m <- modelData %>%
+  filter(respPeriod == 'signal2', cue==0.8) %>%
+  glm(forcedChoice ~ noise2frames_behav, ., family='binomial')
+
+# compute expected marginal means
+emm <- emmeans(m, consec ~ noise2frames_behav, type='response', cov.reduce=range)
+
+# get noise values from emmeans call
+noise_vals <- unique(summary(emm)$emmean$noise2frames_behav)
+
+# quick plot
+# emmip(m, ~ noise2frames_behav, type='response', at=list(noise2frames_behav=noise_vals),
+#       CIs=T, cov.reduce=F)
+
+# save plot-formatted emmeans
+emm_df <- emmip(m, ~ noise2frames_behav, type='response', at=list(noise2frames_behav=noise_vals),
+                CIs=T, plotit=F, cov.reduce=F)
+
+# plot emmeans above raw data
+mp <- modelData %>%
+  filter(respPeriod == 'signal2', cue==0.8) %>% 
+  ggplot(aes(x = noise2frames_behav, y = forcedChoice)) +
+  theme_bw() +
+  geom_hline(yintercept=0.5, linetype='dashed') +
+  geom_point(position=position_jitter(height=0.05), size=1) +
+  # add emmeans
+  geom_ribbon(aes(x=xvar, y=yvar, ymin=LCL, ymax=UCL), data=emm_df, alpha=0.1) +
+  geom_line(aes(x=xvar, y=yvar), data=emm_df) +
+  labs(title = 'model data', subtitle='80% cues only')
+
+#summary(m)
+#print(emm)
+```
+
+```{r display noise2 plots, echo=F, fig.width=8, fig.dpi=300}
+
+hp + mp
+
+```
+
+regression coefficients & emmeans info for human data:
+```{r display noise2 summary, echo=F}
+
+tab_model(hm, digits=4)
+emmeans(hm, consec ~ noise2frames_behav, type='response', cov.reduce=range)
+
+```
+
+#### Effect of signal1 evidence * noise2 duration on choice probabilities in signal2: 80% cues
+```{r cueCongChoice_signal2 ~ noise2frames_behav * signal1Ev - continuous color: human, echo=F}
+
+# make filtered df
+df <- inferenceData_tidy %>%
+    filter(catch_trial==0) %>%
+    filter(respPeriod == 'signal2', cueIdx < 3) 
+
+# fit model
+hm <- glm(cueCongChoice ~ noise2frames_behav * signal1_cueEv, df, family = 'binomial')
+
+# make vectors for plotting emmeans
+plot_vals <- df %>%
+  select(noise2frames_behav, signal1_cueEv) %>%
+  summarise(noise_vals = quantile(noise2frames_behav, probs = seq(0,1,0.25), na.rm=T, names=F),
+            signal_vals = quantile(signal1_cueEv, probs = seq(0,1,0.25), na.rm=T, names=F))
+
+# compute expected marginal means
+emm <- emmeans(hm, ~ noise2frames_behav | signal1_cueEv, type='response', 
+               at = list(noise2frames_behav = plot_vals$noise_vals,
+                         signal1_cueEv = unique(plot_vals$signal_vals)))
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm, signal1_cueEv ~ noise2frames_behav, type='response', CIs=T, plotit=F,
+                at = list(noise2frames_behav = plot_vals$noise_vals,
+                         signal1_cueEv = unique(plot_vals$signal_vals)))
+
+# plot emmeans over raw data
+hp <- df %>% 
+  ggplot(aes(x=noise2frames_behav, y=cueCongChoice)) +
+  theme_bw() + geom_hline(yintercept=0.5, linetype='dashed') + 
+  scale_color_gradient2() + scale_fill_gradient2() + 
+  geom_point(aes(color=signal1_cueEv), size=1.5, position=position_jitter(height=0.1)) + 
+  # add emmeans
+  geom_line(aes(xvar, yvar, color=signal1_cueEv, group=signal1_cueEv), emm_df, linewidth=0.5) +
+  geom_errorbar(aes(xvar, yvar, ymin=LCL, ymax=UCL, color=signal1_cueEv), emm_df) +
+  labs(title = 'human data', subtitle='signal2 responses on 80% cue trials only')
+
+# emmeans(m, eff ~ noise2frames_behav | signal1_cueEv, type='response', cov.reduce=range)
+```
+
+```{r cueCongChoice_signal2 ~ noise2frames_behav * signal1Ev - continuous color: model, echo=F}
+# filter data
+m <- modelData %>%
+    filter(respPeriod == 'signal2', cue==0.8) %>% 
+    # fit model
+    glm(forcedChoice ~ noise2frames_behav * signal1_vizEv, ., family = 'binomial')
+
+# compute expected marginal means
+emm <- emmeans(m, ~ noise2frames_behav | signal1_vizEv, type='response', cov.reduce=range)
+
+# save plot-formatted emmeans
+m_df <- modelData %>% filter(respPeriod == 'signal2', cue==0.8)
+emm_df <- emmip(m, signal1_vizEv ~ noise2frames_behav, type='response', CIs=T, plotit=F,
+                at = list(signal1_vizEv = varRange(m_df, 'signal1_vizEv', 5),
+                          noise2frames_behav = varRange(m_df, 'noise2frames_behav', 5))) %>%
+  mutate(signal1_vizEv = as.numeric(signal1_vizEv))
+
+# plot emmeans over raw data
+mp <- modelData %>%
+  filter(respPeriod=='signal2', cue == 0.8) %>%
+  ggplot(aes(x=noise2frames_behav, y=forcedChoice)) +
+  theme_bw() + geom_hline(yintercept=0.5, linetype='dashed') + 
+  scale_color_gradient2(low = 'forestgreen', high='purple4') + scale_fill_gradient2(low = 'forestgreen', high='purple4') + 
+  geom_point(aes(color=signal1_vizEv), size=1.5, position=position_jitter(height=0.1)) + 
+  # add emmeans
+  geom_line(aes(xvar, yvar, color=signal1_vizEv, group=signal1_vizEv), emm_df, linewidth=0.5) +
+  labs(title = 'model data', subtitle='signal2 responses on 80% cue trials only')
+
+# emmeans(m, eff ~ noise2frames_behav | signal1_vizEv, type='response', cov.reduce=range)
+```
+
+***I used different color scales to preserve the difference in evidence magnitudes between the human & model data***
+Both models allow for interaction effects between signal1 evidence and noise2 duration
+```{r display signal1ev * noise2frames plot, echo=F, ig.dpi=300, fig.width=10}
+hp + mp + plot_layout(guides = 'collect')
+```
+
+regression coefficients & emmeans info for human data:
+```{r display signal1ev * noise2frames summary, echo=F}
+
+tab_model(hm, digits=4)
+emmeans(hm, ~ noise2frames_behav | signal1_cueEv, type='response', cov.reduce=range)
+
+```
+
+It looks like the human data is exhibiting a very interesting divergence from the generating model! The difference completely evaporates however if we only allow for additive effects of signal1 evidence and noise2 frames:
+
+```{r additive model: human & model, echo=F, fig.width=10, fig.dpi=300}
+
+df <- inferenceData_tidy %>%
+    filter(catch_trial==0) %>%
+    filter(respPeriod == 'signal2', cueIdx < 3) 
+
+# fit model
+hm <- glm(cueCongChoice ~ noise2frames_behav + signal1_cueEv, df, family = 'binomial')
+
+# make vectors for plotting emmeans
+plot_vals <- df %>%
+  select(noise2frames_behav, signal1_cueEv) %>%
+  summarise(noise_vals = quantile(noise2frames_behav, probs = seq(0,1,0.1), na.rm=T, names=F),
+            signal_vals = quantile(signal1_cueEv, probs = seq(0,1,0.1), na.rm=T, names=F))
+
+# compute expected marginal means
+emm <- emmeans(hm,  ~ noise2frames_behav | signal1_cueEv, type='response', 
+               at = list(noise2frames_behav = plot_vals$noise_vals,
+                         signal1_cueEv = unique(plot_vals$signal_vals)))
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm, signal1_cueEv ~ noise2frames_behav, type='response', CIs=T, plotit=F,
+               at = list(noise2frames_behav = plot_vals$noise_vals,
+                         signal1_cueEv = unique(plot_vals$signal_vals)))
+
+# plot emmeans over raw data
+hp <- df %>% 
+  ggplot(aes(x=noise2frames_behav, y=cueCongChoice)) +
+  theme_bw() + geom_hline(yintercept=0.5, linetype='dashed') + 
+  scale_color_gradient2() + scale_fill_gradient2() + 
+  geom_point(aes(color=signal1_cueEv), size=1.5, position=position_jitter(height=0.1)) + 
+  # add emmeans
+  geom_line(aes(xvar, yvar, color=signal1_cueEv, group=signal1_cueEv), emm_df, linewidth=0.5) +
+  geom_errorbar(aes(xvar, yvar, ymin=LCL, ymax=UCL, color=signal1_cueEv), emm_df) + 
+  labs(title = 'human data, additive model only', subtitle='signal2 responses on 80% cue trials only')
+
+
+#### model data #### 
+m_add <- modelData %>%
+    filter(respPeriod == 'signal2', cue == 0.8) %>%
+    # fit model
+    glm(forcedChoice ~ noise2frames_behav + signal1_vizEv, ., family = 'binomial')
+
+emm <- emmeans(m_add,  ~ signal1_vizEv | noise2frames_behav, type='response', cov.reduce=F)
+
+emm_df <- emmip(m_add, signal1_vizEv ~ noise2frames_behav, type='response', CIs=T, plotit=F,
+                at = list(signal1_vizEv = varRange(m_df, 'signal1_vizEv', 5),
+                          noise2frames_behav = varRange(m_df, 'noise2frames_behav', 5))) %>%
+  mutate(signal1_vizEv = as.numeric(signal1_vizEv))
+
+# plot emmeans over raw data
+mp <- modelData %>%
+  filter(respPeriod=='signal2', cue == 0.8) %>%
+  ggplot(aes(x=noise2frames_behav, y=forcedChoice)) +
+  theme_bw() + geom_hline(yintercept=0.5, linetype='dashed') + 
+  scale_color_gradient2(low = 'forestgreen', high='purple4') + scale_fill_gradient2(low = 'forestgreen', high='purple4') + 
+  geom_point(aes(color=signal1_vizEv), size=1.5, position=position_jitter(height=0.1)) + 
+  # add emmeans
+  geom_line(aes(xvar, yvar, color=signal1_vizEv, group=signal1_vizEv), emm_df, linewidth=0.5) +
+  labs(title = 'model data, additive effects only', subtitle='signal2 responses on 80% cue trials only')
+
+hp + mp
+```
+
+regression coefficients & emmeans info for human data (additive model)
+```{r display signal1ev + noise2frames summary, echo=F}
+
+tab_model(hm, digits=4)
+emmeans(hm,  ~ signal1_cueEv | noise2frames_behav, type='response', cov.reduce=range)
+
+```
+
+
+# Confidence analyses
+
+#### Effect of noise2 duration on confidence in noise2 decisions
+```{r noise2_conf ~ signal1ev + noise2frames: human, echo=F}
+
+# fit model
+hm <- inferenceData_tidy %>%
+    filter(catch_trial==0) %>%
+    filter(respPeriod == 'noise2', cueIdx < 3) %>%
+    # fit model
+    lm(zConf ~ noise2frames_behav * signal1_cueEv, .)
+
+# compute expected marginal means
+emm <- emmeans(hm, ~ noise2frames_behav | signal1_cueEv, 
+               at = list(noise2frames_behav = c(75, 100, 120),
+                         signal1_cueEv = c(-9, 2, 13)))
+
+# get predictor values from emmeans call
+noise_vals <- unique(summary(emm)$noise2frames_behav)
+signal_vals <- unique(summary(emm)$signal1_cueEv)
+
+# quick plot
+# emmip(hm, signal1_cueEv ~ noise2frames_behav, type='response', CIs=T,
+#       at = list(signal1_cueEv = signal_vals,
+#                 noise2frames_behav = noise_vals))
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm, signal1_cueEv ~ noise2frames_behav, type='response', CIs=T, plotit=F,
+                at = list(signal1_cueEv = signal_vals,
+                          noise2frames_behav = noise_vals)) %>%
+  mutate(signal1_cueEv = as.numeric(signal1_cueEv))
+
+# plot emmeans over raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0, respPeriod=='signal2', cueIdx < 3) %>%
+  ggplot(aes(x=noise2frames_behav, y=zConf)) +
+  theme_bw() + geom_hline(yintercept=0, linetype='dashed') + 
+  scale_color_gradient2() + scale_fill_gradient2() + 
+  geom_point(aes(color=signal1_cueEv), size=1.5, position=position_jitter(height=0.1)) + 
+  # add emmeans
+  geom_line(aes(xvar, yvar, color=signal1_cueEv, group=signal1_cueEv), emm_df, linewidth=0.5) +
+  labs(title = 'human data', subtitle='signal2 confidence on 80% cue trials only')
+
+# emmeans(hm, eff ~ noise2frames_behav | signal1_cueEv, type='response', cov.reduce=range)
+```
+
+#### Effect of noise2 duration on confidence in signal2 decisions
+```{r conf ~ signal1ev + noise2frames: human, echo=F}
+
+# fit model
+hm <- inferenceData_tidy %>%
+    filter(catch_trial==0) %>%
+    filter(respPeriod == 'signal2', cueIdx < 3) %>%
+    # fit model
+    lm(zConf ~ noise2frames_behav * signal1_cueEv, .)
+
+# compute expected marginal means
+emm <- emmeans(hm, ~ noise2frames_behav | signal1_cueEv,                
+               at = list(noise2frames_behav = c(75, 100, 120),
+                         signal1_cueEv = c(-9, 2, 13)))
+
+# get predictor values from emmeans call
+noise_vals <- unique(summary(emm)$noise2frames_behav)
+signal_vals <- unique(summary(emm)$signal1_cueEv)
+
+# quick plot
+emmip(hm, signal1_cueEv ~ noise2frames_behav, type='response', CIs=T,
+      at = list(signal1_cueEv = signal_vals,
+                noise2frames_behav = noise_vals))
+
+# save plot-formatted emmeans
+emm_df <- emmip(hm, signal1_cueEv ~ noise2frames_behav, type='response', CIs=T, plotit=F,
+                at = list(signal1_cueEv = signal_vals,
+                          noise2frames_behav = noise_vals)) %>%
+  mutate(signal1_cueEv = as.numeric(signal1_cueEv))
+
+# plot emmeans over raw data
+hp <- inferenceData_tidy %>%
+  filter(catch_trial == 0, respPeriod=='signal2', cueIdx < 3) %>%
+  ggplot(aes(x=noise2frames_behav, y=zConf)) +
+  theme_bw() + geom_hline(yintercept=0, linetype='dashed') + 
+  scale_color_gradient2() + scale_fill_gradient2() + 
+  geom_point(aes(color=signal1_cueEv), size=1.5, position=position_jitter(height=0.1)) + 
+  # add emmeans
+  geom_line(aes(xvar, yvar, color=signal1_cueEv, group=signal1_cueEv), emm_df, linewidth=2) +
+  labs(title = 'human data', subtitle='signal2 confidence on 80% cue trials only') +
+  xlim(75, 150)
+
+emmeans(hm, eff ~ noise2frames_behav | signal1_cueEv, type='response', cov.reduce=range)
+```
+
+
+
+
+```{r julia analyses}
+
+julia_df %>%
+  mutate(choose2 = ifelse(response==2, 1, 0)) %>%
+  ggplot(aes(x=cueIdx, y=choose2)) + 
+  theme_bw() +
+  geom_col()
+
+
+
+julia_df %>%
+  mutate(choose1 = ifelse(response==1, 1, 0)) %>%
+  ggplot(aes(x=cueIdx, y=choose1)) + 
+  theme_bw() +
+  geom_col()
+
+julia_df %>%
+  mutate(choose1 = ifelse(response==1, 1, 0)) %>%
+  ggplot(aes(x=cueIdx, y=accuracy)) + 
+  theme_bw() +
+  stat_summary(fun='mean', geom='bar') + 
+  geom_hline(yintercept = 0.5)
+
+
+
+inferenceData_tidy %>%
+  filter(subID==22) %>%
+  ggplot(aes(x=cueIdx, y=cueCongChoice)) +
+  stat_summary(fun='mean', geom='bar') + 
+  geom_hline(yintercept = 0.5)
+
+```
