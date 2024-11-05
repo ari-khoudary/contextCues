@@ -1,0 +1,457 @@
+---
+title: "Pilot results - July 2024"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+## load libraries & data, tidy data
+```{r setup, include=FALSE}
+library(tidyverse)
+library(patchwork)
+library(wesanderson)
+
+inferenceData_tidy <- read.csv('poster_data/inference_data.csv')
+learningData_tidy <- read.csv('poster_data/learning_data.csv')
+modelData <- read.csv('poster_data/0.52coh_10_thresh_confidence.csv')
+
+inferenceData_tidy <- inferenceData_tidy %>% filter(pilotGroup == 'group2')
+nSubs <- length(unique(inferenceData_tidy$subID))
+
+modelData <- modelData %>%
+  filter(is.na(noise1Frames)==F) %>%
+  mutate(cue = factor(cue),
+         threshold = factor(threshold),
+         congruent = case_when(cue==0.8 & congruent==1 ~ 'congruent',
+                               cue==0.8 & congruent==0 ~ 'incongruent',
+                               cue==0.5 & congruent==1 ~ 'neutral',
+                               cue==0.5 & congruent==0 ~ 'neutral'),
+         congruent = factor(congruent, levels=c('incongruent', 'neutral', 'congruent')),
+         accuracyFactor = factor(forcedChoice, levels=c(1,0), labels=c('correct', 'incorrect')))
+outdir <- ('poster_plots/')
+```
+
+
+## accuracy: simulated / predicted
+```{r}
+individualSummary_model <- modelData %>%
+  group_by(subID) %>%
+  mutate(logRT = log(RT),
+         zlogRT = scale(logRT)) %>%
+  group_by(subID, congruent) %>%
+  summarise(propCorrect_raw = mean(rawChoice, na.rm=T),
+            propCorrect_forced = mean(forcedChoice),
+            meanRT = mean(RT))
+
+groupSummary_model <- modelData %>%
+  group_by(congruent) %>%
+  summarise(propCorrect_raw = mean(rawChoice, na.rm=T),
+            propCorrect_forced = mean(forcedChoice),
+            meanRT = mean(RT),
+            raw_sem = sd(rawChoice, na.rm=T)/sqrt(9),
+            forced_sem = sd(forcedChoice)/sqrt(9),
+            RT_sem = sd(RT)/sqrt(9))
+
+ggplot(groupSummary_model, aes(x=congruent, y=propCorrect_forced, color=congruent, fill=congruent)) +
+  geom_hline(yintercept = 0.5, linewidth=0.15) +
+  geom_col(position = position_dodge(width=0.9), width=0.75, fill='white', linewidth=2) +
+  geom_errorbar(aes(ymin=propCorrect_forced - forced_sem, ymax=propCorrect_forced + forced_sem), width=0.1,
+                position = position_dodge(width=0.9), color='gray25') +
+  geom_point(data=individualSummary_model, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.15), 
+             color='gray25', shape=21, size=2, alpha=0.7) +
+  geom_point(size=2, color='gray25', position = position_dodge(width=0.25)) +
+  labs(y = 'proportion correct', x='') + 
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic() +
+  theme(legend.position = 'none',
+        text = element_text(size=16),
+        #axis.text.x = element_text(size=18),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=18),
+        axis.text.x = element_blank())
+ggsave(paste0(outdir, 'accuracy_model.png'), width=4.5, height=4, dpi='retina')
+```
+
+## accuracy: measured / observed
+```{r accuracy summary, echo=FALSE, message=FALSE, warning=FALSE, out.width='60%'}
+inferenceData_tidy <- inferenceData_tidy %>% 
+  mutate(accuracyFactor=factor(accuracy, levels=c(1,0), labels=c('correct', 'incorrect')),
+         congruent = factor(congruent, levels=c('incongruent', 'neutral', 'congruent')))
+
+# compute accuracy within individuals
+individualSummary <- inferenceData_tidy %>%
+  group_by(subID, congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            meanRT = mean(zlogRT),
+            meanZConf = mean(zConf))
+
+# compute accuracy across individuals
+groupSummary <- inferenceData_tidy %>%
+  group_by(congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            accuracy_sem = sd(accuracy) / sqrt(nSubs),
+            meanRT = mean(zlogRT),
+            RT_sem = sd(zlogRT) / sqrt(nSubs),
+            meanConf = mean(zConf),
+            conf_sem = sd(zConf)/sqrt(nSubs)) 
+
+# plot accuracy
+ggplot(groupSummary, aes(x=congruent, y=propCorrect, fill=congruent)) +
+  ylim(0,1) +
+  geom_hline(yintercept=0.5, linewidth=0.15) +
+  geom_col(position = position_dodge(width=0.25), width = 0.9) +
+  geom_errorbar(aes(ymin=propCorrect - accuracy_sem, ymax = propCorrect + accuracy_sem), width=0.1,
+                position = position_dodge(width=0.25), color='gray25') +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  geom_point(data=individualSummary, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.15), 
+             color='gray25', shape=21, size=2, alpha=0.7) +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic() +
+  labs(y = 'proportion correct') +
+  theme(legend.position = 'none',
+        text = element_text(size=16),
+        #axis.text.x = element_text(size=18),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=18),
+        axis.text.x = element_blank())
+ggsave(paste0(outdir, 'accuracy.png'), width=4.5, height=4, dpi='retina')
+```
+
+takeaways:
+* behavior follows predictions! 
+* accuracy increases as a function of cue predictiveness 
+* noise frames impair decision accuracy relative to noise-free flickers used during calibration -- accuracy is slightly above chance for neutral trials when theoretically it should be at the level of performance we calibrated to
+
+
+## RT plot: simulated / predicted
+```{r}
+individualSummary_model <- modelData %>%
+  group_by(subID, congruent, accuracyFactor) %>%
+  summarise(meanRT = mean(RT))
+
+groupSummary_model <- modelData %>%
+  group_by(congruent, accuracyFactor) %>%
+  summarise(meanRT = mean(RT),
+            RT_sem = sd(RT)/sqrt(9))
+
+ggplot(groupSummary_model, aes(x=congruent, y=meanRT, color=congruent, fill=congruent)) +
+  facet_wrap(~ accuracyFactor) + 
+  geom_col(position = position_dodge(width=0.9), width=0.9, fill='white', linewidth=2) +
+  geom_errorbar(aes(ymin=meanRT - RT_sem, ymax=meanRT + RT_sem), width=0.1,
+                position = position_dodge(width=0.9), color='gray25') +
+  geom_point(data=individualSummary_model, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.15), 
+             color='gray25', shape=21, size=2, alpha=0.7) +
+  geom_point(size=2, color='gray25', position = position_dodge(width=0.25)) +
+  labs(y='response time') +
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic() +
+  theme(legend.position = 'none',
+        text = element_text(size=16),
+        #axis.text.x = element_text(size=18),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=18),
+        strip.text = element_text(size=22),
+        axis.text.x = element_blank())
+ggsave(paste0(outdir, 'RT_model.png'), width=7, height=4)
+```
+
+## RT plot: measured / observed
+```{r RT, warning=FALSE, echo=FALSE, message=FALSE, out.width='60%'}
+groupSummary <- inferenceData_tidy %>%
+  mutate(accuracyFactor = factor(accuracy, levels=c(1,0), labels=c('correct', 'incorrect'))) %>%
+  group_by(accuracyFactor, congruent) %>%
+  summarise(meanRT = mean(zlogRT),
+         RT_sem = sd(zlogRT) / sqrt(nSubs),
+         meanConf = mean(zConf),
+         conf_sem = sd(zConf) / sqrt(nSubs))
+
+# then compute individual summaries
+individualSummary <- inferenceData_tidy %>%
+  group_by(accuracyFactor, congruent, subID) %>%
+  summarise(meanRT = mean(zlogRT),
+            meanConf = mean(zConf))
+
+# plot accuracy * RT interaction
+groupSummary %>%
+ggplot(aes(x=congruent, y=meanRT, fill=congruent)) +
+  facet_wrap(~accuracyFactor) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_col(color='gray25') + 
+  geom_errorbar(aes(ymin=meanRT - RT_sem, ymax = meanRT + RT_sem), width=0.1,
+                color='gray25') +
+  geom_point(data=individualSummary, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.25), 
+             color='gray25', shape=21, size=2, alpha=0.9) +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  labs(x='', y = 'response time') + 
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic() +
+  theme(legend.position = 'none',
+        text = element_text(size=16),
+        #axis.text.x = element_text(size=18),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=18),
+        strip.text = element_text(size=22),
+        axis.text.x = element_blank())
+ggsave(paste0(outdir, 'RT.png'), width=7, height=4)
+```
+
+takeaway:
+* behavior largely follows predictions! one difference is that neutral is slightly slower in the human data, whereas the model predicts that incongruent should be the slowest. but the pattern that we see in the data makes sense to us --
+* participants make correct responses faster when the cue is congruent with visual evidence
+* participants make *in*correct responses faster when the cue is *in*congruent with visual evidence 
+
+
+******************************************************************************
+
+## confidence plot
+```{r confidence, echo=FALSE, warning=FALSE, out.width='60%'}
+groupSummary %>%
+  ggplot(aes(x=congruent, y=meanConf, fill=congruent)) +
+  theme_classic() + 
+  facet_wrap(~accuracyFactor) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_col(color='gray25') + 
+  geom_errorbar(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem), width=0.1,
+                color='gray25') +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  geom_point(data=individualSummary, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.25), 
+             color='gray25', shape=21, size=2, alpha=0.9) +
+  labs(x='', y = 'decision confidence') + 
+  scale_fill_brewer(palette = "Dark2") +
+  scale_color_brewer(palette = "Dark2") +
+  theme_classic() +
+  theme(legend.position = 'none',
+        text = element_text(size=16),
+        #axis.text.x = element_text(size=18),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=18),
+        strip.text = element_text(size=22),
+        axis.text.x = element_blank())
+ggsave(paste0(outdir, 'confidence.png'), width=7, height=4)
+```
+
+takeaway
+* participants are more confident in their correct responses when the cue is congruent with visual evidence, and *less* confident in their incorrect responses when the cue is incongruent with visual evidence
+* participants are less confident in their correct responses when the cue is incongruent with visual evidence, and more confident in their incorrect responses when the cue is incongruent with visual evidence 
+
+
+## accumulator figure with noise periods
+# load & tidy data
+```{r}
+library(tidyverse)
+blue = 'dodgerblue1'
+orange = 'darkorange1'
+brown = 'saddlebrown'
+
+# load in data
+dynamic_congruent <- read.csv('../../presentations/noiseFrameData/dynamic_strong_congruent.csv', header = F) %>%
+  rename(memory = V1, vision = V2, dv = V3) %>%
+  mutate(time = 1:nrow(.))
+dynamic_congruent_neutral <- read.csv('../../presentations/noiseFrameData/dynamic_neutral_congruent.csv', header = F) %>%
+  rename(memory = V1, vision = V2, dv = V3) %>%
+  mutate(time = 1:nrow(.))
+dynamic_incongruent <- read.csv('../../presentations/noiseFrameData/dynamic_strong_incongruent.csv', header = F) %>%
+  rename(memory = V1, vision = V2, dv = V3) %>%
+  mutate(time = 1:nrow(.))
+dynamic_incongruent_neutral <- read.csv('../../presentations/noiseFrameData/dynamic_neutral_incongruent.csv', header = F) %>%
+  rename(memory = V1, vision = V2, dv = V3) %>%
+  mutate(time = 1:nrow(.))
+```
+
+# plot congruent & incongruent traces
+```{r}
+# plot congruent
+foo <- rnorm(1500)
+dynamic_congruent %>%
+  ggplot(aes(x=time)) + 
+  ylim(-250, 250) + 
+  xlim(0, 1500) +
+  annotate('rect', xmin=0, xmax=350, ymin=-250, ymax=250, alpha=0.2, fill='gray') + 
+  annotate('rect', xmin=730, xmax=730+500, ymin=-250, ymax=250, alpha=0.2, fill='gray') + 
+  geom_hline(yintercept=c(0, 250),linewidth=c(0.25, 0.5)) + 
+  geom_line(aes(y=vision), color=orange, linewidth=1) + 
+  geom_line(aes(y=memory), color=blue,linetype='solid', linewidth=1) + 
+  geom_line(data=dynamic_congruent_neutral, aes(y=memory), color=blue, linetype='dotted', linewidth=1) +
+  geom_line(data=dynamic_congruent, aes(y=dv), color=brown, linewidth=1.25) +
+  geom_line(data=dynamic_congruent_neutral, aes(y=dv), color=brown, linewidth=1.25, linetype='dotted') +
+  geom_line(data=dynamic_incongruent, aes(y=cumsum(foo)*1), color=brown, linewidth=1.25, linetype='dashed') +
+  theme_classic()  +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank())
+
+ggsave(paste0(outdir,'congruentTrace.png'), width=4, height=3, dpi='retina')
+ggsave(paste0(outdir,'bothTraces.png'), width=4, height=3, dpi='retina')
+
+# plot incongruent
+dynamic_incongruent %>%
+  ggplot(aes(x=time)) + 
+  ylim(-250, 250) + 
+  annotate('rect', xmin=0, xmax=350, ymin=-250, ymax=250, alpha=0.2, fill='gray') + 
+  annotate('rect', xmin=730, xmax=730+500, ymin=-250, ymax=250, alpha=0.2, fill='gray') + 
+  geom_hline(yintercept=c(0, 250), linewidth=c(0.25, 0.5)) + 
+  geom_line(aes(y=memory), color=blue, linewidth=1) + 
+  geom_line(data=dynamic_incongruent_neutral, aes(y=memory), color=blue, linetype='dotted', linewidth=1) +
+  geom_line(aes(y=vision),  color=orange, linewidth=1) + 
+  geom_line(aes(y=dv),color=brown, linewidth=1.25) + 
+  geom_line(data=dynamic_incongruent_neutral, aes(y=dv), size=0.75, color=brown, linetype='dotted', linewidth=1) + 
+  theme_classic() + 
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank())
+ggsave(paste0(outdir, 'incongruentTrace.png'), width=4, height=3, dpi='retina')
+```
+
+
+
+############### ari playground
+## confidence simulation
+```{r confidence, echo=FALSE, warning=FALSE, out.width='60%'}
+
+df <- modelData %>% mutate(inverseConf = 1/accumulatorDifference)
+
+df_group <- df %>%
+  group_by(congruent, accuracyFactor) %>%
+  summarise(confidence1 = mean(accumulatorDifference),
+            confidence1_sem = sd(accumulatorDifference)/sqrt(9),
+            confidence2 = mean(vizDifference),
+            confidence2_sem = sd(vizDifference)/sqrt(9),
+            confidence3 = mean(inverseConf),
+            confidence3_sem = sd(inverseConf)/sqrt(9))
+
+df_ind <- df %>%
+  group_by(congruent, accuracyFactor, subID) %>%
+  summarise(confidence1 = mean(accumulatorDifference),
+            confidence2 = mean(vizDifference),
+            confidence3 = mean(inverseConf))
+
+
+## confidence as absolute difference in accumulator position
+df_group %>%
+  ggplot(aes(x=congruent, y=confidence1, fill=congruent,color=congruent)) +
+  theme_classic() + 
+  facet_wrap(~accuracyFactor) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_col(fill='white',linewidth=2) + 
+  geom_errorbar(aes(ymin=confidence1 - confidence1_sem, ymax = confidence1 + confidence1_sem), width=0.1,
+                color='gray25') +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  geom_point(data=df_ind, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.25), 
+             color='gray25', shape=21, size=2, alpha=0.9) +
+  labs(y = 'decision confidence', title='abs(memoryAccumulator(RT) - visionAccumulator(RT))') + 
+  #scale_fill_brewer(palette = "Dark2") +
+  #scale_color_brewer(palette = "Dark2") +
+  theme_classic() +
+  theme(legend.position = 'none',
+        axis.title.x = element_blank())
+ggsave('confidenceModel_absOnly.png', width=6)
+
+
+## 
+df_group %>%
+  ggplot(aes(x=congruent, y=confidence3, fill=congruent,color=congruent)) +
+  theme_classic() + 
+  facet_wrap(~accuracyFactor) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_col(fill='white',linewidth=2) + 
+  geom_errorbar(aes(ymin=confidence3 - confidence3_sem, ymax = confidence3 + confidence3_sem), width=0.1,
+                color='gray25') +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  geom_point(data=df_ind, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.25), 
+             color='gray25', shape=21, size=2, alpha=0.9) +
+  labs(y = 'decision confidence', title='confidence as inverse difference') + 
+  #scale_fill_brewer(palette = "Dark2") +
+  #scale_color_brewer(palette = "Dark2") +
+  theme_classic() +
+  theme(legend.position = 'none',
+        text = element_text(size=16),
+        #axis.text.x = element_text(size=18),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(size=18),
+        strip.text = element_text(size=22),
+        axis.text.x = element_blank())
+
+ggsave(paste0(outdir,'confidence_model.png'), width=7, height=4)
+```
+
+
+# can we get a confidence spike in the second noise period too??
+```{r}
+df <- df %>%
+  mutate(respPeriod = case_when(RT <= noise1Frames ~ 1,
+                                RT <= noise1Frames + signal1Frames ~ 2,
+                                RT <= noise1Frames + signal1Frames + noise2Frames ~ 3,
+                                RT > noise1Frames + signal1Frames + noise2Frames ~ 4))
+
+df_group <- df %>%
+  group_by(congruent, accuracyFactor, respPeriod) %>%
+  summarise(confidence = mean(inverseConf),
+            sem = sd(inverseConf,na.rm=T)/sqrt(9))
+
+
+df_ind <- df %>%
+  group_by(congruent, accuracyFactor, respPeriod, subID) %>%
+  summarise(confidence = mean(inverseConf))
+
+df_group %>%
+  ggplot(aes(x=respPeriod, y=confidence, color=congruent, fill=congruent, alpha=congruent)) +
+  geom_pointrange(aes(ymin=confidence - sem, ymax = confidence + sem)) +
+  geom_line(aes(group=congruent, alpha=congruent)) +
+  scale_alpha_manual(values=c(1, 0.5, 0.5)) +
+  theme_classic() +
+  labs(x='', y = 'confidence') +
+  theme(legend.position = 'top') 
+ggsave(paste0(outdir, 'confidenceSpike_model.png'), width=5, height=4)
+```
+
+
+#### trying to see if lowering threshold will give us the spike; from 10 -> 7
+```{r}
+df <- read.csv('poster_data/0.52coh_10_thresh_confidence.csv') %>%
+  filter(is.na(noise1Frames)==F) %>%
+  mutate(inverseConf = 1/accumulatorDifference,
+         cue = factor(cue),
+         threshold = factor(threshold),
+         accuracyFactor = factor(forcedChoice, levels=c(1,0), labels=c('correct', 'incorrect')),
+         congruent = case_when(cue==0.8 & congruent==1 ~ 'congruent',
+                               cue==0.8 & congruent==0 ~ 'incongruent',
+                               cue==0.5 & congruent==1 ~ 'neutral',
+                               cue==0.5 & congruent==0 ~ 'neutral'),
+         congruent = factor(congruent, levels=c('incongruent', 'neutral', 'congruent')),
+         respPeriod = case_when(RT <= noise1Frames ~ 1,
+                                RT <= noise1Frames + signal1Frames ~ 2,
+                                RT <= noise1Frames + signal1Frames + noise2Frames ~ 3,
+                                RT > noise1Frames + signal1Frames + noise2Frames ~ 4))
+
+df_group <- df %>%
+  group_by(congruent, respPeriod) %>%
+  summarise(confidence = mean(inverseConf),
+            sem = sd(inverseConf,na.rm=T)/sqrt(9),
+            rt = mean(RT),
+            rt_sem = sd(RT)/sqrt(9))
+
+
+df_ind <- df %>%
+  group_by(congruent, respPeriod, subID) %>%
+  summarise(confidence = mean(inverseConf),
+            rt = mean(RT))
+
+df_group %>%
+  ggplot(aes(x=respPeriod, y=confidence, color=congruent, fill=congruent, alpha=congruent)) +
+  geom_pointrange(aes(ymin=confidence - sem, ymax = confidence + sem)) +
+  geom_line(aes(group=congruent, alpha=congruent)) +
+  scale_alpha_manual(values=c(1, 0.5, 0.5)) +
+  theme_classic() +
+  labs(x='', y = 'confidence') +
+  theme(legend.position = 'top') 
+ggsave(paste0(outdir, 'confidenceSpike_model.png'), width=5, height=4)
+```
+

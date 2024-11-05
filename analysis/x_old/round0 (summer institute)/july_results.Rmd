@@ -1,0 +1,518 @@
+---
+title: "Pilot results - July 2024"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+editor_options: 
+  chunk_output_type: console
+---
+
+### Participants
+
+-   total subjects collected = 13
+    -   first 3 excluded because of an experiment bug that taught them incorrect cue probabilities during learning
+    -   additional 1 excluded because of another bug during learning, and then human (ari) error in addressing the bug during the session
+-   **total subjects in the sample = 9**
+
+### Design details
+
+-   2 pairs of grayscale scene images randomly chosen
+-   2 pairs of triadic color borders randomly chosen
+-   3 cue levels: 50%, 80% scene A, 80% scene B
+-   25 learning trials per cue \* 3 cues = 75 learning trials total
+-   perceptual decision accuracy calibrated to 70% for each image using 2 QUEST staircases
+-   inference trial breakdown
+    -   100 trials for each 80% cue \* 2 cues = 200 trials
+    -   50 trials for the 50% cue = 50 trials
+    -   10 "catch" trials for each 80% cue = 20 trials
+    -   5 "catch" trials for the 50% cue = 5 (rounded up to 6 for target assignment convenience)
+    -   **total inference trials per person = 276**
+- all time-varying components of the stimuli were determined using an exponential distribution (lambda = 0.05) to achieve a fixed hazard rate across trials
+
+| Trial Period | Min Duration | Max Duration | Median Duration |
+| ------------ | ------------ | ------------ | --------------- |
+| first noise  | 1.25 seconds | 3.25 seconds | 1.48 seconds |
+| first signal | 0.38 seconds | 2.38 seconds | 0.62 seconds |
+| second noise | 1.25 seconds | 3.25 seconds | 1.48 seconds |
+
+maximum flicker duration = 9 seconds
+
+### Data tidying
+
+-   trials with no choice or confidence RT were excluded (n=46)
+-   catch trials were excluded
+-   reaction times were log-transformed and then z-scored within participant across all conditions
+-   confidence responses were z-scored within participant across all conditions
+- all values shown are means +/- 1 SEM
+
+****
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(patchwork)
+
+inferenceData_tidy <- read.csv('poster_data/inference_data.csv')
+learningData_tidy <- read.csv('poster_data/learning_data.csv')
+
+inferenceData_tidy <- inferenceData_tidy %>% filter(pilotGroup == 'group2')
+nSubs <- length(unique(inferenceData_tidy$subID))
+```
+
+### Part 1: group behavior averaged over time
+```{r accuracy summary, echo=FALSE, message=FALSE, warning=FALSE, out.width='60%'}
+inferenceData_tidy <- inferenceData_tidy %>% 
+  mutate(accuracyFactor=factor(accuracy, levels=c(1,0), labels=c('correct', 'incorrect')),
+         congruent = factor(congruent, levels=c('incongruent', 'neutral', 'congruent')))
+
+# compute accuracy within individuals
+individualSummary <- inferenceData_tidy %>%
+  group_by(subID, congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            meanRT = mean(zlogRT),
+            meanZConf = mean(zConf))
+
+# compute accuracy across individuals
+groupSummary <- inferenceData_tidy %>%
+  group_by(congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            accuracy_sem = sd(accuracy) / sqrt(nSubs),
+            meanRT = mean(zlogRT),
+            RT_sem = sd(zlogRT) / sqrt(nSubs),
+            meanConf = mean(zConf),
+            conf_sem = sd(zConf)/sqrt(nSubs)) 
+
+# plot accuracy
+ggplot(groupSummary, aes(x=congruent, y=propCorrect, fill=congruent)) +
+  ylim(0,1) +
+  theme_classic() + 
+  geom_hline(yintercept=0.5, linewidth=0.15) +
+  geom_col(position = position_dodge(width=0.25), width = 0.9) +
+  geom_errorbar(aes(ymin=propCorrect - accuracy_sem, ymax = propCorrect + accuracy_sem), width=0.1,
+                position = position_dodge(width=0.25), color='gray25') +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  geom_point(data=individualSummary, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.15), 
+             color='gray25', shape=21, size=2, alpha=0.7) +
+  labs(title = 'Figure 1: Accuracy', x='') +
+  theme(text = element_text(size=14),
+        legend.position = 'none')
+```
+
+```{r RT, warning=FALSE, echo=FALSE, message=FALSE, out.width='60%'}
+groupSummary <- inferenceData_tidy %>%
+  mutate(accuracyFactor = factor(accuracy, levels=c(1,0), labels=c('correct', 'incorrect'))) %>%
+  group_by(accuracyFactor, congruent) %>%
+  summarise(meanRT = mean(zlogRT),
+         RT_sem = sd(zlogRT) / sqrt(nSubs),
+         meanConf = mean(zConf),
+         conf_sem = sd(zConf) / sqrt(nSubs))
+
+# then compute individual summaries
+individualSummary <- inferenceData_tidy %>%
+  group_by(accuracyFactor, congruent, subID) %>%
+  summarise(meanRT = mean(zlogRT),
+            meanConf = mean(zConf))
+
+# plot accuracy * RT interaction
+groupSummary %>%
+ggplot(aes(x=congruent, y=meanRT, fill=congruent)) +
+  theme_classic() + 
+  facet_wrap(~accuracyFactor) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_col(color='gray25') + 
+  geom_errorbar(aes(ymin=meanRT - RT_sem, ymax = meanRT + RT_sem), width=0.1,
+                color='gray25') +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  geom_point(data=individualSummary, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.25), 
+             color='gray25', shape=21, size=2, alpha=0.9) +
+  labs(title = 'Figure 2: RT by choice accuracy', x='') + 
+  theme(text = element_text(size=14),
+        legend.position = 'none')
+```
+
+```{r confidence, echo=FALSE, warning=FALSE, out.width='60%'}
+groupSummary %>%
+  ggplot(aes(x=congruent, y=meanConf, fill=congruent)) +
+  theme_classic() + 
+  facet_wrap(~accuracyFactor) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_col(color='gray25') + 
+  geom_errorbar(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem), width=0.1,
+                color='gray25') +
+  geom_point(size=2, color='gray25',position = position_dodge(width=0.25)) +
+  geom_point(data=individualSummary, position=position_jitterdodge(dodge.width=0.25, jitter.width = 0.25), 
+             color='gray25', shape=21, size=2, alpha=0.9) +
+  labs(title = 'Figure 3: confidence by choice accuracy', x='') + 
+  theme(text = element_text(size=14),
+        legend.position = 'none')
+```
+
+```{r RT conf interaction, warning=FALSE, message=FALSE,echo=FALSE, out.width='60%'}
+groupSummary %>%
+  ggplot(aes(x=congruent, y=meanRT, group=accuracyFactor)) +
+  facet_grid(~ accuracyFactor) + 
+  geom_hline(yintercept=0, linewidth=0.15) + 
+  geom_pointrange(aes(ymin=meanRT - RT_sem, ymax = meanRT + RT_sem, color='black')) +
+  geom_line() +
+  geom_pointrange(aes(y=meanConf, ymin=meanConf - conf_sem, ymax = meanConf + conf_sem, color='gray50')) +
+  geom_line(aes(y=meanConf), color='gray50', linetype='dashed') +
+  labs(y = 'z-score value', x='', title = 'Figure 4: RT, confidence, accuracy, congruence') +
+  theme_classic() +
+  scale_color_identity(guide = "legend",
+                       name = '',
+                       labels = c('RT', 'confidence')) +
+    theme(text = element_text(size=14))
+```
+
+### Part 1 takeaways
+
+on average...
+
+* accuracy increases as a function of cue predictiveness (Fig1)
+* noise frames impair decision accuracy relative to noise-free flickers used during calibration -- accuracy is slightly above chance for neutral trials when theoretically it should be at the level of performance we calibrated to (70%; Fig1)
+* participants make correct responses faster when the cue is congruent with visual evidence (Fig2, Fig4)
+* participants make *in*correct responses faster when the cue is *in*congruent with visual evidence (Fig2, Fig4)
+* participants are more confident in their correct responses when the cue is congruent with visual evidence, and *less* confident in their incorrect responses when the cue is incongruent with visual evidence (Fig3, Fig4)
+* participants are less confident in their correct responses when the cue is incongruent with visual evidence, and more confident in their incorrect responses when the cue is incongruent with visual evidence (Fig3, Fig4)
+* we've captured the inverse relationship between RT and confidence characteristic of evidence accumulation! (Fig4)
+
+***
+
+### Part 2: group behavior as functions of time
+```{r accByRT, echo=FALSE, warning=FALSE, message=FALSE, out.width="60%"}
+
+rtSummary_group <- inferenceData_tidy %>%
+    group_by(rt_quartile, congruent) %>%
+    summarise(propCorrect = mean(accuracy),
+            sem = sd(accuracy)/sqrt(nSubs),
+            meanConf = mean(zConf),
+            conf_sem = sd(zConf)/sqrt(nSubs))
+
+rtSummary_individual <- inferenceData_tidy %>%
+  group_by(subID, rt_quartile, congruent) %>%
+  summarise(propCorrect = mean(accuracy))
+
+acc <- rtSummary_group %>%
+  ggplot(aes(x=rt_quartile, y=propCorrect, color=congruent,group=congruent)) +
+  geom_hline(yintercept=0.5, linewidth=0.15) + 
+  geom_pointrange(aes(ymin=propCorrect - sem, ymax = propCorrect + sem)) +
+  geom_line() +
+  theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size=14),
+        legend.text = element_text(size=10))
+
+conf <- rtSummary_group %>%
+  ggplot(aes(x=rt_quartile, y=meanConf, color=congruent,group=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) + 
+  geom_pointrange(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(y='confidence') +
+  theme(plot.title = element_text(hjust = 0.5),
+        text = element_text(size=14),
+        legend.text = element_text(size=10))
+
+acc + conf + plot_layout(guides='collect') + plot_annotation(title='Figure 5: accuracy & confidence as a function of RT')
+```
+
+```{r respPeriod plots, message=FALSE, echo=FALSE, out.width="75%"}
+tpSummary_group <- inferenceData_tidy %>%
+  filter(is.na(respPeriod)==F) %>%
+  mutate(respPeriod = factor(respPeriod, levels=c(1,2,3,4),
+                             labels = c('noise1', 'signal1','noise2','signal2'))) %>%
+  group_by(respPeriod, congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            accuracy_sem = sd(accuracy)/sqrt(nSubs),
+            meanConf = mean(zConf),
+            conf_sem = sd(zConf)/sqrt(nSubs),
+            meanRT = mean(zlogRT),
+            RT_sem = sd(zlogRT)/sqrt(nSubs))
+
+tpSummary_individual <- inferenceData_tidy %>%
+  filter(is.na(respPeriod)==F) %>%
+  mutate(respPeriod = factor(respPeriod, levels=c(1,2,3,4),
+                             labels = c('noise1', 'signal1','noise2','signal2'))) %>% 
+  group_by(respPeriod, congruent, subID) %>%
+  summarise(propCorrect = mean(accuracy),
+            meanConf = mean(zConf),
+            meanRT = mean(zlogRT))
+
+# plot accuracy as a function of response period -- commented out text makes it a bar plot
+acc <- tpSummary_group %>%
+  ggplot(aes(x=respPeriod, y=propCorrect, color=congruent, fill=congruent)) +
+  geom_hline(yintercept=0.5, linewidth=0.15) +
+  #geom_col(position=position_dodge()) +
+  #geom_errorbar(aes(ymin=propCorrect - accuracy_sem, ymax = propCorrect + accuracy_sem), width=0.1,
+  #              position = position_dodge(width=0.9), color='gray25') + 
+  #geom_point(data=tpSummary_individual, position=position_jitterdodge(dodge.width=0.9, jitter.width = 0.15), 
+  #           color='gray25', shape=21, size=1, alpha=0.7) +
+  geom_pointrange(aes(ymin=propCorrect - accuracy_sem, ymax = propCorrect + accuracy_sem)) +
+  geom_line(aes(group=congruent)) + 
+  theme_classic() +
+  labs(x='', y='accuracy') +
+  theme(legend.position = 'none')
+
+rt <- tpSummary_group %>%
+  ggplot(aes(x=respPeriod, y=meanRT, color=congruent, fill=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_pointrange(aes(ymin=meanRT - RT_sem, ymax = meanRT + RT_sem)) +
+  geom_line(aes(group=congruent)) + 
+  theme_classic() +
+  labs(x='', y = 'RT') +
+  theme(legend.position = 'none')
+
+# plot confidence as a function of response period -- commented out text makes it a bar plot
+conf <- tpSummary_group %>%
+  ggplot(aes(x=respPeriod, y=meanConf, color=congruent, fill=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  #geom_col(position=position_dodge()) +
+  #geom_errorbar(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem), width=0.1,
+  #              position = position_dodge(width=0.9), color='gray25') + 
+  #geom_point(data=tpSummary_individual, position=position_jitterdodge(dodge.width=0.9, jitter.width = 0.15), 
+  #          color='gray25', shape=21, size=1, alpha=0.7) +
+  geom_pointrange(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem)) +
+  geom_line(aes(group=congruent)) +
+  theme_classic() +
+  labs(x='', y = 'confidence') +
+  theme(legend.position = 'top')
+
+acc + rt + conf + 
+  plot_layout(guides='collect') + 
+  plot_annotation(title='Figure 6: behavior as a function of response period') &
+  theme(legend.position = 'bottom')
+```
+
+#### Summary
+
+- when the cue is congruent with visual evidence, accuracy decreases as a function of reaction time (Fig5)
+- when the cue is incongruent with visual evidence, accuracy *increases* as a function of reaction time (Fig5)
+- confidence globally decreases as a function of reaction time (Fig5)
+- when time is operationalized as the period of time within the trial when a participant responded, these effects remain -- accuracy increases with accumulation time for incongruent trials and decreases with accumulation time for incongruent trials (Fig6)
+- RTs increase steadily across trial periods, as expected. Responses are fastest for neutral trials in the first 2 parts of the trial structure
+- participants are far less confident in neutral responses made during the first noise period (Fig6)
+- spike in confidence for incongruent responses made during second noise period (Fig6)
+
+***
+
+```{r noise summaries, message=FALSE, echo=FALSE, out.width="70%"}
+
+tnSummary_group <- inferenceData_tidy %>%
+  group_by(totalNoise_quartile, congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            accuracy_sem = sd(accuracy)/sqrt(nSubs),
+            meanConf = mean(zConf),
+            conf_sem = sd(zConf)/sqrt(nSubs),
+            meanRT = mean(zlogRT),
+            RT_sem = sd(zlogRT)/sqrt(nSubs))
+
+tnSummary_individual <- inferenceData_tidy %>%
+  group_by(totalNoise_quartile, congruent, subID) %>%
+  summarise(propCorrect = mean(accuracy),
+            meanConf = mean(zConf),
+            meanRT = mean(zlogRT))
+
+# plot accuracy as a function of trial noise
+TN_acc <- tnSummary_group %>%
+  ggplot(aes(x=totalNoise_quartile, y=propCorrect, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0.5, linewidth=0.15) +
+  geom_pointrange(aes(ymin=propCorrect - accuracy_sem, ymax = propCorrect + accuracy_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'total trial noise', y = 'accuracy')
+
+# RT as a function of trial noise
+TN_rt <- tnSummary_group %>%
+  ggplot(aes(x=totalNoise_quartile, y=meanRT, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_pointrange(aes(ymin=meanRT - RT_sem, ymax = meanRT + RT_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x= 'total trial noise', y = 'RT')
+
+  # confidence as a function of trial noise
+TN_conf <- tnSummary_group %>%
+  ggplot(aes(x=totalNoise_quartile, y=meanConf, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_pointrange(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'total trial noise', y='confidence') 
+
+TN_acc + TN_rt + TN_conf + 
+  plot_layout(guides='collect') + 
+  plot_annotation(title='Figure 7: behavior as a function of total trial noise')
+
+### compute accuracy & confidence as a function of first trial noise & congruence ### 
+fnSummary_group <- inferenceData_tidy %>%
+  group_by(firstNoise_quartile, congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            accuracy_sem = sd(accuracy)/sqrt(nSubs),
+            meanConf = mean(zConf),
+            conf_sem = sd(zConf)/sqrt(nSubs),
+            meanRT = mean(zlogRT),
+            RT_sem = sd(zlogRT)/sqrt(nSubs))
+
+fnSummary_individual <- inferenceData_tidy %>%
+  group_by(firstNoise_quartile, congruent, subID) %>%
+  summarise(propCorrect = mean(accuracy),
+            meanConf = mean(zConf),
+            meanRT = mean(zlogRT))
+
+# plot accuracy as a function of trial noise
+FN_acc <- fnSummary_group %>%
+  ggplot(aes(x=firstNoise_quartile, y=propCorrect, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0.5, linewidth=0.15) +
+  geom_pointrange(aes(ymin=propCorrect - accuracy_sem, ymax = propCorrect + accuracy_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'first noise duration', y='accuracy')
+
+# RT as a function of trial noise
+FN_rt <- fnSummary_group %>%
+  ggplot(aes(x=firstNoise_quartile, y=meanRT, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_pointrange(aes(ymin=meanRT - RT_sem, ymax = meanRT + RT_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'first noise duration', y='RT')
+
+# confidence as a function of trial noise
+FN_conf <- fnSummary_group %>%
+  ggplot(aes(x=firstNoise_quartile, y=meanConf, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_pointrange(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'first noise duration', y='confidence')
+
+FN_acc + FN_rt + FN_conf + plot_layout(guides='collect') + 
+  plot_annotation(title='Figure 7B: behavior as a function of first noise duration') 
+
+#### compute accuracy and confidence as a function of second noise duration #### 
+snSummary_group <- inferenceData_tidy %>%
+  group_by(secondNoise_quartile, congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            accuracy_sem = sd(accuracy)/sqrt(nSubs),
+            meanConf = mean(zConf),
+            conf_sem = sd(zConf)/sqrt(nSubs),
+            meanRT = mean(zlogRT),
+            RT_sem = sd(zlogRT) / sqrt(nSubs))
+
+snSummary_individual <- inferenceData_tidy %>%
+  group_by(secondNoise_quartile, congruent, subID) %>%
+  summarise(propCorrect = mean(accuracy),
+            meanConf = mean(zConf),
+            meanRT = mean(zlogRT))
+
+# plot accuracy as a function of trial noise
+SN_acc <- snSummary_group %>%
+  ggplot(aes(x=secondNoise_quartile, y=propCorrect, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0.5, linewidth=0.15) +
+  geom_pointrange(aes(ymin=propCorrect - accuracy_sem, ymax = propCorrect + accuracy_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x='second noise duration', y='accuracy')
+
+SN_rt <- snSummary_group %>%
+  ggplot(aes(x=secondNoise_quartile, y=meanRT, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_pointrange(aes(ymin=meanRT - RT_sem, ymax = meanRT + RT_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'second noise duration', y='RT')
+
+# confidence as a function of trial noise
+SN_conf <- snSummary_group %>%
+  ggplot(aes(x=secondNoise_quartile, y=meanConf, color=congruent, fill=congruent, group=congruent)) +
+  geom_hline(yintercept=0, linewidth=0.15) +
+  geom_pointrange(aes(ymin=meanConf - conf_sem, ymax = meanConf + conf_sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(x = 'second noise duration', y='confidence')
+
+SN_acc + SN_rt + SN_conf + plot_layout(guides='collect') + 
+  plot_annotation(title='Figure 7C: behavior as a function of second noise duration') 
+```
+
+#### Summary
+- decreasing the global amount of signal in a trial (Figure 7A):
+  - generally decreases accuracy
+  - slightly decreases RTs on incongruent trials
+  - does not appear to affect confidence
+- increasing the first noise duration (Figure 7B):
+  - does not appear to exert substantive changes on behavior
+- increasing the second noise duration (Figure 7C):
+  - maybe decreases accuracy on incongruent trials?
+  - speeds incongruent RTs until it doesnt (4th quartile)
+  - maybe increases confidence for incongruent trials until it doesn't (4th quartile)
+  - maybe decreases confidence for neutral trials until it doesn't (4th quartile)
+
+***
+
+### Part 3: Behavior averaged over total time in the experiment
+```{r, message=FALSE, echo=FALSE}
+learningData_tidy %>%
+  mutate(congruent = factor(congruent, levels=c('incongruent', 'neutral', 'congruent'))) %>%
+  group_by(congruent, learning_time) %>%
+  summarise(meanRT = mean(zlogRT),
+            sem = sd(zlogRT)/sqrt(nSubs)) %>%
+  ggplot(aes(x=learning_time, y=meanRT, color=congruent, group=congruent)) +
+  geom_hline(yintercept = 0, linewidth=0.15) +
+  geom_pointrange(aes(ymin = meanRT - sem, ymax=meanRT + sem)) +
+  geom_line() +
+  theme_classic() +
+  labs(y='RT', x='time spent in cue learning', title='Figure 8: RTs over the course of cue learning')
+```
+
+```{r, message=FALSE, echo=FALSE}
+trial_quartile <- quantile(inferenceData_tidy$trial, names=F)
+inferenceData_tidy <- inferenceData_tidy %>%
+  mutate(trial_time = case_when(trial >= trial_quartile[1] & trial < trial_quartile[2] ~ 1,
+                                trial >= trial_quartile[2] & trial < trial_quartile[3] ~ 2,
+                                trial >= trial_quartile[3] & trial < trial_quartile[4] ~ 3,
+                                trial >= trial_quartile[4] ~ 4))
+acc <- inferenceData_tidy %>%
+  group_by(trial_time, congruent) %>%
+  summarise(propCorrect = mean(accuracy),
+            sem = sd(accuracy) / sqrt(nSubs)) %>%
+  ggplot(aes(x=trial_time, y=propCorrect, color=congruent, group=congruent)) +
+    geom_hline(yintercept = 0.5, linewidth=0.15) +
+    geom_pointrange(aes(ymin = propCorrect-sem, ymax=propCorrect+sem)) +
+    geom_line() +
+    theme_classic() +
+    labs(y='accuracy', x='time spent in the inference phase', title = 'Figure 9A')
+
+RT <- inferenceData_tidy %>%
+  group_by(trial_time, congruent) %>%
+  summarise(RT = mean(zlogRT),
+            sem = sd(zlogRT) / sqrt(nSubs)) %>%
+  ggplot(aes(x=trial_time, y=RT, color=congruent, group=congruent)) +
+    geom_hline(yintercept = 0, linewidth=0.15) +
+    geom_pointrange(aes(ymin = RT-sem, ymax=RT+sem)) +
+    geom_line() +
+    theme_classic() +
+    labs(y='RT', x='time spent in the inference phase', title = 'Figure 9B')
+
+conf <- inferenceData_tidy %>%
+  group_by(trial_time, congruent) %>%
+  summarise(conf = mean(zConf),
+            sem = sd(zConf) / sqrt(nSubs)) %>%
+  ggplot(aes(x=trial_time, y=conf, color=congruent, group=congruent)) +
+    geom_hline(yintercept = 0, linewidth=0.15) +
+    geom_pointrange(aes(ymin = conf-sem, ymax=conf+sem)) +
+    geom_line() +
+    theme_classic() +
+    labs(y='confidence', x='time spent in the inference phase', title = 'Figure 9C')
+
+acc + RT + conf + plot_layout(guides = 'collect', axis_titles = 'collect') + plot_annotation(title = 'Figure 9: behavior over the entire inference phase')
+```
+
+#### Summary
+- Figure 8: as people progress through the cue learning phase, they get slower at responding to targets that follow a neutral cue
+- Figure 9: as people gain more experience performing the cued inference task, 
+  - Fig 9A: they become more accurate on congruent trials and less accurate on neutral trials
+  - Fig 9B: they respond faster only on trials with non-neutral cues
+  - Fig 9C: they get more confident in general, but especially for decisions made with neutral cues
+- comparing 9A and 9C suggests that, at a coarse level, metacognitive sensitivity in the neutral condition *decreases* over the course of the experiment: participants' accuracy decreases but confidence increases, despite RTs staying the same. so their discrimination is getting worse, their RTs aren't necessarily signaling better performance, but they're still more confident than they were at the start. to be fair, this seems like it's mainly driven by really low confidence in the first half of inference. but it's still worth noting given the opposing trend in performance! 
