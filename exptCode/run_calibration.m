@@ -30,33 +30,25 @@ tStDev = 0.25;
 
 % set initial guess, which will be different for different desired
 % accuracies; prior threshold estimate and SD; this should cover all possible values pretty generously
-tGuess(1) = 0.6;
-tGuess(2) = 0.5;
+tGuess(1) = 0.8;
+tGuess(2) = 0.6;
 
-% For each stimulus, staircase, and calibration trial, record the value tested
-stair1Thresh    = zeros(nImages, calibrationTrialsPerImage);
-stair2Thresh    = stair1Thresh;
 % Tracks # presentations of each stimulus, staircase
 stair1Counter  = zeros(nImages, 1);
 stair2Counter = stair1Counter;
 
-% set up stimulus / staircase testing order
-stim_ind = [];
-
+% instantiate two staircases per image
 for stimIdx = 1:nImages
-    % instantiating quest staircase
     q1{stimIdx} = QuestCreate(tGuess(1), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
     q2{stimIdx} = QuestCreate(tGuess(2), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
-    stim_ind = ([stim_ind repmat(stimIdx, 1, calibrationTrialsPerImage)]);
-end
+ end
 
-trialOrder = Shuffle(1:calibrationTrialN);
-stim_ind   = stim_ind(trialOrder);
-
-% initialize flicker stream & structures to hold timing info
+% initialize flicker stream & structures to hold timing/staircase info
+stim_ind = Shuffle(repelem([1 2], calibrationTrialsPerImage));
 flickerStream = repmat([0; 1], nFrames/2, calibrationTrialN);
 responseFrames = zeros(calibrationTrialN, 1);
 flipTimes = zeros(nFrames, calibrationTrialN);
+trialStair = zeros(calibrationTrialN, 1);
 
 %% trial loop
 
@@ -65,12 +57,12 @@ for trial = 1: calibrationTrialN
     % get coherence value from interleaved staircases
     if mod(trial,2) == 1
         stair1Counter(target) = stair1Counter(target) + 1;
-        stair1Thresh(target, stair1Counter(target)) = QuestQuantile(q1{target});
-        trialCoherence = (squeeze(stair1Thresh(target, stair1Counter(target))));
+        trialCoherence = squeeze(QuestQuantile(q1{target}));
+        trialStair(trial) = 1;
     else
         stair2Counter(target) = stair2Counter(target) + 1;
-        stair2Thresh(target, stair2Counter(target)) = QuestQuantile(q2{target});
-        trialCoherence = (squeeze(stair2Thresh(target, stair2Counter(target))));
+        trialCoherence = squeeze(QuestQuantile(q2{target}));
+        trialStair(trial) = 2;
     end
 
     % get indices of non-noise frames
@@ -79,7 +71,8 @@ for trial = 1: calibrationTrialN
     % use coherence to determine number of target frames
     nTargetFrames = ceil(nImgFrames*trialCoherence);
     nLureFrames = nFrames/2 - nTargetFrames;
-    targetIdx = RandSample(imgIdx, [nTargetFrames 1]);
+    rIdx = randperm(nImgFrames);
+    targetIdx = imgIdx(rIdx(1:nTargetFrames));
     lureIdx = setdiff(imgIdx, targetIdx);
 
     % populate imgFrames with target, in proportion to coherence
@@ -128,7 +121,7 @@ for trial = 1: calibrationTrialN
 
         % scan for response
         if isnan(RT)
-            [keyIsDown, secs, keyCode] = KbCheck;
+            [keyIsDown, secs, keyCode] = KbCheck(-1);
             % quit if quit key is pressed
             if keyIsDown
                 if keyCode(respQuit)
@@ -139,7 +132,7 @@ for trial = 1: calibrationTrialN
                 if any(keyCode(imageResponseKeys))
                     RT = secs - flickerStart;
                     resp = find(keyCode(imageResponseKeys));
-                    respFrame = f;
+                    responseFrames(trial) = f;
                     break
                 end % if any...
             end % if keyIsDown
@@ -149,17 +142,13 @@ for trial = 1: calibrationTrialN
     % document actual duration of each flicker stream
     realDuration = GetSecs - flickerStart;
 
-    % record accuracy & store frame when response was made, update staircases
+    % compute accuracy and update staircases
     accuracy = resp==target;
-    responseFrames(trial,1) = respFrame;
+   
     if mod(trial,2) == 1
-        response(target, stair1Counter(target)) = accuracy;
-        RTs(target, stair1Counter(target))      = RT;
-        q1{target} = QuestUpdate(q1{target}, stair1Thresh(target, stair1Counter(target)), response(target, stair1Counter(target)));
-    else
-        response(target, stair2Counter(target)) = accuracy;
-        RTs(target, stair2Counter(target))      = RT;       
-        q2{target} = QuestUpdate(q2{target}, stair2Thresh(target, stair2Counter(target)), response(target, stair2Counter(target)));
+        q1{target} = QuestUpdate(q1{target}, trialCoherence, accuracy);
+    else  
+        q2{target} = QuestUpdate(q2{target}, trialCoherence, accuracy);
     end
 
     % end the trial after a response during calibration

@@ -17,4 +17,4 @@ spaceKey = KbName('space');
 FlushEvents('keyDown');
 
 % load KbCheck into memory now so later RTs are uniform
-[keyIsDown, secs, keyCode] = KbCheck;
+[keyIsDown, secs, keyCode] = KbCheck(-1);

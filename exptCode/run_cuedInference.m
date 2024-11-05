@@ -138,7 +138,7 @@ for trial = 1:inferenceTrialN_total
 
         % scan for response
         if isnan(RT)
-            [keyIsDown, secs, keyCode] = KbCheck;
+            [keyIsDown, secs, keyCode] = KbCheck(-1);
             % quit if quit key is pressed
             if keyIsDown
                 if keyCode(respQuit)
@@ -177,7 +177,7 @@ for trial = 1:inferenceTrialN_total
         end
         % allow response during ISI between flicker & confidence
         if isnan(RT)
-            [keyIsDown, secs, keyCode] = KbCheck;
+            [keyIsDown, secs, keyCode] = KbCheck(-1);
             % record response but keep flicker on screen for full duration
             if any(keyCode(imageResponseKeys))
                 RT = secs - flickerStart;
@@ -211,7 +211,7 @@ for trial = 1:inferenceTrialN_total
         end
         % scan for response
         if isnan(confRT) && GetSecs > isiFlip + inferenceISI
-            [keyIsDown, secs, keyCode] = KbCheck;
+            [keyIsDown, secs, keyCode] = KbCheck(-1);
             % quit if quit key is pressed
             if keyIsDown
                 if keyCode(respQuit)

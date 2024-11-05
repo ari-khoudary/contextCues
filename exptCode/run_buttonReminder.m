@@ -10,7 +10,7 @@ for target = 1:length(remindIdx)
     Screen('Flip', mainWindow);
     % collect response
     while(1)
-        [keyIsDown,~,keyCode] = KbCheck;
+        [keyIsDown,~,keyCode] = KbCheck(-1);
         if find(keyCode(imageResponseKeys)) == remindIdx(target)
             feedbackString = 'Correct!';
             DrawFormattedText(mainWindow, reminderString, 'center', centerY-imageRect(4)+20, textColor);

@@ -82,7 +82,7 @@ while needToTrain
 
             % scan keyboard until press is detected
             if isnan(trainRT)
-                [keyIsDown, secs, keyCode] = KbCheck;
+                [keyIsDown, secs, keyCode] = KbCheck(-1);
 
                 % quit expt if respQuit button is pressed
                 if (keyIsDown)
@@ -124,7 +124,7 @@ while needToTrain
             % if incorrect, give them chance to respond again
             if trainResp ~= trainCorrResp
                 % scan for a new press
-                [keyIsDown, secs, keyCode] = KbCheck;
+                [keyIsDown, secs, keyCode] = KbCheck(-1);
 
                 % quit if that press is the quit key
                 if (keyIsDown)

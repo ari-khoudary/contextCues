@@ -73,7 +73,7 @@ for cohLevel = 1:length(practiceCoherences)
 
             % scan for response
             if isnan(RT)
-                [keyIsDown, secs, keyCode] = KbCheck;
+                [keyIsDown, secs, keyCode] = KbCheck(-1);
                 % quit if quit key is pressed
                 if keyIsDown
                     if keyCode(respQuit)
@@ -188,7 +188,7 @@ for cohLevel = 1:length(practiceCoherences)
 
                 % scan for response
                 if isnan(RT)
-                    [keyIsDown, secs, keyCode] = KbCheck;
+                    [keyIsDown, secs, keyCode] = KbCheck(-1);
                     % quit if quit key is pressed
                     if keyIsDown
                         if keyCode(respQuit)

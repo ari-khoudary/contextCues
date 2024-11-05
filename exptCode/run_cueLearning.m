@@ -79,7 +79,7 @@ while needToLearn == 1
             end
             % allow for responding during cue-only period
             if isnan(learnRT)
-                [keyIsDown, secs, keyCode] = KbCheck;
+                [keyIsDown, secs, keyCode] = KbCheck(-1);
 
                 if (keyIsDown)
                     if (keyCode(respQuit))
@@ -114,7 +114,7 @@ while needToLearn == 1
             end
             % scan for response
             if isnan(learnRT)
-                [keyIsDown, secs, keyCode] = KbCheck;
+                [keyIsDown, secs, keyCode] = KbCheck(-1);
 
                 if (any(keyCode(imageResponseKeys)))
                     learnRT = secs - cueFlip;

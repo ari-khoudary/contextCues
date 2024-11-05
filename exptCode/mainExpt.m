@@ -4,6 +4,7 @@
 % Author: Ari Khoudary (2023-2024), adapting code originally written by Mariam Aly, Aaron M. Bornstein, Sam Feng (2015)
 
 %% initial setup
+PsychJavaTrouble;
 clc;
 
 % get subject & block numbers
@@ -60,7 +61,7 @@ feedbackDuration = 3;
 %%% calibration
 calibrationITI = 1;
 if debugging
-    calibrationTrialsPerImage = 5; % staircase trials per image
+    calibrationTrialsPerImage = 10; % staircase trials per image
 else
     calibrationTrialsPerImage = 50; % staircase trials per image
 end
@@ -148,7 +149,7 @@ for block = 1:nBlocks
             end
             Screen('Flip', mainWindow);
             WaitSecs(0.05);
-            [~,~,keyCode] = KbCheck;
+            [~,~,keyCode] = KbCheck(-1);
             if page < length(welcString) && keyCode(rightKey)
                 page = page + 1;
                 FlushEvents('keyDown');
@@ -175,7 +176,7 @@ for block = 1:nBlocks
         FlushEvents('keyDown');
         WaitSecs(3);
         while(1)
-            [~,~,keyCode] = KbCheck;
+            [~,~,keyCode] = KbCheck(-1);
             if keyCode(spaceKey)
                 break;
             end
@@ -194,7 +195,7 @@ for block = 1:nBlocks
         Screen('Flip', mainWindow);
         FlushEvents('keyDown');
         while(1)
-            [~,~,keyCode] = KbCheck;
+            [~,~,keyCode] = KbCheck(-1);
             if keyCode(spaceKey)
                 break;
             end
@@ -219,7 +220,7 @@ for block = 1:nBlocks
             end
             Screen('Flip', mainWindow);
             WaitSecs(0.05);
-            [~,~,keyCode] = KbCheck;
+            [~,~,keyCode] = KbCheck(-1);
             if page < 3 && keyCode(rightKey)
                 page = page + 1;
                 FlushEvents('keyDown');
@@ -247,12 +248,13 @@ for block = 1:nBlocks
         FlushEvents('keyDown');
         
         while(1)
-            [~, ~, keyCode] = KbCheck;
+            [~, ~, keyCode] = KbCheck(-1);
             if keyCode(rightKey)
                 break
             end
             WaitSecs(0.05);
         end
+    end
         
         %%%%%%% initiate button reminder %%%%%%%
         run_buttonReminder;
@@ -307,7 +309,7 @@ for block = 1:nBlocks
             end
             Screen('Flip', mainWindow);
             WaitSecs(0.05);
-            [~,~,keyCode] = KbCheck;
+            [~,~,keyCode] = KbCheck(-1);
             if page < 3 && keyCode(rightKey)
                 page = page + 1;
                 FlushEvents('keyDown');
@@ -384,7 +386,7 @@ for block = 1:nBlocks
             Screen('Flip', mainWindow);
             WaitSecs(0.05);
             
-            [~,~,keyCode] = KbCheck;
+            [~,~,keyCode] = KbCheck(-1);
             if page < 3 && keyCode(rightKey)
                 page = page + 1;
                 FlushEvents('keyDown');
@@ -397,7 +399,7 @@ for block = 1:nBlocks
                 break
             end
         end
-    end
+    %end
         
         %%%%%%% initiate button reminder %%%%%%%
         run_buttonReminder;
