@@ -55,7 +55,7 @@ subject:
 
 ![](individual_analyses_files/figure-gfm/learning%20accuracy-1.png)<!-- -->
 
-### what do their RTs look like during learning?
+### what do RTs look like during learning?
 
 ![](individual_analyses_files/figure-gfm/learning%20RTs-1.png)<!-- -->
 
@@ -65,6 +65,14 @@ subject:
 
 ### what can learning RTs for each cue tell us about how those cues affect decision performance?
 
-![](individual_analyses_files/figure-gfm/group%20inference%20summary-1.png)<!-- -->
+<img src="individual_analyses_files/figure-gfm/group inference summary-1.png" style="display: block; margin: auto;" />
+
+### what can learning RTs for each cue tell us about how those cues affect decision performance?
 
 ![](individual_analyses_files/figure-gfm/individual%20learnRTs%20+%20decision%20accuracy-1.png)<!-- -->
+
+### are choices better predicted by true or estimated cue probabilities?
+
+![](individual_analyses_files/figure-gfm/group%20regressions:%20accuracy-1.png)<!-- -->
+
+### what about choice probabilities?

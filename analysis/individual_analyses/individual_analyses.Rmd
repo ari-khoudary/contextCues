@@ -111,7 +111,7 @@ learning_df %>%
   theme(text = element_text(size=14))
 ```
 
-### what do their RTs look like during learning?
+### what do RTs look like during learning?
 ```{r learning RTs, echo = F, fig.dpi=300, fig.height=3}
 # plot group regressions
 learning_df %>%
@@ -128,10 +128,11 @@ learning_df %>%
 
 ## inference data
 
-```{r load in inference data, echo=F}
+```{r load in inference data & psq, echo=F}
 inference_files = list.files('../../data', full.names = TRUE, pattern='block1_inference.csv', recursive = T)
 inference_keep_idx <- grep('excluded', inference_files, invert=T)
 inference_df = do.call(rbind, lapply(inference_files[inference_keep_idx], function(x) { read.csv(x, header = TRUE)} )) 
+psq <- read.csv('../../data/tidied/subjective_probabilities.csv')
 
 inference_df <- inference_df %>%
   mutate(cueIdx = case_when(targetIdx==1 & congruent==1 ~ 1,
@@ -140,7 +141,11 @@ inference_df <- inference_df %>%
                             targetIdx==2 & congruent==0 ~ 1,
                             is.na(congruent) ~ 3),
          cueLabel = factor(cueIdx, levels=c(3,1,2), labels=c('50% A/B', '80%A', '80%B')),
-         cue_string = trimws(cue_string))
+         cue_string = trimws(cue_string)) %>%
+  left_join(., psq) %>% 
+  mutate()
+
+
 ```
 
 ### what can learning RTs for each cue tell us about how those cues affect decision performance?
@@ -169,7 +174,6 @@ RTs <- learning_df %>%
   scale_x_continuous(n.breaks=4) +
   labs(title = 'RTs over learning')
   
-  
 accuracy <- inference_df %>%
   ggplot(aes(x=cueLabel, y=accuracy, color=cueLabel)) +
   theme_bw() +
@@ -179,12 +183,60 @@ accuracy <- inference_df %>%
   labs(y = 'proportion correct', title = 'inference accuracy') +
   scale_y_continuous(n.breaks=5)
 
-accuracy + RTs + plot_layout(guides = 'collect', widths=c(0.5, 1))
+estimates <- inference_df %>%
+  ggplot(aes(x=cueLabel, y=estimate, color=cueLabel, fill=cueLabel)) +
+  theme_bw() +
+  facet_grid(rows = 'subID') +
+  geom_hline(yintercept = 0.5, linetype = 'dashed') +
+  geom_point() +
+  labs(y = 'estimate', title = 'estimated probability') +
+  scale_y_continuous(n.breaks=5)
+
+estimates + accuracy + RTs + plot_layout(guides = 'collect', widths=c(0.5, 0.5, 1))
 ```
 
-```{r load in subjective probabilities}
+### are choices better predicted by true or estimated cue probabilities?
+```{r group regressions: accuracy, echo=F, fig.dpi=300, fig.position='center', fig.width=8}
 
-psq <- read.csv('../../data/tidied/subjective_probabilities.csv')
+# predicting accuracy based on cue level
+m_cue <- glm(accuracy ~ cueLabel, inference_df, family='binomial',
+         contrasts = list(cueLabel=contr.sum))
+cue_df <- emmip(m_cue,  ~ cueLabel, type='response', CIs=T, plotit=F)
 
-f <- left_join(inference_df, psq)
+# predicting accuracy based on verbal estimate
+m_estimate <- glm(accuracy ~ estimate, inference_df, family='binomial')
+estimate_df <- emmip(m_estimate, ~ estimate, type='response', CIs=T, plotit=F,
+                     at = list(estimate = quantile(inference_df$estimate, names=F, na.rm=T)))
+
+# plotting results
+p1 <- cue_df %>%
+  ggplot(aes(cueLabel, yvar, color=cueLabel, fill=cueLabel)) +
+  geom_hline(yintercept = 0.5, linetype='dashed') +
+  geom_col(alpha=0, linewidth=1.5) +
+  geom_errorbar(aes(ymin=LCL, ymax=UCL), color='black', width=0.1) +
+  geom_jitter(aes(x=cueLabel, y=accuracy), color='gray', data=inference_df, height=0.05, size=0.5) +
+  theme_bw() +
+  ylim(0, 1) +
+  labs(y = 'estimated p(correct)', title = 'objective cue probabilities',
+       subtitle = 'glm(accuracy ~ cueLabel)')
+
+p2 <- estimate_df %>%
+  ggplot(aes(estimate, yvar)) +
+  geom_hline(yintercept = 0.5, linetype='dashed') +
+  geom_line() +
+  geom_ribbon(aes(ymin=LCL, ymax=UCL), alpha=0.2) +
+  geom_jitter(data=inference_df, aes(y=accuracy, color=cueLabel), height = 0.05, width=0.05, size=0.5) +
+  theme_bw() +
+  labs(y = 'estimated p(correct)', title = 'estimated cue probabilities',
+       subtitle = 'glm(accuracy ~ estimate)')
+
+p1 + p2 + plot_layout(guides='collect')
+```
+
+### what about choice probabilities?
+```{r group regressions: choice probability, echo=F}
+
+
+
+
 ```
