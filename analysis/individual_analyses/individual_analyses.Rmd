@@ -54,7 +54,7 @@ calibrated_coherence <- calibrated_coherence[, col_order]
 
 ### what do the staircases look like during calibration?
 solid line indicates the level of decision accuracy we are calibrating to.
-```{r plot calibration data, echo=F, fig.height=10, fig.width=10, fig.dpi=300}
+```{r plot calibration data, echo=F, fig.height=6, fig.width=6, fig.dpi=300}
 
 staircase_df %>%
   mutate(subID = paste0('sub', subID),
@@ -69,14 +69,9 @@ staircase_df %>%
 
 ### what coherence levels did each subject observe for each stimulus?
 coherence values that obtained 70% accuracy for each image for each subject:
-```{r display calibrated coherence, echo=F}
+```{r display coherence for each subject, echo=F, out.width='350px', fig.align='center'}
 
 kable(calibrated_coherence)
-
-```
-
-```{r, out.width='350px', echo=F, fig.align='center'}
-
 knitr::include_graphics("../../imageGrid.png")
 
 ```
@@ -113,8 +108,39 @@ learning_df %>%
 
 ### what do RTs look like during learning?
 ```{r learning RTs, echo = F, fig.dpi=300, fig.height=3}
+
+# plot correlation coefficients over the course of learning 
+bar1 <- learning_df %>%
+  filter(trial < 38) %>%
+  group_by(cueLabel) %>%
+  summarise(y=cor(trial, zlogRT, use='na.or.complete')) %>%
+  ggplot(aes(cueLabel, y, color=cueLabel, fill = cueLabel)) +
+  geom_col() + geom_hline(yintercept=0) +
+  theme_bw() + ylim(-0.1, 0.35) +
+  labs(title = 'first half of learning trials', y='correlation coefficient')
+
+bar2 <- learning_df %>%
+  filter(trial > 38) %>%
+  group_by(cueLabel) %>%
+  summarise(y=cor(trial, zlogRT, use='na.or.complete')) %>%
+  ggplot(aes(cueLabel, y, color=cueLabel, fill = cueLabel)) +
+  geom_col() + geom_hline(yintercept = 0) +
+  theme_bw() + ylim(-0.1, 0.35) +
+  labs(title = 'second half of learning trials', y='correlation coefficient')
+
 # plot group regressions
-learning_df %>%
+reg1 <- learning_df %>%
+  filter(trial < 38) %>%
+  ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
+  theme_bw() +
+  facet_wrap(~ cueLabel) +
+  geom_hline(yintercept = 0, linetype='dashed') +
+  geom_point(alpha=0.25, size=1) +
+  geom_smooth(method = 'lm', linewidth=1.5) +
+  labs(title = 'group summary', subtitle = 'zlogRT ~ cueIdx + trial')
+
+reg2 <- learning_df %>%
+  filter(trial > 38) %>%
   ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
   theme_bw() +
   facet_wrap(~ cueLabel) +
