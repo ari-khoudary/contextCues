@@ -113,8 +113,3 @@ break_trials = break_trials(2:(length(break_trials)-1));
 %% set up probabilistic ISIs
 
 setup_durations;
-
-
-%% set up flicker stream
-
-setup_flicker;

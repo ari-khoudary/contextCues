@@ -269,8 +269,10 @@ for block = 1:nBlocks
     end
 
     %% run calibration
-    run_cali11111bration;
+
+    run_calibration;
     coherence = calibratedCoherence;
+    setup_flicker;
 
     % phase pivot to learning & give instructions
     learnString = 'Nice work! You''re all done with Flicker Practice. \n\n Press spacebar when to receive instructions for Border Learning.';
