@@ -44,6 +44,8 @@ subject:
 |    25 | S3-12.jpg |    0.74 | S4-20.jpg |    0.54 |
 |    26 | S1-15.jpg |    0.59 | S2-19.jpg |    0.68 |
 |    27 | S2-19.jpg |    0.58 | S1-15.jpg |    0.68 |
+|    28 | S4-20.jpg |    0.56 | S3-12.jpg |    0.59 |
+|    29 | S4-20.jpg |    0.50 | S3-12.jpg |    0.91 |
 
 <img src="../../imageGrid.png" width="350px" style="display: block; margin: auto;" />
 
@@ -57,15 +59,11 @@ subject:
 
 ### what do RTs look like during learning?
 
-![](individual_analyses_files/figure-gfm/learning%20RTs-1.png)<!-- -->
+![](individual_analyses_files/figure-gfm/learning%20RTs-1.png)<!-- -->![](individual_analyses_files/figure-gfm/learning%20RTs-2.png)<!-- -->![](individual_analyses_files/figure-gfm/learning%20RTs-3.png)<!-- -->![](individual_analyses_files/figure-gfm/learning%20RTs-4.png)<!-- -->
 
 ------------------------------------------------------------------------
 
 ## inference data
-
-### what can learning RTs for each cue tell us about how those cues affect decision performance?
-
-<img src="individual_analyses_files/figure-gfm/group inference summary-1.png" style="display: block; margin: auto;" />
 
 ### what can learning RTs for each cue tell us about how those cues affect decision performance?
 
@@ -75,4 +73,13 @@ subject:
 
 ![](individual_analyses_files/figure-gfm/group%20regressions:%20accuracy-1.png)<!-- -->
 
-### what about choice probabilities?
+#### model comparison metrics
+
+``` r
+knitr::kable(compare_performance(m_cue, m_estimate, metrics=c('AIC', 'BIC', 'RMSE', 'Log_loss')))
+```
+
+| Name       | Model |      AIC | AIC_wt |      BIC | BIC_wt |      RMSE |  Log_loss |
+|:-----------|:------|---------:|-------:|---------:|-------:|----------:|----------:|
+| m_cue      | glm   | 6327.915 |      0 | 6347.255 |      0 | 0.4926499 | 0.6784627 |
+| m_estimate | glm   | 5538.980 |      1 | 5551.637 |      1 | 0.4876710 | 0.6684759 |

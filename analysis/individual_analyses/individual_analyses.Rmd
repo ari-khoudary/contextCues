@@ -54,13 +54,13 @@ calibrated_coherence <- calibrated_coherence[, col_order]
 
 ### what do the staircases look like during calibration?
 solid line indicates the level of decision accuracy we are calibrating to.
-```{r plot calibration data, echo=F, fig.height=6, fig.width=6, fig.dpi=300}
+```{r plot calibration data, echo=F, fig.height=10, fig.width=6, fig.dpi=300}
 
 staircase_df %>%
   mutate(subID = paste0('sub', subID),
          targetIdx = paste0('img', imgPath)) %>% 
   ggplot(aes(x=trial, y=coherence, color=staircase)) +
-  facet_wrap(subID ~ targetIdx, ncol=6) +
+  facet_wrap(subID ~ targetIdx, ncol=4) +
   geom_line(linewidth=1) +
   theme_bw() +
   geom_hline(yintercept = 0.7)
@@ -82,7 +82,7 @@ knitr::include_graphics("../../imageGrid.png")
 ```{r load & tidy learning data, include=F}
 learning_files = list.files('../../data', full.names = TRUE, pattern='block1_learning.csv', recursive = T)
 learning_keep_idx <- grep('excluded', learning_files, invert=T)
-learning_keep_idx <- learning_keep_idx[1:14]
+learning_keep_idx <- learning_keep_idx
 learning_df = do.call(rbind, lapply(learning_files[learning_keep_idx], function(x) { read.csv(x, header = TRUE)} )) 
 
 # transform RTs
@@ -107,47 +107,93 @@ learning_df %>%
 ```
 
 ### what do RTs look like during learning?
-```{r learning RTs, echo = F, fig.dpi=300, fig.height=3}
+```{r learning RTs, echo = F, fig.dpi=300, fig.height=2, fig.width=5}
 
 # plot correlation coefficients over the course of learning 
 bar1 <- learning_df %>%
-  filter(trial < 38) %>%
+  filter(trial < 20) %>%
   group_by(cueLabel) %>%
   summarise(y=cor(trial, zlogRT, use='na.or.complete')) %>%
   ggplot(aes(cueLabel, y, color=cueLabel, fill = cueLabel)) +
   geom_col() + geom_hline(yintercept=0) +
-  theme_bw() + ylim(-0.1, 0.35) +
-  labs(title = 'first half of learning trials', y='correlation coefficient')
+  theme_bw() + ylim(-0.3, 0.35) +
+  labs(y='correlation coefficient') + theme(legend.position='none')
 
 bar2 <- learning_df %>%
-  filter(trial > 38) %>%
+  filter(trial >= 20 & trial < 38) %>%
   group_by(cueLabel) %>%
   summarise(y=cor(trial, zlogRT, use='na.or.complete')) %>%
   ggplot(aes(cueLabel, y, color=cueLabel, fill = cueLabel)) +
   geom_col() + geom_hline(yintercept = 0) +
-  theme_bw() + ylim(-0.1, 0.35) +
-  labs(title = 'second half of learning trials', y='correlation coefficient')
+  theme_bw() + ylim(-0.3, 0.35) +
+  labs(y='correlation coefficient') + theme(legend.position='none')
+
+bar3 <- learning_df %>%
+  filter(trial >= 38 & trial < 57) %>%
+  group_by(cueLabel) %>%
+  summarise(y=cor(trial, zlogRT, use='na.or.complete')) %>%
+  ggplot(aes(cueLabel, y, color=cueLabel, fill = cueLabel)) +
+  geom_col() + geom_hline(yintercept = 0) +
+  theme_bw() + ylim(-0.3, 0.35) +
+  labs(y='correlation coefficient') + theme(legend.position='none')
+
+bar4 <- learning_df %>%
+  filter(trial >= 57) %>%
+  group_by(cueLabel) %>%
+  summarise(y=cor(trial, zlogRT, use='na.or.complete')) %>%
+  ggplot(aes(cueLabel, y, color=cueLabel, fill = cueLabel)) +
+  geom_col() + geom_hline(yintercept = 0) +
+  theme_bw() + ylim(-0.3, 0.35) +
+  labs(y='correlation coefficient') + theme(legend.position='none')
 
 # plot group regressions
 reg1 <- learning_df %>%
-  filter(trial < 38) %>%
+  filter(trial < 20) %>%
   ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
   theme_bw() +
   facet_wrap(~ cueLabel) +
   geom_hline(yintercept = 0, linetype='dashed') +
   geom_point(alpha=0.25, size=1) +
-  geom_smooth(method = 'lm', linewidth=1.5) +
-  labs(title = 'group summary', subtitle = 'zlogRT ~ cueIdx + trial')
+  geom_smooth(method = 'lm', linewidth=1) + theme(legend.position='none')
 
 reg2 <- learning_df %>%
-  filter(trial > 38) %>%
+  filter(trial >= 20 & trial < 38) %>%
   ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
   theme_bw() +
   facet_wrap(~ cueLabel) +
   geom_hline(yintercept = 0, linetype='dashed') +
   geom_point(alpha=0.25, size=1) +
-  geom_smooth(method = 'lm', linewidth=1.5) +
-  labs(title = 'group summary', subtitle = 'zlogRT ~ cueIdx + trial')
+  geom_smooth(method = 'lm', linewidth=1) + theme(legend.position='none')
+
+reg3 <- learning_df %>%
+  filter(trial >= 38 & trial < 57) %>%
+  ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
+  theme_bw() +
+  facet_wrap(~ cueLabel) +
+  geom_hline(yintercept = 0, linetype='dashed') +
+  geom_point(alpha=0.25, size=1) +
+  geom_smooth(method = 'lm', linewidth=1) + theme(legend.position='none')
+
+reg4 <- learning_df %>%
+  filter(trial >= 57) %>%
+  ggplot(aes(x=trial, y=zlogRT, color=cueLabel)) +
+  theme_bw() +
+  facet_wrap(~ cueLabel) +
+  geom_hline(yintercept = 0, linetype='dashed') +
+  geom_point(alpha=0.25, size=1) +
+  geom_smooth(method = 'lm', linewidth=1) + theme(legend.position='none')
+
+bar1 + reg1 + plot_layout(widths=c(0.5, 1)) + plot_annotation(title = 'first quartile')  & 
+  theme(text=element_text(size=8))
+
+bar2 + reg2 + plot_layout(widths=c(0.5, 1)) + plot_annotation(title = 'second quartile') & 
+   theme(text=element_text(size=8))
+
+bar3 + reg3 + plot_layout(widths=c(0.5, 1)) + plot_annotation(title = 'third quartile') &
+   theme(text=element_text(size=8))
+
+bar4 + reg4 + plot_layout(widths=c(0.75, 1)) + plot_annotation(title = 'fourth quartile') &
+   theme(text=element_text(size=8))
 ```
 
 ***
@@ -172,19 +218,6 @@ inference_df <- inference_df %>%
   mutate()
 
 
-```
-
-### what can learning RTs for each cue tell us about how those cues affect decision performance?
-```{r group inference summary, echo=F, fig.align='center', fig.dpi=300}
-
-inference_df %>%
-  group_by(subID, cueLabel) %>%
-  summarise(propCorrect = mean(accuracy, na.rm=T)) %>%
-  ggplot(aes(x=cueLabel, y=propCorrect, color=cueLabel)) +
-  theme_bw() +
-  geom_hline(yintercept = 0.5, linetype='dashed') +
-  geom_boxplot() +
-  labs(title = 'group summary: decision accuracy', subtitle = 'propCorrect first computed within-subject')
 ```
 
 ### what can learning RTs for each cue tell us about how those cues affect decision performance?
@@ -222,7 +255,7 @@ estimates + accuracy + RTs + plot_layout(guides = 'collect', widths=c(0.5, 0.5, 
 ```
 
 ### are choices better predicted by true or estimated cue probabilities?
-```{r group regressions: accuracy, echo=F, fig.dpi=300, fig.position='center', fig.width=8}
+```{r group regressions: accuracy, echo=F, fig.dpi=300, fig.position='center', fig.width=8, fig.height=4}
 
 # predicting accuracy based on cue level
 m_cue <- glm(accuracy ~ cueLabel, inference_df, family='binomial',
@@ -259,10 +292,9 @@ p2 <- estimate_df %>%
 p1 + p2 + plot_layout(guides='collect')
 ```
 
-### what about choice probabilities?
-```{r group regressions: choice probability, echo=F}
+#### model comparison metrics
+```{r model comparisons}
 
-
-
+knitr::kable(compare_performance(m_cue, m_estimate, metrics=c('AIC', 'BIC', 'RMSE', 'Log_loss')))
 
 ```
