@@ -41,7 +41,7 @@ stair2Counter = stair1Counter;
 for stimIdx = 1:nImages
     q1{stimIdx} = QuestCreate(tGuess(1), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
     q2{stimIdx} = QuestCreate(tGuess(2), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
- end
+end
 
 % initialize flicker stream & structures to hold timing/staircase info
 stim_ind = Shuffle(repelem([1 2], calibrationTrialsPerImage));
@@ -64,6 +64,11 @@ for trial = 1: calibrationTrialN
         trialCoherence = squeeze(QuestQuantile(q2{target}));
         trialStair(trial) = 2;
     end
+
+    if trialCoherence > 1
+        trialCoherence = 1;
+    end
+
 
     % get indices of non-noise frames
     imgIdx = find(flickerStream(:, trial));
@@ -93,8 +98,8 @@ for trial = 1: calibrationTrialN
 
     % start with fixation for ITI
     trialStart = GetSecs;
-     DrawFormattedText(mainWindow, '+', 'center', centerY, textColor);
-     Screen('Flip', mainWindow);
+    DrawFormattedText(mainWindow, '+', 'center', centerY, textColor);
+    Screen('Flip', mainWindow);
     while (1)
         if GetSecs > trialStart + inferenceITI
             break
@@ -144,10 +149,10 @@ for trial = 1: calibrationTrialN
 
     % compute accuracy and update staircases
     accuracy = resp==target;
-   
+
     if mod(trial,2) == 1
         q1{target} = QuestUpdate(q1{target}, trialCoherence, accuracy);
-    else  
+    else
         q2{target} = QuestUpdate(q2{target}, trialCoherence, accuracy);
     end
 
