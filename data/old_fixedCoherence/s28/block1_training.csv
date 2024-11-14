@@ -1,0 +1,5 @@
+subID,block,trial,image,actualResponse,correctResponse,accuracy,RT
+ 28, 1, 1, S2-19.jpg, 2, 2, 1, 9.770870e-01, 
+ 28, 1, 2, S1-15.jpg, 1, 1, 1, 7.707933e-01, 
+ 28, 1, 3, S1-15.jpg, 1, 1, 1, 9.772867e-01, 
+ 28, 1, 4, S2-19.jpg, 2, 2, 1, 1.336539e+00, 
