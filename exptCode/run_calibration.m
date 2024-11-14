@@ -31,7 +31,7 @@ tStDev = 0.25;
 % set initial guess, which will be different for different desired
 % accuracies; prior threshold estimate and SD; this should cover all possible values pretty generously
 tGuess(1) = 0.8;
-tGuess(2) = 0.6;
+tGuess(2) = 0.65;
 
 % Tracks # presentations of each stimulus, staircase
 stair1Counter  = zeros(nImages, 1);
@@ -41,7 +41,7 @@ stair2Counter = stair1Counter;
 for stimIdx = 1:nImages
     q1{stimIdx} = QuestCreate(tGuess(1), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
     q2{stimIdx} = QuestCreate(tGuess(2), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
-end
+ end
 
 % initialize flicker stream & structures to hold timing/staircase info
 stim_ind = Shuffle(repelem([1 2], calibrationTrialsPerImage));
@@ -64,11 +64,6 @@ for trial = 1: calibrationTrialN
         trialCoherence = squeeze(QuestQuantile(q2{target}));
         trialStair(trial) = 2;
     end
-
-    if trialCoherence > 1
-        trialCoherence = 1;
-    end
-
 
     % get indices of non-noise frames
     imgIdx = find(flickerStream(:, trial));
@@ -98,8 +93,8 @@ for trial = 1: calibrationTrialN
 
     % start with fixation for ITI
     trialStart = GetSecs;
-    DrawFormattedText(mainWindow, '+', 'center', centerY, textColor);
-    Screen('Flip', mainWindow);
+     DrawFormattedText(mainWindow, '+', 'center', centerY, textColor);
+     Screen('Flip', mainWindow);
     while (1)
         if GetSecs > trialStart + inferenceITI
             break
@@ -147,18 +142,52 @@ for trial = 1: calibrationTrialN
     % document actual duration of each flicker stream
     realDuration = GetSecs - flickerStart;
 
-    % compute accuracy and update staircases
+ 
+    
+    %% feedback 
     accuracy = resp==target;
 
+    % display feedback
+    targetString = 'The correct answer was: ';
+    respString = 'Your response was: ';
+    if isnan(resp)
+        accString = 'You did not respond in time. \n Please respond faster on the next trial.';
+    elseif accuracy==1
+        accString = 'Correct!';
+    else
+        accString = 'Incorrect.';
+    end
+        
+    % draw & flip to screen
+    DrawFormattedText(mainWindow, targetString, 'center', centerY-imageRect(4)/1.5, textColor);
+    Screen('DrawTexture',mainWindow,randImageTex(target),imageRect,centerRect);
+    if ~isnan(resp)
+        DrawFormattedText(mainWindow, respString, 'center', centerY+imageRect(4)-20, textColor);
+        DrawFormattedText(mainWindow, accString, 'center', centerY+feedbackRect(4)*3.3, textColor);
+        Screen('DrawTexture', mainWindow, randFeedbackTex(resp), feedbackRect, feedbackPos);
+    else
+        DrawFormattedText(mainWindow, accString, 'center', centerY+imageRect(4)-20, textColor);
+    end
+
+    feedbackStart = Screen('Flip', mainWindow);
+    
+    % display for feedbackDuration seconds
+    while (1)
+        if GetSecs > feedbackStart + feedbackDuration
+            break
+        end
+    end
+   
+    % update staircases
     if mod(trial,2) == 1
         q1{target} = QuestUpdate(q1{target}, trialCoherence, accuracy);
-    else
+    else  
         q2{target} = QuestUpdate(q2{target}, trialCoherence, accuracy);
     end
 
     % end the trial after a response during calibration
-    fprintf(calibrationFile, '\n %i, %i, %i, %s, %i, %.2f, %i, %i, %i, %.4f, %.4f', ...
-        subID, block, trial, imagePath{target}, target, trialCoherence, respFrame, resp, accuracy, RT, realDuration);
+    fprintf(calibrationFile, '\n %i, %i, %i, %s, %i, %.4f, %i, %i, %i, %i, %.4f, %.4f', ...
+        subID, block, trial, imagePath{target}, target, trialCoherence, trialStair(trial), responseFrames(trial), resp, accuracy, RT, realDuration);
 end
 
 % save workspace variables

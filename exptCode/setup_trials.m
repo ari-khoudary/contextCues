@@ -108,8 +108,3 @@ catchImg = foo(catch_rIdx);
 
 break_trials = round(linspace(1, inferenceTrialN, nInferenceBreaks+2));
 break_trials = break_trials(2:(length(break_trials)-1));
-
-
-%% set up probabilistic ISIs
-
-setup_durations;

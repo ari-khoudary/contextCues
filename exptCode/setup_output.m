@@ -2,7 +2,7 @@
 
 % create folder to contain each subject's files
 sID = ['s', num2str(subID)];
-datadir = ['..' filesep 'data' filesep sID];
+datadir = ['..' filesep 'data_v2' filesep sID];
 if ~exist(datadir, 'dir')
     mkdir(datadir);
 end
@@ -14,19 +14,12 @@ fprintf(trainingFile, ...
     '%s,%s,%s,%s,%s,%s,%s,%s',  ...
     'subID', 'block', 'trial', 'image', 'actualResponse', 'correctResponse', 'accuracy', 'RT');
 
-% make file for practice
-practiceFileName = [datadir filesep 'block', num2str(block), '_flickerPractice.csv'];
-practiceFile = fopen(practiceFileName, 'wt+');
-fprintf(practiceFile, ...
-    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s',  ...
-    'subID', 'block', 'trial', 'targetImage', 'targetIdx', 'coherence', 'respFrame', 'response', 'accuracy', 'RT', 'flickerDuration', 'repeatedTrial');
-
 % make file for calibration
 calibrationFileName = [datadir filesep 'block', num2str(block), '_calibration.csv'];
 calibrationFile = fopen(calibrationFileName, 'wt+');
 fprintf(calibrationFile, ...
-    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s',  ...
-    'subID', 'block', 'trial', 'targetImage', 'targetIdx', 'coherence', 'respFrame', 'response', 'accuracy', 'RT', 'flickerDuration');
+    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s',  ...
+    'subID', 'block', 'trial', 'targetImage', 'targetIdx', 'coherence', 'staircase', 'respFrame', 'response', 'accuracy', 'RT', 'flickerDuration');
 
 % make file for learning
 learnFileName = [datadir, filesep 'block', num2str(block), '_learning.csv'];

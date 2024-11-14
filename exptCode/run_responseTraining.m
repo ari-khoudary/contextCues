@@ -186,7 +186,7 @@ while needToTrain
         save(pracFileName);
         needToTrain = 1;
         numPrac = numPrac + 1;
-        trialsPerImage = 5; % this time only 5 trials per image
+        trialsPerImage = 1; % this time only 1 trials per image
 
         % make a new csv & .mat files
         trainingFileName = [datadir filesep 'block', num2str(block),'_training' num2str(numPrac) ,'.csv'];

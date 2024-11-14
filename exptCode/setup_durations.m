@@ -1,11 +1,53 @@
 %% compute probabilistic noise periods that achieve a fixed hazard rate across trials 
 
 % create a general distribution
-lambda = 0.05;
-maxFrames = 2/ifi;
-noisePDF = discrete_bounded_hazard_rate(lambda, maxFrames);
-noiseMin = round(1.25/ifi);
-signalMin = round(0.375/ifi);
+lambda = 0.12;
+noiseMin = round(1/ifi);
+signalMin = round(0.75/ifi);
+noisePDF = discrete_bounded_hazard_rate(lambda, noiseMin);
+signalPDF = discrete_bounded_hazard_rate(lambda, signalMin);
+
+%% create noise & signal durations for coherence validation
+
+noiseDistribution_v = round(noisePDF * cohFeedbackTotalN);
+noiseFrames_v = zeros(cohFeedbackTotalN, 1);
+trialCount = cumsum(noiseDistribution_v);
+for i = 1:length(noiseDistribution_v)
+    if i==1
+        noiseFrames_v(1:noiseDistribution_v(i))=1;
+    else
+        startrow = trialCount(i) - noiseDistribution_v(i);
+        endrow = trialCount(i);
+        noiseFrames_v(startrow:endrow) = i;
+    end
+end
+
+% add baseline of noiseMin seconds, keep in frames because that's how the
+% flicker stream is specified
+noise1Frames_v = Shuffle(noiseFrames_v + noiseMin);
+noise2Frames_v = Shuffle(noise1Frames_v);
+
+% create signal frames
+signalDistribution_v = round(signalPDF * cohFeedbackTotalN);
+signal1Frames_v = zeros(cohFeedbackTotalN, 1);
+trialCount = cumsum(signalDistribution_v);
+for i=1:length(signalDistribution_v)
+    if i==1
+        signal1Frames_v(1:signalDistribution_v(i)) = 1;
+    else
+        startrow = trialCount(i) - signalDistribution_v(i);
+        endrow = trialCount(i);
+        signal1Frames_v(startrow:endrow) = i;
+    end
+end
+signal1Frames_v = Shuffle(signal1Frames_v + signalMin);
+
+% define max flicker durations
+noise1max_v = max(noise1Frames_v*ifi);
+signal1max_v = max(signal1Frames_v*ifi);
+noise2max_v = max(noise2Frames_v*ifi);
+minFlicker_v = noise1max_v + signal1max_v + noise2max_v;
+nFrames_v = round(minFlicker_v) / ifi;
 
 %% create cue duration distribution for learning
 cueDistribution = round(noisePDF * learnTrialN);

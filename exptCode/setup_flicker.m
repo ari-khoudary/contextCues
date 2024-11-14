@@ -11,10 +11,6 @@
 
 %% define necessary variables
 % put in generic coherence values if coherence is not yet specified
-if exist('coherence', 'var') ==0 
-    coherence = [0.51 0.51];
-end
-
 cue1Counter = 0;
 cue2Counter = 0;
 cue3Counter = 0;
