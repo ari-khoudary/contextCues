@@ -135,6 +135,10 @@ for t=1:length(catch_trials)
     end
 end
 
+%% shorten flicker duration to be 4 seconds
+
+flickerAll = flickerAll(1:maxFrames, :);
+
 %% 
 clear cue1Counter cue2Counter cue3Counter catchTrialCounter inference_counter_general targetIdx lureIdx rIdx
 

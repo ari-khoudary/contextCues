@@ -41,7 +41,7 @@ for trial=1:cohFeedbackTotalN
     end
 end
 
-flickerStream_v = flickerStream_v(1:250, :);
+flickerStream_v = flickerStream_v(1:maxFrames, :);
 
 % randomize targets across trials
 trialTargets_v = repmat([1 2], [1 cohFeedbackTotalN/2]);

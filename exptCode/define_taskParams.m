@@ -23,6 +23,10 @@ waitframes = 1;
 % number of brief breaks during inference
 nInferenceBreaks = 4;
 
+% maximum duration of flicker stream
+maxDuration = 4; % in seconds
+maxFrames = 4/ifi;
+
 %% timing & number of trials for each experimental phase
 
 %%% response training

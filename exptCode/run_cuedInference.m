@@ -8,7 +8,8 @@
 
 %% create structures to store behavior & behavior-relevant variables
 responseFrames = NaN(inferenceTrialN_total, 1);
-flickerFlipTimes = NaN(nFrames, inferenceTrialN_total);
+flickerFlipTimes = NaN(maxFrames, inferenceTrialN_total);
+inferenceEvidence = flickerFlipTimes;
 infResps = NaN(inferenceTrialN_total, 1);
 infRTs = NaN(inferenceTrialN_total, 1);
 infAccuracy = NaN(inferenceTrialN_total, 1);
@@ -24,6 +25,19 @@ cue1Counter = 0;
 cue2Counter = 0;
 cue3Counter = 0;
 inference_counter_general = 0;
+
+%% create table to store data
+
+varNames = {'subID', 'block', 'trial', 'targetName', 'targetIdx', 'response', 'accuracy', 'RT', 'respFrame', ...
+    'noise1frames', 'signal1Onset', 'totalEv_signal1', 'targetEv_signal1', 'noise2Onset', 'noise2frames', 'signal2Onset', 'totalEv_signal2', 'targetEv_signal2', ...
+    'confidence', 'confRT', 'flickerDuration', 'coherence'};
+varTypes = cell([1, length(varNames)]);
+varTypes(:) = {'double'};
+varTypes(4) = {'cell'};
+
+data_cuedInference = table('Size', [inferenceTrialN_total length(varNames)], ...
+    'VariableNames', varNames, ...
+    'VariableTypes', varTypes);
 
 %% flicker trial loop
 for trial = 1:inferenceTrialN_total
@@ -117,7 +131,7 @@ for trial = 1:inferenceTrialN_total
     flickerStart = GetSecs;
     vbl = flickerStart;
 
-    for f = 1:nFrames
+    for f = 1:maxFrames
 
         % pull frames from integrated test & catch flicker stream
         frame = flickerAll(f, trial);
@@ -161,12 +175,18 @@ for trial = 1:inferenceTrialN_total
         end %if isnan
     end % for f=1:nFrames
 
+    if isnan(RT)
+        respFrame = maxFrames;
+    end
+
     % document duration of each flicker stream
     realDuration = GetSecs - flickerStart;
 
-    % record accuracy & store frame when response was made
+    % record accuracy, store frame when response was made, store observed
+    % evidence
     infAccuracy(trial) = response==trialTarget;
     responseFrames(trial) = respFrame;
+    inferenceEvidence(1:respFrame, trial) = flickerAll(1:respFrame, trial);
 
     % move to ISI, collect "overflow" responses
     DrawFormattedText(mainWindow, '', 'center', centerY, textColor);
@@ -241,8 +261,61 @@ for trial = 1:inferenceTrialN_total
         fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
             subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_catch(catchTrialCounter), signal1Frames_catch(catchTrialCounter), noise2Frames_catch(catchTrialCounter), trialCoherence(trial), catch_trial);
     end
-        
 
+    % %%% write data to table %%%
+    % data_cuedInference.trial(trial) = trial;
+    % data_cuedInference.targetName(trial) = imagePath(trialTargets_v(trial));
+    % data_cuedInference.targetIdx(trial) = trialTarget;
+    % data_cuedInference.response(trial) = response;
+    % data_cuedInference.accuracy(trial) = infAccuracy(trial);
+    % data_cuedInference.RT(trial) = RT;
+    % data_cuedInference.respFrame(trial) = respFrame;
+    % data_cuedInference.flickerDuration(trial) = realDuration;
+    % data_cuedInference.coherence(trial) = coherence(target);
+    % % evidence dynamics 
+    % data_cuedInference.noise1frames(trial) = noise1Frames_v(trial);
+    % data_cuedInference.totalEv_signal1(trial) = sum(trialEvidence > 0);
+    % data_cuedInference.targetEv_signal1(trial) = sum(trialEvidence == target);
+    % data_cuedInference.signal1Onset(trial) = noise1Frames_v(trial) + 1;
+    % data_cuedInference.noise2frames(trial) = noise2Frames_v(trial);
+    % data_cuedInference.totalEv_signal2(trial) = sum(trialEvidence(signal2Onset:f) > 0);
+    % data_cuedInference.targetEv_signal2(trial) = sum(trialEvidence(signal2Onset:f) == target);
+    % data_cuedInference.noise2Onset(trial) = noise2Onset;
+    % data_cuedInference.signal2Onset(trial) = signal2Onset;
+    % % adjust values depending on when participant responded
+    % if respFrame >= noise2Onset && f < signal2Onset % response during second noise period 
+    %     data_cuedInference.noise2frames(trial) = length(trialEvidence(noise2Onset:f));
+    %     data_cuedInference.signal2Onset(trial) = NaN;
+    %     data_cuedInference.totalEv_signal2(trial) = NaN;
+    %     data_cuedInference.targetEv_signal2(trial) = NaN;
+    % elseif  respFrame > noise1Frames_v(trial) && respFrame < noise2Onset % response during first signal period
+    %     data_cuedInference.targetEv_signal1(trial) = sum(trialEvidence == target);   
+    %     data_cuedInference.noise2frames(trial) = NaN;
+    %     data_cuedInference.signal2Onset(trial) = NaN;
+    %     data_cuedInference.totalEv_signal2(trial) = NaN;
+    %     data_cuedInference.targetEv_signal2(trial) = NaN;
+    % else % if response during first noise period
+    %     data_cuedInference.noise1frames(trial) = length(trialEvidence(1:f));
+    %     data_cuedInference.signal1Onset(trial) = NaN;
+    %     data_cuedInference.totalEv_signal1(trial) = NaN;
+    %     data_cuedInference.targetEv_signal1(trial) = NaN;
+    %     data_cuedInference.noise2Onset(trial) = NaN;
+    %     data_cuedInference.noise2frames(trial) = NaN;
+    %     data_cuedInference.signal2Onset(trial) = NaN;
+    %     data_cuedInference.totalEv_signal2(trial) = NaN;
+    %     data_cuedInference.targetEv_signal2(trial) = NaN;
+    % end
+    % 
+    % % store confidence
+    % if trial > nFeedbackTrial
+    %     data_cuedInference.confidence(trial) = confResponse;
+    %     data_cuedInference.confRT(trial) = confRT;
+    % else
+    %     data_cuedInference.confidence(trial) = NaN;
+    %     data_cuedInference.confRT(trial) = NaN;
+    % end
+    
+        
 end % inference trial loop
 
 % save workspace variables

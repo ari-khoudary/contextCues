@@ -18,7 +18,7 @@
     
     % make sure random seed is unique across blocks for the same participant
     if block > 1
-        rng(subID + block)
+        rng(subID + randn)
     end
     
     % generate directory for subject's data
@@ -36,6 +36,9 @@
     
     % load in & setup stimuli
     setup_stimuli;
+
+    % setup outfiles
+    setup_output;
     
     % organize & randomize trial types
     setup_trials;
@@ -175,7 +178,7 @@
                     break
                 end
             end
-        %end % if debugging==0
+       % end % if debugging==0
     
         %%%% run "flicker training" aka CALIBRATION %%%
         run_calibration;
@@ -214,7 +217,7 @@
             if (temp == ' ')
                 break;
             end
-            WaitSecs(0.05)
+            WaitSecs(0.05);
         end
     
         %%%% run coherenceValidation %%%%
@@ -230,7 +233,7 @@
             if (temp == ' ')
                 break;
             end
-            WaitSecs(0.05)
+            WaitSecs(0.05);
         end
     
         % learning instructions
@@ -244,7 +247,7 @@
         pracString{2} = ['BORDER LEARNING INSTRUCTIONS: \n\n\n' ...
             'You might get really good at anticipating which image will appear when you see a particular border.\n\n' ...
             'If so, you can make your response before the image actually comes on screen. You still receive feedback if you respond before the image appears.\n\n' ...
-            'Remember: your task is to learn how reliably each colored border predicts each scene image. \n\n'
+            'Remember: your task is to learn how reliably each colored border predicts each scene image. \n\n' ...
             'If you don''t have questions, press spacebar when you feel ready to begin Border Learning.'];
     
         page = 1;
@@ -285,14 +288,14 @@
             if (temp == ' ')
                 break;
             end
-            WaitSecs(0.05)
+            WaitSecs(0.05);
         end
     
         %%%% run cue learning %%%
         run_cueLearning;
-        end 
+        end % if debugging
     
-        % phase pivot and display learning validation instructions
+        %%%% phase pivot and display learning validation instructions
         pivotString = ['We would now like to know what you learned about the predictiveness of each border. \n\n' ...
             'You will be presented with each border and asked to use a slider to indicate how predictive that border is for the image pair. \n' ...
             'Use the arrow keys to move the slider around and press spacebar when you are satisfied with your answer. \n\n' ...
@@ -302,13 +305,15 @@
         DrawFormattedText(mainWindow, pivotString, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);
         FlushEvents('keyDown');
-        while(1)
-            temp = GetChar;
-            if (temp == ' ')
+       while(1)
+            [~,~,keyCode] = KbCheck(-1);
+            if keyCode(spaceKey)
                 break;
             end
-            WaitSecs(0.05)
-        end
+            WaitSecs(0.05);
+       end
+
+       FlushEvents('keyDown');
     
         %%%% run learning validation %%%%
         run_learningValidation;
@@ -319,16 +324,15 @@
             'Press spacebar to receive instructions.'];
         DrawFormattedText(mainWindow, pivotString, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);
-        FlushEvents('keyDown');
-        while(1)
-            temp = GetChar;
-            if (temp == ' ')
+       while(1)
+            [~,~,keyCode] = KbCheck(-1);
+            if keyCode(spaceKey)
                 break;
             end
-            WaitSecs(0.05)
-        end
+            WaitSecs(0.05);
+       end
     
-        % inference inference instructions
+        %%%% inference instructions
         infString{1} = ['DECISION MAKING INSTRUCTIONS: \n\n\n'...
             'In this phase of the experiment, you will perform the flicker task again: determining which of the images dominated the flicker stream. \n\n' ...
             'The flickering stream will be presented inside of the colored borders, and the correct answer on each trial is *usually* the one that more frequently followed that color border during Border Learning. \n\n' ...
@@ -382,11 +386,11 @@
         DrawFormattedText(mainWindow, instructString, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);
         while(1)
-            temp = GetChar;
-            if (temp == ' ')
+            [~,~,keyCode] = KbCheck(-1);
+            if keyCode(spaceKey)
                 break;
             end
-            WaitSecs(0.05)
+            WaitSecs(0.05);
         end
     
         %%%% run cued inference %%%%
@@ -401,7 +405,7 @@
             if (temp == ' ')
                 break
             end
-            WaitSecs(0.05)
+            WaitSecs(0.05);
         end
         sca;
     

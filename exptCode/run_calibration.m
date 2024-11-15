@@ -30,8 +30,8 @@ tStDev = 0.25;
 
 % set initial guess, which will be different for different desired
 % accuracies; prior threshold estimate and SD; this should cover all possible values pretty generously
-tGuess(1) = 0.8;
-tGuess(2) = 0.65;
+tGuess(1) = 0.7;
+tGuess(2) = 0.55;
 
 % Tracks # presentations of each stimulus, staircase
 stair1Counter  = zeros(nImages, 1);
@@ -45,9 +45,9 @@ for stimIdx = 1:nImages
 
 % initialize flicker stream & structures to hold timing/staircase info
 stim_ind = Shuffle(repelem([1 2], calibrationTrialsPerImage));
-flickerStream = repmat([0; 1], nFrames/2, calibrationTrialN);
+flickerStream = repmat([0; 1], maxFrames/2, calibrationTrialN);
 responseFrames = zeros(calibrationTrialN, 1);
-flipTimes = zeros(nFrames, calibrationTrialN);
+flipTimes = zeros(maxFrames, calibrationTrialN);
 trialStair = zeros(calibrationTrialN, 1);
 
 %% trial loop
@@ -107,7 +107,7 @@ for trial = 1: calibrationTrialN
     vbl = flickerStart;
 
     % run flicker stream
-    for f = 1:nFrames
+    for f = 1:maxFrames
         frame = flickerStream(f, trial);
         if frame == 0
             Screen('DrawTexture', mainWindow, randMaskTex(randi(2,1)), imageRect, centerRect);
@@ -190,9 +190,6 @@ for trial = 1: calibrationTrialN
         subID, block, trial, imagePath{target}, target, trialCoherence, trialStair(trial), responseFrames(trial), resp, accuracy, RT, realDuration);
 end
 
-% save workspace variables
-save([datadir filesep 'block' num2str(block) '_calibrationVars.mat']);
-
 %stairConvergThresh = 0.1;
 for stimIdx = 1:nImages
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
@@ -206,6 +203,9 @@ for stimIdx = 1:nImages
         warning('Hey, there are NaNs in your staircase. Consider redoing it.');
     end
 end
+
+% save workspace variables
+save([datadir filesep 'block' num2str(block) '_calibrationVars.mat']);
 
 %% plot staircase values
 figure;

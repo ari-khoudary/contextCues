@@ -72,7 +72,6 @@ while needToLearn == 1
         DrawFormattedText(mainWindow, '+', 'center', centerY, textColor);
         cueFlip = Screen('Flip',mainWindow);
         learnCueOnsets(trial) = cueFlip;
-        cueDurations(trial)
         while (1)
             if GetSecs > cueFlip + cueDurations(trial)
                 break

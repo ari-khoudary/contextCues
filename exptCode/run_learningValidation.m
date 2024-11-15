@@ -41,7 +41,7 @@ for i = 1:nCues
     thisCue = cueColors(rIdx(i),:);
 
     % display cue + slider
-    while isnan(estimate)
+    while isnan(estimate) 
 
         % draw the prompt
         DrawFormattedText(mainWindow, 'How predictive was this border?', 'center', screenY*0.3, textColor, 70);
@@ -112,7 +112,7 @@ for i = 1:nCues
     data_learningValidation.leftImageIdx(i) = 1;
     data_learningValidation.estimate(i) = estimate;
     data_learningValidation.confidence(i) = confidence;
-    data_learningValidation.confRT(i) = confRT;
+    %data_learningValidation.confRT(i) = confRT;
 
 end % for i=1:nCues
 

@@ -213,6 +213,3 @@ while needToTrain
         end % while(1)...
     end % if acc >= criterion
 end % needToTrain
-
-DrawFormattedText(mainWindow, 'all done!', 'center', textColor);
-Screen('Flip', mainWindow);

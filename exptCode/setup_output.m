@@ -1,12 +1,5 @@
 %% set up files to save behavioral responses
 
-% create folder to contain each subject's files
-sID = ['s', num2str(subID)];
-datadir = ['..' filesep 'data_v2' filesep sID];
-if ~exist(datadir, 'dir')
-    mkdir(datadir);
-end
-
 % make file for training
 trainingFileName = [datadir filesep 'block', num2str(block), '_training.csv'];
 trainingFile = fopen(trainingFileName, 'wt+');

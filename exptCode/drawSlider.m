@@ -32,7 +32,7 @@ function drawSlider(w, centerY, centerX, minValue, maxValue, currentValue, slide
     
     % Draw the text
     Screen('DrawText', w, [valueText '%'], textX, textY, [225 225 225]);  % thumb value
-    Screen('DrawText', w, '100%', sliderStartX-100, sliderY - imageHeight/1.25); % slider left anchor
+    Screen('DrawText', w, '100%', sliderStartX-110, sliderY - imageHeight/1.25); % slider left anchor
     Screen('DrawText', w, '100%', sliderEndX+50, sliderY - imageHeight/1.25); % slider right anchor
 
     % draw the images
