@@ -14,20 +14,18 @@
 cue1Counter = 0;
 cue2Counter = 0;
 cue3Counter = 0;
-catchTrialCounter = 0;
-inference_counter_general = 0;
 
 %% create flicker
 % forward & backward mask image frames with noise
-flickerStream = repmat([0; 1], nFrames/2, sum(sum(inferenceTrials)));
+flickerStream = repmat([0; 1], nFrames/2, testTrialN);
 
 % make flicker stream for test trials
-for trial=1:sum(sum(inferenceTrials))
+for trial=1:testTrialN
     flickerStream(1:noise1Frames_test(trial), trial) = 0;
     noise2onset = noise1Frames_test(trial) + signal1Frames_test(trial);
     flickerStream(noise2onset:noise2onset+noise2Frames_test(trial), trial) = 0;
 
-    cueIdx=inferenceCue(trial);
+    cueIdx=testCue(trial);
     if cueIdx==1
         cue1Counter=cue1Counter+1;
         inference_counter_general = cue1Counter;
@@ -38,7 +36,7 @@ for trial=1:sum(sum(inferenceTrials))
         cue3Counter=cue3Counter+1;
         inference_counter_general = cue3Counter;
     end
-    target = inferenceImg(cueIdx, inference_counter_general);
+    target = testImg(cueIdx, inference_counter_general);
 
     % get indices of non-noise frames
     imgIdx = find(flickerStream(:, trial));
@@ -137,7 +135,9 @@ end
 
 %% shorten flicker duration to be 4 seconds
 
-flickerAll = flickerAll(1:maxFrames, :);
+if exist('maxFrames', 'var')
+    flickerAll = flickerAll(1:maxFrames, :);
+end
 
 %% 
 clear cue1Counter cue2Counter cue3Counter catchTrialCounter inference_counter_general targetIdx lureIdx rIdx

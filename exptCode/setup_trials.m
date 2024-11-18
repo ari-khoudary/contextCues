@@ -1,8 +1,9 @@
 % set up trial structures for learning & inference
 
+
 %% make matrix of transition probabilities for each cue
 cueLevels = [memReliability 1-memReliability; ... % cue in favor of imgIdx1
-    1-memReliability memReliability; ... % cue in favor of imgIdx 2
+    1-memReliability memReliability; ... % cue in favor of imgIdx 2 
     0.5 0.5];
 
 %% choose colored borders 
@@ -45,38 +46,34 @@ learnImg = learnImg(:, randperm(size(learnImg,2)));
 %% organize inference trials
 
 % compute how many trials in each condition
-inferenceTrials = round(cueLevels*inferenceTrialN / nCues);
-% get rid of half the neutral trials
-inferenceTrials(3,:) = round(inferenceTrials(3,:)/2);
+testTrialN = inferenceTrialPerCue * nCues;
+testTrials = round(cueLevels*testTrialN / nCues);
+if halfNeutral==1
+    % get rid of half the neutral trials
+    testTrials(3,:) = round(testTrials(3,:)/2);
+    testTrialN = sum(sum(testTrials));
+end
 
 % compute how many catch trials
-nCatchTrial = pCatchTrial * inferenceTrialN;
-catch_per_cue = nCatchTrial / nCues;
-% catch trials per condition
-catchTrials = round(cueLevels * catch_per_cue);
-% match the proportion of neutral non-catch trials 
-if catch_per_cue > 2
-    catchTrials(3,:) = round(catchTrials(3,:) / 2);
-else
-    catchTrials(3,:) = Shuffle([0 1]);
-end
-nCatchTrial = sum(sum(catchTrials));
+catchTrials = ceil(pCatchTrial * testTrials);
+catch_per_cue = sum(catchTrials, 2);
+catchTrialN = sum(sum(catchTrials));
 
 % total amount of trials per cue
-totalTrials = catchTrials + inferenceTrials;
-inferenceTrialN_total = sum(sum(totalTrials));
+totalTrials = testTrials + catchTrials;
+inferenceTrialN = sum(sum(totalTrials));
 
 % create cue arrays
-inferenceCue = [repelem(1, sum(inferenceTrials(1,:))) repelem(2, sum(inferenceTrials(2,:))) repelem(3, sum(inferenceTrials(3,:)))]; 
+testCue = [repelem(1, sum(testTrials(1,:))) repelem(2, sum(testTrials(2,:))) repelem(3, sum(testTrials(3,:)))]; 
 catchCue = [repelem(1, sum(catchTrials(1,:))) repelem(2, sum(catchTrials(2,:))) repelem(3, sum(catchTrials(3,:)))];
 
 % populate image array in proportion to cue reliability; each row corresponds to cue index
-inferenceImg = NaN(nCues, sum(inferenceTrials(1,:)));
+testImg = NaN(nCues, sum(testTrials(1,:)));
 catchImg = NaN(nCues, sum(catchTrials(1,:)));
 
 for cueIdx=1:nCues
-    if cueIdx==3
-        inferenceImg(cueIdx, :) = [repelem(1, inferenceTrials(cueIdx,1)) repelem(2, inferenceTrials(cueIdx,2)) zeros([1 (length(inferenceImg)-sum(inferenceTrials(cueIdx,:)))])];
+    if cueIdx==3 & halfNeutral==1
+        testImg(cueIdx, :) = [repelem(1, testTrials(cueIdx,1)) repelem(2, testTrials(cueIdx,2)) zeros([1 (length(testImg)-sum(testTrials(cueIdx,:)))])];
         if catch_per_cue==1
             catchImg(cueIdx, :) = randi([1 2]);
         elseif catch_per_cue==2
@@ -85,18 +82,18 @@ for cueIdx=1:nCues
             catchImg(cueIdx, :) = [repelem(1, catchTrials(cueIdx,1)) repelem(2, catchTrials(cueIdx,2)) zeros([1 (length(catchImg)-sum(catchTrials(cueIdx,:)))])];
         end
     else
-        inferenceImg(cueIdx, :) = [repelem(1, inferenceTrials(cueIdx,1)) repelem(2, inferenceTrials(cueIdx,2))];
+        testImg(cueIdx, :) = [repelem(1, testTrials(cueIdx,1)) repelem(2, testTrials(cueIdx,2))];
         catchImg(cueIdx, :) = [repelem(1, catchTrials(cueIdx,1)) repelem(2, catchTrials(cueIdx,2))];
     end
 end
 
 % randomize order
-inferenceImg(1:2, :) = inferenceImg(1:2, randperm(size(inferenceImg, 2))); % non-neutral cues
-inferenceImg(3, 1:nnz(inferenceImg(3,:))) = inferenceImg(3, randperm(nnz(inferenceImg(3,:))));
-inferenceCue = Shuffle(inferenceCue);
+testImg(1:2, :) = testImg(1:2, randperm(size(testImg, 2))); % non-neutral cues
+testImg(3, 1:nnz(testImg(3,:))) = testImg(3, randperm(nnz(testImg(3,:))));
+testCue = Shuffle(testCue);
 
 % randomly determine which trials will be catch
-catch_trials = sort(randperm(inferenceTrialN_total, sum(sum(catchTrials))));
+catch_trials = sort(randperm(inferenceTrialN, catchTrialN));
 % randomize order of catch trials
 catch_rIdx = randperm(nnz(catchImg));
 % randomize cues & targets by the same order

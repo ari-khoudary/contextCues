@@ -1,15 +1,19 @@
-%% compute probabilistic noise periods that achieve a fixed hazard rate across trials 
+%% define timing variables 
+
+% visual interfilp interval / sampling rate
+ifi = 1/60;
+waitframes = 1;
 
 % create a general distribution
 lambda = 0.12;
-noiseMin = round(1/ifi);
-signalMin = round(0.75/ifi);
+noiseMin = round(0.75/ifi);
+signalMin = round(0.5/ifi);
 noisePDF = discrete_bounded_hazard_rate(lambda, noiseMin);
 signalPDF = discrete_bounded_hazard_rate(lambda, signalMin);
 
 %% create noise & signal durations for coherence validation
 
-noiseDistribution_v = round(noisePDF * cohFeedbackTotalN);
+noiseDistribution_v = ceil(noisePDF * cohFeedbackTotalN);
 noiseFrames_v = zeros(cohFeedbackTotalN, 1);
 trialCount = cumsum(noiseDistribution_v);
 for i = 1:length(noiseDistribution_v)
@@ -68,8 +72,8 @@ cueDurations = (cueDurations + noiseMin)*ifi;
 cueDurations = Shuffle(cueDurations);
 
 %% create noise1 and noise 2 distributions
-noiseDistribution = round(noisePDF * inferenceTrialN_total);
-noiseFrames = zeros(inferenceTrialN_total, 1);
+noiseDistribution = round(noisePDF * inferenceTrialN);
+noiseFrames = zeros(inferenceTrialN, 1);
 trialCount = cumsum(noiseDistribution);
 for i = 1:length(noiseDistribution)
     if i==1
@@ -107,5 +111,3 @@ signal1max = max(signal1Frames*ifi);
 noise2max = max(noise2Frames*ifi);
 minFlicker = noise1max + signal1max + noise2max;
 nFrames = round(minFlicker) / ifi;
-
-

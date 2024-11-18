@@ -61,14 +61,14 @@ while needToLearn == 1
         DrawFormattedText(mainWindow, '+', 'center', centerY, textColor);
         fixFlip = Screen('Flip', mainWindow);
         while (1)
-            if GetSecs > fixFlip + learnITI
+            if GetSecs > fixFlip + trainITI
                 break
             end
         end
 
         % show prior cue with fixation cross
         FlushEvents('keyDown');
-        Screen('FrameRect', mainWindow, thisCue, borderRect, 8);
+        Screen('FrameRect', mainWindow, thisCue, borderRect, 10);
         DrawFormattedText(mainWindow, '+', 'center', centerY, textColor);
         cueFlip = Screen('Flip',mainWindow);
         learnCueOnsets(trial) = cueFlip;
@@ -95,7 +95,7 @@ while needToLearn == 1
         end
 
         % replace fixation with image
-        Screen('FrameRect', mainWindow, thisCue, borderRect, 8);
+        Screen('FrameRect', mainWindow, thisCue, borderRect, 10);
         Screen('DrawTexture',mainWindow,thisImg,imageRect,centerRect);
         % give feedback on button press if they responded during cue-only period
         if ~isnan(learnRT)
@@ -127,7 +127,7 @@ while needToLearn == 1
             else
                 feedbackString='Incorrect.';
             end
-            Screen('FrameRect', mainWindow, thisCue, borderRect, 8);
+            Screen('FrameRect', mainWindow, thisCue, borderRect, 10);
             Screen('DrawTexture',mainWindow,thisImg,imageRect,centerRect);
             DrawFormattedText(mainWindow, feedbackString, 'center', centerY-imageRect(4)-10, textColor);
             Screen('Flip', mainWindow);

@@ -43,12 +43,17 @@ for stimIdx = 1:nImages
     q2{stimIdx} = QuestCreate(tGuess(2), tStDev, vizAccuracy, beta, delta, gamma, grain, range);
  end
 
-% initialize flicker stream & structures to hold timing/staircase info
+%% initialize flicker stream & structures to hold timing/staircase info
 stim_ind = Shuffle(repelem([1 2], calibrationTrialsPerImage));
-flickerStream = repmat([0; 1], maxFrames/2, calibrationTrialN);
+flickerStream = repmat([0; 1], nFrames/2, calibrationTrialN);
 responseFrames = zeros(calibrationTrialN, 1);
-flipTimes = zeros(maxFrames, calibrationTrialN);
+flipTimes = zeros(nFrames, calibrationTrialN);
 trialStair = zeros(calibrationTrialN, 1);
+
+if exist('maxFrames', 'var')
+    flickerStream = flickerStream(1:maxFrames, :);
+    flipTimes = flipTimes(1:maxFrames, :);
+end
 
 %% trial loop
 
@@ -107,7 +112,7 @@ for trial = 1: calibrationTrialN
     vbl = flickerStart;
 
     % run flicker stream
-    for f = 1:maxFrames
+    for f = 1:nFrames
         frame = flickerStream(f, trial);
         if frame == 0
             Screen('DrawTexture', mainWindow, randMaskTex(randi(2,1)), imageRect, centerRect);
@@ -116,7 +121,7 @@ for trial = 1: calibrationTrialN
         end
 
         % flip to screen
-        vbl = Screen('Flip', mainWindow, vbl + (waitframes - 0.5) * ifi);
+        vbl = Screen('Flip', mainWindow, vbl + (waitframes - 0.25) * ifi);
         flipTimes(f, trial) = vbl;
 
         % scan for response
@@ -141,8 +146,6 @@ for trial = 1: calibrationTrialN
 
     % document actual duration of each flicker stream
     realDuration = GetSecs - flickerStart;
-
- 
     
     %% feedback 
     accuracy = resp==target;
@@ -190,12 +193,17 @@ for trial = 1: calibrationTrialN
         subID, block, trial, imagePath{target}, target, trialCoherence, trialStair(trial), responseFrames(trial), resp, accuracy, RT, realDuration);
 end
 
-%stairConvergThresh = 0.1;
+%%
 for stimIdx = 1:nImages
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
     validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
-    endq1 = validq1(end);
-    endq2 = validq2(end);
+    if debugging==1 && length(validq1)==0
+        endq1 = 0;
+        endq2 = validq2(end);
+    elseif debugging==1 && length(validq2)==0
+         endq1 = validq1(end);
+        endq2 = 0;
+    end
     abs(endq1 - endq2)
     sprintf('Staircase difference for stimulus is %i is %.4f', stimIdx,  abs(endq1 - endq2))
     calibratedCoherence(stimIdx) = mean([endq1 endq2], 'omitnan');

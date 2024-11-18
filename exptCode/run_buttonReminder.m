@@ -4,7 +4,7 @@ FlushEvents('keyDown');
 remindIdx = Shuffle([1,2]);
 for target = 1:length(remindIdx)
     % put reminder & target on screen
-    reminderString = 'Before proceeding, please press the button associated with this scene image:';
+    reminderString = 'Before proceeding, please press the button corresponding to this scene image:';
     DrawFormattedText(mainWindow, reminderString, 'center', centerY-imageRect(4)+20, textColor);
     Screen('DrawTexture', mainWindow, randImageTex(remindIdx(target)), imageRect, centerRect);
     Screen('Flip', mainWindow);

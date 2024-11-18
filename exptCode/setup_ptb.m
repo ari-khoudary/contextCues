@@ -25,7 +25,7 @@ Screen('Preference', 'SuppressAllWarnings', 1);
 Screen('Preference', 'Verbosity', 0);
 
 % aesthetics
-backgroundColor = 0;
+backgroundColor = 25;
 textColor = 255;
 
 % make farthest screen display
@@ -40,7 +40,7 @@ centerX  = screenX/2;
 centerY = screenY/2;
 
 % define open window
-mainWindow = Screen(screenNumber, 'OpenWindow',backgroundColor);
+mainWindow = Screen(screenNumber, 'OpenWindow', backgroundColor);
 
 % retrieve maximum priority number
 topPriorityLevel = MaxPriority(mainWindow);

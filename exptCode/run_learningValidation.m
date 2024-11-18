@@ -44,10 +44,10 @@ for i = 1:nCues
     while isnan(estimate) 
 
         % draw the prompt
-        DrawFormattedText(mainWindow, 'How predictive was this border?', 'center', screenY*0.3, textColor, 70);
+        DrawFormattedText(mainWindow, 'What does this border predict?', 'center', screenY*0.3, textColor, 70);
 
         % draw the cue
-        Screen('FrameRect', mainWindow, thisCue, borderRect, 8);
+        Screen('FrameRect', mainWindow, thisCue, borderRect, 10);
 
         % Draw the slider
         drawSlider(mainWindow, centerY, centerX, minValue, maxValue, currentValue, sliderLength, sliderWidth, sliderHeight, rightImageIdx, leftImageIdx, feedbackRect, randFeedbackTex, thisCue);
@@ -67,15 +67,19 @@ for i = 1:nCues
         WaitSecs(0.05);
     end
 
-    % record estimate
-    estimate = currentValue;
+    % record estimate & slider value
+    if currentValue < 50
+        estimate = 100 - currentValue;
+    else
+        estimate = currentValue;
+    end
 
     % prep for confidence rating
     FlushEvents('keyDown');
 
     % draw & display confidence screen
     scale = '1                          2                          3                          4';
-    labels = '\n\n not confident                                                              highly confident';
+    labels = '\n\n not confident                                                              quite confident';
     DrawFormattedText(mainWindow, 'Confidence?', 'center', screenY*0.35, textColor, 70);
     DrawFormattedText(mainWindow, [scale, labels], 'center', screenY*0.55, textColor);
     confFlip = Screen('Flip', mainWindow);
@@ -101,7 +105,7 @@ for i = 1:nCues
     end % while(1)
 
     % write trial data
-    data_learningValidation.cueString(i) = cueStrings(i);
+    data_learningValidation.cueString(i) = cueStrings(rIdx(i));
     data_learningValidation.cueIdx(i) = rIdx(i);
     if rIdx(i) < 3
         data_learningValidation.congImgIdx(i) = rIdx(i);
@@ -112,7 +116,7 @@ for i = 1:nCues
     data_learningValidation.leftImageIdx(i) = 1;
     data_learningValidation.estimate(i) = estimate;
     data_learningValidation.confidence(i) = confidence;
-    %data_learningValidation.confRT(i) = confRT;
+    data_learningValidation.confRT(i) = confRT;
 
 end % for i=1:nCues
 

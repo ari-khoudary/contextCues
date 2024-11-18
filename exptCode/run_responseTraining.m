@@ -84,13 +84,6 @@ while needToTrain
             if isnan(trainRT)
                 [keyIsDown, secs, keyCode] = KbCheck(-1);
 
-                % quit expt if respQuit button is pressed
-                if (keyIsDown)
-                    if (keyCode(respQuit))
-                        cleanupScr(mainWindow);
-                        return;
-                    end
-
                     % record RT & response if one of the image keys is pressed
                     if (any(keyCode(imageResponseKeys)))
                         trainRT = secs - imageTime;
@@ -102,7 +95,6 @@ while needToTrain
                         end
 
                     end % if any(keyCode...
-                end % if (keyIsDown)
             end % if isnan...
 
             % provide textual feedback

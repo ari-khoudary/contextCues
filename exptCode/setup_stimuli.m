@@ -21,7 +21,7 @@ border_array_string = {borders1_string, borders2_string};
 imageList = dir('images/S*.jpg');
 maskList = dir('images/mask*_s*.jpg');
 feedbackList = dir('images/feedback_*.jpg');
-% storee
+% store
 imageTex = zeros(length(imageList),1);
 maskTex = zeros(length(maskList),1);
 feedbackTex = zeros(length(feedbackList),1);

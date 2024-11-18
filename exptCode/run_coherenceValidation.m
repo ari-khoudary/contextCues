@@ -41,7 +41,9 @@ for trial=1:cohFeedbackTotalN
     end
 end
 
-flickerStream_v = flickerStream_v(1:maxFrames, :);
+if exist('maxFrames', 'var')
+    flickerStream_v = flickerStream_v(1:maxFrames, :);
+end
 
 % randomize targets across trials
 trialTargets_v = repmat([1 2], [1 cohFeedbackTotalN/2]);
@@ -71,6 +73,22 @@ validationEvidence = validationFlipTimes;
 %% run trials
 
 for trial = 1:cohFeedbackTotalN
+
+    if trial == nFeedbackTrial + 1
+        string = ['Thats it for the feedback! \n\n For the rest of this phase, we will ask you to report your confidence that you made the right choice on each trial. \n\n'  ...
+            'This rating will come immediately after your decision on each trial.\n\n  Make sure you continue to make the primary response: determining which image dominated the stream. \n\n' ...
+            'Press spacebar to proceed.'];
+        DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
+        Screen('Flip', mainWindow);
+        while(1)
+            [~,~,keyCode] = KbCheck(-1);
+            if keyCode(spaceKey)
+                break;
+            end
+            WaitSecs(0.05);
+        end
+    end
+    clear string
 
     % reset temporary variables
     response = NaN;
@@ -109,7 +127,7 @@ for trial = 1:cohFeedbackTotalN
         end
 
         % flip to screen
-        vbl = Screen('Flip', mainWindow, vbl + (waitframes - 0.5) * ifi);
+        vbl = Screen('Flip', mainWindow, vbl + (waitframes - 0.25) * ifi);
         validationFlipTimes(f, trial) = vbl;
 
         % scan for response
@@ -163,7 +181,7 @@ for trial = 1:cohFeedbackTotalN
 
         % draw & display confidence screen
         scale = '1                          2                          3                          4';
-        labels = '\n\n not confident                                                              highly confident';
+        labels = '\n\n not confident                                                              quite confident';
         DrawFormattedText(mainWindow, 'Confidence?', 'center', screenY*0.35, textColor, 70);
         DrawFormattedText(mainWindow, [scale, labels], 'center', screenY*0.55, textColor);
         confFlip = Screen('Flip', mainWindow);
@@ -238,7 +256,7 @@ for trial = 1:cohFeedbackTotalN
     data_coherenceValidation.respFrame(trial) = respFrame;
     data_coherenceValidation.flickerDuration(trial) = flickerDuration;
     data_coherenceValidation.coherence(trial) = coherence(target);
-    % evidence dynamics 
+    % evidence dynamics
     data_coherenceValidation.noise1frames(trial) = noise1Frames_v(trial);
     data_coherenceValidation.totalEv_signal1(trial) = sum(trialEvidence > 0);
     data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence == target);
@@ -249,13 +267,13 @@ for trial = 1:cohFeedbackTotalN
     data_coherenceValidation.noise2Onset(trial) = noise2Onset;
     data_coherenceValidation.signal2Onset(trial) = signal2Onset;
     % adjust values depending on when participant responded
-    if respFrame >= noise2Onset && f < signal2Onset % response during second noise period 
+    if respFrame >= noise2Onset && f < signal2Onset % response during second noise period
         data_coherenceValidation.noise2frames(trial) = length(trialEvidence(noise2Onset:f));
         data_coherenceValidation.signal2Onset(trial) = NaN;
         data_coherenceValidation.totalEv_signal2(trial) = NaN;
         data_coherenceValidation.targetEv_signal2(trial) = NaN;
     elseif  respFrame > noise1Frames_v(trial) && respFrame < noise2Onset % response during first signal period
-        data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence == target);   
+        data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence == target);
         data_coherenceValidation.noise2frames(trial) = NaN;
         data_coherenceValidation.signal2Onset(trial) = NaN;
         data_coherenceValidation.totalEv_signal2(trial) = NaN;
