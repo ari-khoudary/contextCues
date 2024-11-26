@@ -48,7 +48,7 @@ data_cuedInference = table('Size', [inferenceTrialN length(varNames)], ...
 for trial = 1:inferenceTrialN
 
     %%%% give breaks & give feedback on performance %%%%
-    takeBreak = 0; 
+    takeBreak = 0;
     if sum(trial==break_trials) == 1
         takeBreak = 1;
         percent_correct = 100*mean(infAccuracy, 'omitnan');
@@ -138,8 +138,8 @@ for trial = 1:inferenceTrialN
 
     for f = 1:nFrames
 
-         % draw colored border
-         Screen('FrameRect', mainWindow, thisCue, borderRect, 10);
+        % draw colored border
+        Screen('FrameRect', mainWindow, thisCue, borderRect, 10);
 
         % pull frames from integrated test & catch flicker stream
         frame = flickerAll(f, trial);
@@ -261,7 +261,7 @@ for trial = 1:inferenceTrialN
     end % while 1
 
     % write behavior to csv
-    if catch_trial==0 
+    if catch_trial==0
         fprintf(inferenceFile, '\n %i, %i, %i, %s, %i, %s, %s, %i, %i, %i, %i, %.4f, %i, %.4f, %.4f,%i,%i,%i,%.4f,%i', ...
             subID, block, trial, imagePath{trialTarget}, trialTarget, mat2str(thisCue), cueStrings{cueIdx}, congruent, respFrame, response, infAccuracy(trial), RT, confResponse, confRT, realDuration, noise1Frames_test(testTrialCounter), signal1Frames_test(testTrialCounter), noise2Frames_test(testTrialCounter), trialCoherence(trial), catch_trial);
     else
@@ -320,8 +320,8 @@ for trial = 1:inferenceTrialN
     if respFrame > signal2onset % if they respond anytime after the second noise period
         data_cuedInference.totalEv_signal1(trial) = sum(trialEvidence(1:noise2onset) > 0);
         data_cuedInference.targetEv_signal1(trial) = sum(trialEvidence(1:noise2onset) == trialTarget);
-        data_cuedInference.totalEv_signal2(trial) = nansum(trialEvidence(signal2onset:respFrame));
-        data_cuedInference.targetEv_signal2(trial) = nansum(trialEvidence(signal2onset:respFrame)==trialTarget);
+        data_cuedInference.totalEv_signal2(trial) = sum(trialEvidence(signal2onset:respFrame) > 0);
+        data_cuedInference.targetEv_signal2(trial) = sum(trialEvidence(signal2onset:respFrame)==trialTarget);
         data_cuedInference.noise1frames_obs(trial) = noise1frames;
         data_cuedInference.signal1frames_obs(trial) = signal1frames;
         data_cuedInference.noise2frames_obs(trial) = noise2frames;
@@ -354,7 +354,7 @@ for trial = 1:inferenceTrialN
         data_cuedInference.targetEv_signal2(trial) = NaN;
         data_cuedInference.signal2frames_obs(trial) = NaN;
     end
-        
+
 end % inference trial loop
 
 % save workspace variables
@@ -363,3 +363,17 @@ writetable(data_cuedInference, [datadir filesep 'block', num2str(block), '_cuedI
 
 % reset CPU priority
 Priority(0);
+
+% display goodbye screen
+string = 'Experiment complete! Thanks for your participation. \n\n Please get the experimenter.';
+DrawFormattedText(mainWindow, string, 'center', 'cmmenter', textColor, 80);
+Screen('Flip', mainWindow);
+while(1)
+    temp = GetChar;
+    if (temp == ' ')
+        break
+    end
+    WaitSecs(0.05);
+end
+clear string
+sca;

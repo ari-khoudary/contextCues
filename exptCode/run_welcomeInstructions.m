@@ -24,12 +24,13 @@ welcString = ['Welcome! \n\n' ...
     'This is an experiment about how people learn and make decisions. \n\n'...
     'Today''s session will consist of a few different phases that vary in length. \n' ...
     'The experiment as a whole should take no more than 90 minutes to complete. \n\n' ...
-    'Use the forward arrow to learn more about each phase of the experiment. \n' ...
+    'Use the right arrow to learn more about each phase of the experiment. \n' ...
     'You will get more instructions about each phase as it comes up'];
 
 %% runs welcome instructions
 
 DrawFormattedText(mainWindow, welcString, 'center', 'center', textColor, 80);
+DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
 Screen('Flip',mainWindow);
 FlushEvents('keyDown');
 while(1)
@@ -42,7 +43,6 @@ end
 
 % display graphic after right image key is pressed
 Screen('DrawTexture', mainWindow, welcTex, [], destRect);
-WaitSecs(5);
 DrawFormattedText(mainWindow, 'Press spacebar when you are ready to proceed to Response Training.', centerX-350, centerY*1.5);
 Screen('Flip', mainWindow);
 while(1)

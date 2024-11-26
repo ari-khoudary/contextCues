@@ -26,7 +26,7 @@ nFeedbackTrial = ceil(cohFeedbackTotalN * pFeedbackTrial);
 nConfidenceTrial = cohFeedbackTotalN - nFeedbackTrial;
 
 %%% cue learning
-learningCriterion = 0.8; % what level of accuracy per cue is needed to move on from cue learning
+learningCriterion = 0.6; % what level of accuracy per cue is needed to move on from cue learning
 learnImgDuration = 2;
 if debugging
     learnTrialPerCue = 5;

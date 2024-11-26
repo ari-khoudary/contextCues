@@ -138,6 +138,7 @@ while needToLearn == 1
             DrawFormattedText(mainWindow, string, 'center', centerY, textColor);
             Screen('Flip',mainWindow);
             WaitSecs(2);
+            clear string
         end
 
         % document accuracy & congruence

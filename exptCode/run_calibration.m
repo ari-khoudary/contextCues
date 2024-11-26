@@ -193,6 +193,7 @@ for trial = 1: calibrationTrialN
         subID, block, trial, imagePath{target}, target, trialCoherence, trialStair(trial), responseFrames(trial), resp, accuracy, RT, realDuration);
 end
 
+clear string
 %%
 for stimIdx = 1:nImages
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
@@ -201,8 +202,11 @@ for stimIdx = 1:nImages
         endq1 = 0;
         endq2 = validq2(end);
     elseif debugging==1 && length(validq2)==0
-         endq1 = validq1(end);
+        endq1 = validq1(end);
         endq2 = 0;
+    else
+        endq1 = validq1(end);
+        endq2 = validq2(end);
     end
     abs(endq1 - endq2)
     sprintf('Staircase difference for stimulus is %i is %.4f', stimIdx,  abs(endq1 - endq2))

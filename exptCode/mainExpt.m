@@ -59,11 +59,11 @@ setup_durations;
 
 %% run experiment
 
+dbstop if error
+
 for block = 1:nBlocks
 
     try
-
-        dbstop if error
 
         % turn off keyboard responses in the command window
         ListenChar(2);
@@ -74,11 +74,10 @@ for block = 1:nBlocks
         rightPosition = screenX-350;
         leftPosition = screenX - 1200;
 
-        if debugging==0
-
             %%% present general instructions %%%%
             run_welcomeInstructions;
 
+            clear string
             %%%% display response training instructions %%%%
             string = ['RESPONSE TRAINING INSTRUCTIONS: \n\n\n' ...
                 'Your task in this part of the experiment is to learn which keyboard button corresponds to which scene image. \n\n'...
@@ -102,16 +101,17 @@ for block = 1:nBlocks
             run_responseTraining;
 
             %%%% pivot to "flicker practice" (calibration) & give instructions %%%%
+            clear string
             string = ['Nice work! You learned the correct response mappings. \n\n' ...
                 'Moving onto the next phase...'];
             DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
             Screen('Flip', mainWindow);
             WaitSecs(2.5);
             Screen('FillRect', mainWindow, backgroundColor);
-            clear string
 
 
             %%%% present calibration instructions %%%%
+            clear string
             string = ['FLICKER PRACTICE INSTRUCTIONS: \n\n\n' ...
                 'In this part of the experiment, you will practice the "flicker" part of the task: deciding which of the two images was presented more frequently in a rapidly alternating image stream. \n\n' ...
                 'You should respond as soon as you feel like you have an answer -- the goal is to respond as quickly and accurately as possible. \n' ...
@@ -128,140 +128,143 @@ for block = 1:nBlocks
                 end
                 WaitSecs(0.05);
             end
-            clear string
-            % end % if debugging==0
 
-            %%%% run "flicker training" aka CALIBRATION %%%
-            run_calibration;
-            coherence = calibratedCoherence;
-            setup_flicker;
+        %%%% run "flicker training" aka CALIBRATION %%%
+        clear string
+        run_calibration;
+        coherence = calibratedCoherence;
+        setup_flicker;
 
-            %%%% pivot to coherenceValidation and give instructions %%%
-            string{1} = ['Now that you have experience with the flicker task, we are going to make it a bit harder by introducing more noise. \n\n' ...
-                'You will perform the same task: determining which image dominated the flickering stream. \n\n'...
-                'Again, you should respond as soon as you feel you have an answer -- the goal is to respond as quickly and accurately as possible.'];
+        %%%% pivot to coherenceValidation and give instructions %%%
+        clear string
+        string{1} = ['Now that you have experience with the flicker task, we are going to make it a bit harder by introducing more noise. \n\n' ...
+            'You will perform the same task: determining which image dominated the flickering stream. \n\n'...
+            'Again, you should respond as soon as you feel you have an answer -- the goal is to respond as quickly and accurately as possible.'];
 
-            string{2} = ['For the first handful of trials, you will get feedback immediately after you make your decision.\n\n' ...
-                'Eventually this feedback will replaced by a confidence judgment -- instead of us telling you whether you were right, we want to know how confident you are that you made the right decision on each trial.'];
+        string{2} = ['For the first handful of trials, you will get feedback immediately after you make your decision.\n\n' ...
+            'Eventually this feedback will replaced by a confidence judgment -- instead of us telling you whether you were right, we want to know how confident you are that you made the right decision on each trial.'];
 
-            string{3} = ['You will rate your confidence on a scale of 1-4: \n\n' ...
-                '1=not confident, 2=somewhat confident, 3=rather confident, 4=very confident. \n\n' ...
-                'This rating scale will appear onscreen each time you have to make a confidence rating. Please make sure to use all the numbers on the scale. \n\n'...
-                'Press spacebar when you are ready to begin.'];
+        string{3} = ['You will rate your confidence on a scale of 1-4: \n\n' ...
+            '1=not confident, 2=somewhat confident, 3=rather confident, 4=very confident. \n\n' ...
+            'This rating scale will appear onscreen each time you have to make a confidence rating. Please make sure to use all the numbers on the scale. \n\n'...
+            'Press spacebar when you are ready to begin.'];
 
-            page = 1;
-            while page < length(string) + 1
-                DrawFormattedText(mainWindow, string{page}, 'center', 'center', textColor, 80);
-                if page<max(size(string))
-                    DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
-                end
-                if page > 1
-                    DrawFormattedText(mainWindow, leftString, leftPosition, screenY-100, textColor);
-                end
-                Screen('Flip', mainWindow);
-                WaitSecs(0.05);
-                [~,~,keyCode] = KbCheck(-1);
-                if page < length(string) && keyCode(rightKey)
-                    page = page + 1;
-                    FlushEvents('keyDown');
-                    WaitSecs(0.5);
-                elseif page > 1 && keyCode(leftKey)
-                    page = page - 1;
-                    FlushEvents('keyDown');
-                    WaitSecs(0.5);
-                elseif page==max(size(string)) && keyCode(spaceKey)
-                    break
-                end
+        page = 1;
+        while page < length(string) + 1
+            DrawFormattedText(mainWindow, string{page}, 'center', 'center', textColor, 80);
+            if page<max(size(string))
+                DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
             end
-            clear string
-
-            %%%%%%% initiate button reminder %%%%%%%
-            run_buttonReminder;
-
-            % initiate calibration validation with spacebar press
-            string = 'Press spacebar to begin the flicker task.';
-            DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
+            if page > 1
+                DrawFormattedText(mainWindow, leftString, leftPosition, screenY-100, textColor);
+            end
             Screen('Flip', mainWindow);
-            FlushEvents('keyDown');
-            while(1)
-                temp = GetChar;
-                if (temp == ' ')
-                    break;
-                end
-                WaitSecs(0.05);
+            WaitSecs(0.05);
+            [~,~,keyCode] = KbCheck(-1);
+            if page < length(string) && keyCode(rightKey)
+                page = page + 1;
+                FlushEvents('keyDown');
+                WaitSecs(0.5);
+            elseif page > 1 && keyCode(leftKey)
+                page = page - 1;
+                FlushEvents('keyDown');
+                WaitSecs(0.5);
+            elseif page==max(size(string)) && keyCode(spaceKey)
+                break
             end
-            clear string
+        end
+        clear string
 
-            %%%% run coherenceValidation %%%%
-            run_coherenceValidation;
+        %%%%%%% initiate button reminder %%%%%%%
+        run_buttonReminder;
 
-            %%%% phase pivot to learning & give instructions %%%%
-            string = 'Flicker training complete';
-            DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
+        % initiate calibration validation with spacebar press
+        clear string
+        string = 'Press spacebar to begin the flicker task.';
+        DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
+        Screen('Flip', mainWindow);
+        FlushEvents('keyDown');
+        while(1)
+            temp = GetChar;
+            if (temp == ' ')
+                break;
+            end
+            WaitSecs(0.05);
+        end
+        clear string
+
+        %%%% run coherenceValidation %%%%
+        run_coherenceValidation;
+
+        %%%% phase pivot to learning & give instructions %%%%
+        clear string
+        string = 'Flicker training complete';
+        DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
+        Screen('Flip', mainWindow);
+        WaitSecs(2);
+        Screen('FillRect', mainWindow, backgroundColor);
+
+
+        %%%% learning instructions %%%%
+        clear string
+        string{1} = ['BORDER LEARNING INSTRUCTIONS: \n\n\n' ...
+            'In this phase of the experiment, you will be introduced to 3 different colored borders. \n\n' ...
+            'Each border makes a prediction about the probability of observing one scene image relative to the other. \n\n' ...
+            'Your goal is to learn what prediction each border makes about the upcoming scene image.'];
+
+        string{2} = ['BORDER LEARNING INSTRUCTIONS: \n\n\n' ...
+            'Your task on each trial is to press the button that corresponds to the presented scene image. \n\n' ...
+            'But remember: your ultimate goal is to learn how predictive each border is for each image. \n\n' ...
+            'One way to do this is estimating how frequently each border is followed by each image.'];
+
+        string{3} = ['BORDER LEARNING INSTRUCTIONS: \n\n\n' ...
+            'You might get really good at anticipating which image will appear when you see a particular border.\n\n' ...
+            'If so, you can make your response before the image actually comes on screen. \n\n' ...
+            'Remember: your main goal is to figure out what prediction each border makes about the probability of observering one scene instead of the other.\n\n\n' ...
+            'Press spacebar when you feel ready to begin.'];
+
+        FlushEvents('keyDown');
+        page = 1;
+        while page < length(string) + 1
+            DrawFormattedText(mainWindow, string{page}, 'center', 'center', textColor, 80);
+            if page < length(string)
+                DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
+            end
+            if page > 1
+                DrawFormattedText(mainWindow, leftString, leftPosition, screenY-100, textColor);
+            end
             Screen('Flip', mainWindow);
-            WaitSecs(2);
-            Screen('FillRect', mainWindow, backgroundColor);
-            clear string
-
-
-            %%%% learning instructions %%%%
-            string{1} = ['BORDER LEARNING INSTRUCTIONS: \n\n\n' ...
-                'In this phase of the experiment, you will be introduced to 3 different colored borders. \n\n' ...
-                'Each border makes a prediction about the probability of observing one scene image relative to the other. \n\n' ...
-                'Your goal is to learn what prediction each border makes about the upcoming scene image.'];
-
-            string{2} = ['BORDER LEARNING INSTRUCTIONS: \n\n\n' ...
-                'Your task on each trial is to press the button that corresponds to the presented scene image. \n\n' ...
-                'But remember: your ultimate goal is to learn how predictive each border is for each image. \n\n' ...
-                'One way to do this is estimating how frequently each border is followed by each image.'];
-
-            string{3} = ['BORDER LEARNING INSTRUCTIONS: \n\n\n' ...
-                'You might get really good at anticipating which image will appear when you see a particular border.\n\n' ...
-                'If so, you can make your response before the image actually comes on screen. \n\n' ...
-                'Remember: your main goal is to figure out what prediction each border makes about the probability of observering one scene instead of the other.\n\n\n' ...
-                'Press spacebar when you feel ready to begin.'];
-
-            FlushEvents('keyDown');
-            page = 1;
-            while page < length(string) + 1
-                DrawFormattedText(mainWindow, string{page}, 'center', 'center', textColor, 80);
-                if page < length(string)
-                    DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
-                end
-                if page > 1
-                    DrawFormattedText(mainWindow, leftString, leftPosition, screenY-100, textColor);
-                end
-                Screen('Flip', mainWindow);
-                WaitSecs(0.05);
-                [~,~,keyCode] = KbCheck(-1);
-                if page < length(string) && keyCode(rightKey)
-                    page = page + 1;
-                    FlushEvents('keyDown');
-                    WaitSecs(0.5);
-                elseif page > 1 && keyCode(leftKey)
-                    page = page - 1;
-                    FlushEvents('keyDown');
-                    WaitSecs(0.5);
-                elseif page==max(size(string)) && keyCode(spaceKey)
-                    break
-                end
+            WaitSecs(0.05);
+            [~,~,keyCode] = KbCheck(-1);
+            if page < length(string) && keyCode(rightKey)
+                page = page + 1;
+                FlushEvents('keyDown');
+                WaitSecs(0.5);
+            elseif page > 1 && keyCode(leftKey)
+                page = page - 1;
+                FlushEvents('keyDown');
+                WaitSecs(0.5);
+            elseif page==max(size(string)) && keyCode(spaceKey)
+                break
             end
-            clear string
+        end
+        clear string
 
-            %%%% run cue learning %%%
-            run_cueLearning;
-        %end % if debugging
+        %% run cue learning %%%
+        run_cueLearning;
 
         %%%% phase pivot and display learning validation instructions %%%%
+        clear string
         string{1} = ['Almost done with Border Learning! \n\n\n' ...
             'Before you begin the last part of this experiment, we would like to know what you learned about each border.'];
 
         string{2} = ['You will be presented with each border and a slider with each scene image at the endpoints. \n\n' ...
-            'Use the arrow keys to indicate what prediction each border makes about the probability of observing one scene image vs. another. \n\n' ...
-            'Pay attention to which scene image is on which end of the slider to make sure you are accurately reporting your estimate.'];
+            'The image corresponding to the 1 key is at the left endpoint and the image corresponding to the 2 key is at the right endpoint. \n\n' ...
+            'Use the left and right arrow keys to indicate what prediction each border makes about the probability of observing one scene image vs. another. \n\n' ...
+            'For example, if one of the cues always predicts seeing scene image 1, you would move the slider all the way to the left endpoint. \n\n'];
 
-        string{3} = ['Once you are satisfied with your answer, press spacebar to lock it in. \n\n' ...
-            'We will then ask you to rate how confident you are that you correctly estimated the predictiveness of that border. \n\n' ...
+        string{3} = ['Once you are satisfied with your answer, press C to lock it in. \n\n' ...
+            'After you make each estimate, we will ask you to rate how confident you are that you correctly estimated the predictiveness of that border. \n\n' ...
             'This portion is self-timed. Make sure to ask the experimenter if you have any questions. \n\n' ...
             'Press spacebar when you are ready to begin.'];
 
@@ -296,16 +299,17 @@ for block = 1:nBlocks
         FlushEvents('keyDown');
         run_learningValidation;
 
-        %%% phase pivot and display inference instructions %%%%        
+        %%% phase pivot and display inference instructions %%%%
+        clear string
         string = ['All done with Border Learning! \n\n'...
             'Use this time to take a short break before reading the instructions for Decision Making.'];
         DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);
-        WaitSecs(3);
-        clear string
+        WaitSecs(2);
         Screen('FillRect', mainWindow, backgroundColor);
 
-        %%  inference instructions
+        %  inference instructions
+        clear string
         string{1} = ['DECISION MAKING INSTRUCTIONS: \n\n\n'...
             'In this phase of the experiment, you will perform the flicker task again: determining which of the images dominated the flicker stream. \n\n' ...
             'Again, your task is to determine which image dominates the flicker stream as quickly and accurately as you can. \n\n' ...
@@ -320,7 +324,7 @@ for block = 1:nBlocks
             'Please make sure to use the whole range of confidence ratings when responding.'];
 
         string{4} = ['DECISION MAKING INSTRUCTIONS: \n\n\n' ...
-            'This is the final and most important part of the experiment. It is crucial that you are alert and engaged when completing the task.\n\n' ...
+            'This is the final and most important part of the experiment. It is crucial that you are alert and engaged w   hen completing the task.\n\n' ...
             'You will get several breaks. During the breaks, we encourage you to rest your eyes, stretch a bit, and drink some water. \n\n' ...
             'Breaks are also a good time to ask the experimenter any questions that might arise. \n\n\n' ...
             'If you don''t have questions at this time, press spacebar to begin the Decision Making phase.'];
@@ -350,13 +354,13 @@ for block = 1:nBlocks
                 break
             end
         end
-        end  % if debugging==0
         clear string
 
-        %%%%%%% initiate button reminder %%%%%%%
+        %  initiate button reminder %%%%%%%
         run_buttonReminder;
 
         % initiate cued inference with spacebar press
+        clear string
         string = 'Press spacebar to begin the task.';
         DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);
@@ -369,9 +373,11 @@ for block = 1:nBlocks
         end
 
         %%%% run cued inference %%%%
+        clear string
         run_cuedInference;
 
         % display goodbye screen
+        clear string
         string = 'Experiment complete! Thanks for your participation. \n\n Please get the experimenter.';
         DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
         Screen('Flip', mainWindow);

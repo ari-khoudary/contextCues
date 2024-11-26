@@ -56,8 +56,10 @@ noise2Frames_v = noise2Frames_v(rIdx);
 
 %% initialize table to store data
 
-varNames = {'subID', 'block', 'trial', 'targetName', 'targetIdx', 'response', 'accuracy', 'RT', 'respFrame', ...
-    'noise1frames', 'signal1Onset', 'totalEv_signal1', 'targetEv_signal1', 'noise2Onset', 'noise2frames', 'signal2Onset', 'totalEv_signal2', 'targetEv_signal2', ...
+varNames = {'subID', 'block', 'trial', 'targetName','targetIdx', 'response', 'accuracy', 'RT', 'respFrame', 'postFlickerResp',...
+    'noise1frames_design', 'noise1frames_obs', 'signal1Onset_design', 'signal1frames_design', 'signal1frames_obs', ...
+    'noise2Onset_design', 'noise2frames_design', 'noise2frames_obs', 'signal2Onset_design', 'signal2frames_design', 'signal2frames_obs' ...
+    'totalEv_signal1', 'targetEv_signal1', 'totalEv_signal2', 'targetEv_signal2', ...
     'confidence', 'confRT', 'flickerDuration', 'coherence'};
 varTypes = cell([1, length(varNames)]);
 varTypes(:) = {'double'};
@@ -67,8 +69,9 @@ data_coherenceValidation = table('Size', [cohFeedbackTotalN length(varNames)], .
     'VariableNames', varNames, ...
     'VariableTypes', varTypes);
 
-validationFlipTimes = NaN([length(flickerStream_v) cohFeedbackTotalN]);
-validationEvidence = validationFlipTimes;
+cohValidationFlipTimes = NaN([length(flickerStream_v) cohFeedbackTotalN]);
+cohValidationEvidence = cohValidationFlipTimes;
+cohValidationResponseFrames = NaN([cohFeedbackTotalN 1]);
 
 %% run trials
 
@@ -96,6 +99,7 @@ for trial = 1:cohFeedbackTotalN
     respFrame = NaN;
     confResponse = NaN;
     confRT = NaN;
+    flickerDuration = NaN;
     target = trialTargets_v(trial);
     FlushEvents('keyDown');
 
@@ -128,7 +132,7 @@ for trial = 1:cohFeedbackTotalN
 
         % flip to screen
         vbl = Screen('Flip', mainWindow, vbl + (waitframes - 0.25) * ifi);
-        validationFlipTimes(f, trial) = vbl;
+        cohValidationFlipTimes(f, trial) = vbl;
 
         % scan for response
         if isnan(RT)
@@ -139,10 +143,15 @@ for trial = 1:cohFeedbackTotalN
                 response = find(keyCode(imageResponseKeys));
                 respFrame = f;
                 flickerDuration = GetSecs - flickerStart;
+                postFlickerResp = 0;
                 break % terminate flicker with keypress
             end % if any...
         end % if keyIsDown
     end % for f=1:nFrames
+
+    if isnan(flickerDuration)
+        flickerDuration = GetSecs - flickerStart;
+    end
 
     % move to ISI, collect "overflow" responses
     DrawFormattedText(mainWindow, '', 'center', centerY, textColor);
@@ -161,6 +170,7 @@ for trial = 1:cohFeedbackTotalN
                 if size(response, 2) > 1
                     response = 0;
                 end
+                postFlickerResp = 1;
             end % if keyIsDown
         end %if isnan
     end %while 1
@@ -239,14 +249,9 @@ for trial = 1:cohFeedbackTotalN
         end
     end
 
-    % record evidence dynamics
-    trialEvidence = flickerStream_v(1:f, trial);
-    validationEvidence(1:length(trialEvidence), trial) = trialEvidence;
-    noise2Onset = noise1Frames_v(trial) + signal1Frames_v(trial);
-    signal2Onset = noise2Onset + noise2Frames_v(trial);
-
-
     %%% write data to table %%%
+    data_coherenceValidation.subID(trial) = subID;
+    data_coherenceValidation.block(trial) = block;
     data_coherenceValidation.trial(trial) = trial;
     data_coherenceValidation.targetName(trial) = imagePath(trialTargets_v(trial));
     data_coherenceValidation.targetIdx(trial) = trialTargets_v(trial);
@@ -254,40 +259,68 @@ for trial = 1:cohFeedbackTotalN
     data_coherenceValidation.accuracy(trial) = accuracy;
     data_coherenceValidation.RT(trial) = RT;
     data_coherenceValidation.respFrame(trial) = respFrame;
-    data_coherenceValidation.flickerDuration(trial) = flickerDuration;
+    data_coherenceValidation.postFlickerResp(trial) = postFlickerResp;
     data_coherenceValidation.coherence(trial) = coherence(target);
-    % evidence dynamics
-    data_coherenceValidation.noise1frames(trial) = noise1Frames_v(trial);
-    data_coherenceValidation.totalEv_signal1(trial) = sum(trialEvidence > 0);
-    data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence == target);
-    data_coherenceValidation.signal1Onset(trial) = noise1Frames_v(trial) + 1;
-    data_coherenceValidation.noise2frames(trial) = noise2Frames_v(trial);
-    data_coherenceValidation.totalEv_signal2(trial) = sum(trialEvidence(signal2Onset:f) > 0);
-    data_coherenceValidation.targetEv_signal2(trial) = sum(trialEvidence(signal2Onset:f) == target);
-    data_coherenceValidation.noise2Onset(trial) = noise2Onset;
-    data_coherenceValidation.signal2Onset(trial) = signal2Onset;
-    % adjust values depending on when participant responded
-    if respFrame >= noise2Onset && f < signal2Onset % response during second noise period
-        data_coherenceValidation.noise2frames(trial) = length(trialEvidence(noise2Onset:f));
-        data_coherenceValidation.signal2Onset(trial) = NaN;
+    data_coherenceValidation.flickerDuration(trial) = flickerDuration;
+
+    % get duration information
+    noise1frames = noise1Frames_v(trial);
+    noise2frames = noise2Frames_v(trial);
+    signal1frames = signal1Frames_v(trial);
+    % compute derivative variables
+    signal1onset = noise1frames + 1;
+    noise2onset = signal1onset + signal1frames + 1;
+    signal2onset = noise2onset + noise2frames + 1;
+    signal2frames = nFrames - signal2onset;
+    trialEvidence = flickerStream_v(1:f, trial);
+
+    % store 
+    cohValidationEvidence(1:length(trialEvidence), trial) = trialEvidence; 
+    data_coherenceValidation.noise1frames_design(trial) = noise1frames;
+    data_coherenceValidation.signal1Onset_design(trial) = signal1onset;
+    data_coherenceValidation.signal1frames_design(trial) = signal1frames;
+    data_coherenceValidation.noise2Onset_design(trial) = noise2onset;
+    data_coherenceValidation.noise2frames_design(trial) = noise2frames;
+    data_coherenceValidation.signal2Onset_design(trial) = signal2onset;
+    data_coherenceValidation.signal2frames_design(trial) = signal2frames;
+
+   % update evidence dynamics based on responseFrame
+    if respFrame > signal2onset % if they respond anytime after the second noise period
+        data_coherenceValidation.totalEv_signal1(trial) = sum(trialEvidence(1:noise2onset) > 0);
+        data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence(1:noise2onset) == trialTarget);
+        data_coherenceValidation.totalEv_signal2(trial) = sum(trialEvidence(signal2onset:respFrame) > 0);
+        data_coherenceValidation.targetEv_signal2(trial) = sum(trialEvidence(signal2onset:respFrame)==trialTarget);
+        data_coherenceValidation.noise1frames_obs(trial) = noise1frames;
+        data_coherenceValidation.signal1frames_obs(trial) = signal1frames;
+        data_coherenceValidation.noise2frames_obs(trial) = noise2frames;
+        data_coherenceValidation.signal2frames_obs(trial) = length(trialEvidence(signal2onset:respFrame));
+    elseif respFrame > noise2onset && respFrame < signal2onset % if they respond during the second noise period
+        data_coherenceValidation.noise2frames_obs(trial) = length(trialEvidence(noise2onset:respFrame));
+        data_coherenceValidation.totalEv_signal1(trial) = sum(trialEvidence(1:respFrame) > 0);
+        data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence(1:respFrame) == trialTarget);
         data_coherenceValidation.totalEv_signal2(trial) = NaN;
         data_coherenceValidation.targetEv_signal2(trial) = NaN;
-    elseif  respFrame > noise1Frames_v(trial) && respFrame < noise2Onset % response during first signal period
-        data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence == target);
-        data_coherenceValidation.noise2frames(trial) = NaN;
-        data_coherenceValidation.signal2Onset(trial) = NaN;
+        data_coherenceValidation.noise1frames_obs(trial) = noise1frames;
+        data_coherenceValidation.signal1frames_obs(trial) = signal1frames;
+        data_coherenceValidation.signal2frames_obs(trial) = NaN;
+    elseif respFrame > noise1frames && respFrame < noise2onset % if they respond during first signal period
+        data_coherenceValidation.noise2frames_obs(trial) = NaN;
+        data_coherenceValidation.totalEv_signal1(trial) = sum(trialEvidence(1:respFrame) > 0);
+        data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence(1:respFrame) == trialTarget);
         data_coherenceValidation.totalEv_signal2(trial) = NaN;
         data_coherenceValidation.targetEv_signal2(trial) = NaN;
-    else % if response during first noise period
-        data_coherenceValidation.noise1frames(trial) = length(trialEvidence(1:f));
-        data_coherenceValidation.signal1Onset(trial) = NaN;
-        data_coherenceValidation.totalEv_signal1(trial) = NaN;
-        data_coherenceValidation.targetEv_signal1(trial) = NaN;
-        data_coherenceValidation.noise2Onset(trial) = NaN;
-        data_coherenceValidation.noise2frames(trial) = NaN;
-        data_coherenceValidation.signal2Onset(trial) = NaN;
+        data_coherenceValidation.noise1frames_obs(trial) = noise1frames;
+        data_coherenceValidation.signal1frames_obs(trial) = length(trialEvidence(signal1onset:respFrame));
+        data_coherenceValidation.signal2frames_obs(trial) = NaN;
+    else % if they respond during first noise period
+        data_coherenceValidation.signal1frames_obs(trial) = NaN;
+        data_coherenceValidation.noise1frames_obs(trial) = respFrame;
+        data_coherenceValidation.noise2frames_obs(trial) = NaN;
+        data_coherenceValidation.totalEv_signal1(trial) = sum(trialEvidence(1:respFrame) > 0);
+        data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence(1:respFrame) == trialTarget);
         data_coherenceValidation.totalEv_signal2(trial) = NaN;
         data_coherenceValidation.targetEv_signal2(trial) = NaN;
+        data_coherenceValidation.signal2frames_obs(trial) = NaN;
     end
 
     % store confidence
@@ -298,9 +331,6 @@ for trial = 1:cohFeedbackTotalN
         data_coherenceValidation.confidence(trial) = NaN;
         data_coherenceValidation.confRT(trial) = NaN;
     end
-
 end % trial loop
 
-data_coherenceValidation.subID = repelem(subID, cohFeedbackTotalN)';
-data_coherenceValidation.block = repelem(block, cohFeedbackTotalN)';
 writetable(data_coherenceValidation, [datadir filesep 'block', num2str(block), '_coherenceValidation.csv']);

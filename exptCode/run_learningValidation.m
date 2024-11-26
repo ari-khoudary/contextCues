@@ -40,6 +40,7 @@ for i = 1:nCues
     % choose one cue at random
     thisCue = cueColors(rIdx(i),:);
 
+    FlushEvents('keyDown');
     % display cue + slider
     while isnan(estimate) 
 
@@ -60,7 +61,7 @@ for i = 1:nCues
                 currentValue = max(minValue, currentValue - sliderStep);
             elseif keyCode(KbName('RightArrow'))  % Move thumb right
                 currentValue = min(maxValue, currentValue + sliderStep);
-            elseif keyCode(KbName('Space'))  % Exit when spacebar is pressed
+            elseif keyCode(KbName('C'))  % Exit when spacebar is pressed
                 break;
             end
         end
@@ -68,12 +69,8 @@ for i = 1:nCues
     end
 
     % record estimate & slider value
-    if currentValue < 50
-        estimate = 100 - currentValue;
-    else
-        estimate = currentValue;
-    end
-
+    estimate = currentValue;
+    
     % prep for confidence rating
     FlushEvents('keyDown');
 
