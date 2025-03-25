@@ -148,13 +148,19 @@ for trial = 1: calibrationTrialN
     realDuration = GetSecs - flickerStart;
     
     %% feedback 
-    accuracy = resp==target;
+    if length(resp) ~= 1
+        accuracy = NaN;
+    else
+        accuracy = resp==target;
+    end
 
     % display feedback
     targetString = 'The correct answer was: ';
     respString = 'Your response was: ';
     if isnan(resp)
         accString = 'You did not respond in time. \n Please respond faster on the next trial.';
+    elseif length(resp) ==2
+        accString = 'You pressed both response buttons. \n Please only choose one response on each trial.';
     elseif accuracy==1
         accString = 'Correct!';
     else
@@ -164,7 +170,7 @@ for trial = 1: calibrationTrialN
     % draw & flip to screen
     DrawFormattedText(mainWindow, targetString, 'center', centerY-imageRect(4)/1.5, textColor);
     Screen('DrawTexture',mainWindow,randImageTex(target),imageRect,centerRect);
-    if ~isnan(resp)
+    if ~ isnan(resp)
         DrawFormattedText(mainWindow, respString, 'center', centerY+imageRect(4)-20, textColor);
         DrawFormattedText(mainWindow, accString, 'center', centerY+feedbackRect(4)*3.3, textColor);
         Screen('DrawTexture', mainWindow, randFeedbackTex(resp), feedbackRect, feedbackPos);
@@ -181,11 +187,17 @@ for trial = 1: calibrationTrialN
         end
     end
    
+    % make accuracy compatible with quest inputs
+    if isnan(accuracy)
+        questAcc = 0;
+    else
+        questAcc = accuracy;
+    end
     % update staircases
     if mod(trial,2) == 1
-        q1{target} = QuestUpdate(q1{target}, trialCoherence, accuracy);
+        q1{target} = QuestUpdate(q1{target}, trialCoherence, questAcc);
     else  
-        q2{target} = QuestUpdate(q2{target}, trialCoherence, accuracy);
+        q2{target} = QuestUpdate(q2{target}, trialCoherence, questAcc);
     end
 
     % end the trial after a response during calibration
@@ -193,8 +205,7 @@ for trial = 1: calibrationTrialN
         subID, block, trial, imagePath{target}, target, trialCoherence, trialStair(trial), responseFrames(trial), resp, accuracy, RT, realDuration);
 end
 
-clear string
-%%
+% print out calibrated coherence info
 for stimIdx = 1:nImages
     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
     validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
@@ -219,21 +230,21 @@ end
 % save workspace variables
 save([datadir filesep 'block' num2str(block) '_calibrationVars.mat']);
 
-%% plot staircase values
-figure;
-for stimIdx = 1:nImages
-    subplot(1,2,stimIdx)
-    hold on;
-    validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
-    validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
-    ylim([0.3 0.9]);
-    plot(1:length(validq1), validq1, '.-');
-    plot(1:length(validq2), validq2, '.-');
-    titleString = sprintf('Staircases for stimulus %i', stimIdx);
-    title(titleString);
-    xlabel('trial');
-    ylabel('coherence');
-    legend({'staircase1', 'staircase2'});
-    hold off
-end
+% plot staircase values
+% figure;
+% for stimIdx = 1:nImages
+%     subplot(1,2,stimIdx)
+%     hold on;
+%     validq1 = q1{stimIdx}.intensity(q1{stimIdx}.intensity~=0);
+%     validq2 = q2{stimIdx}.intensity(q2{stimIdx}.intensity~=0);
+%     ylim([0.3 0.9]);
+%     plot(1:length(validq1), validq1, '.-');
+%     plot(1:length(validq2), validq2, '.-');
+%     titleString = sprintf('Staircases for stimulus %i', stimIdx);
+%     title(titleString);
+%     xlabel('trial');
+%     ylabel('coherence');
+%     legend({'staircase1', 'staircase2'});
+%     hold off
+% end
 

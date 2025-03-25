@@ -44,7 +44,7 @@ for m = 1:length(maskList)
 end
 
 % randomly choose pair of images for participant
-if rand < 0.5
+if mod(subID, 2) == 1
     randImageTex(1,1) = imageTex(1);
     randImageTex(2,1) = imageTex(2);
     randFeedbackTex(1,1) = feedbackTex(1);

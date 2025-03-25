@@ -83,33 +83,36 @@ for i = 1:nCues
         estimate = currentValue;
     end
 
-    
-    % prep for confidence rating
-    FlushEvents('keyDown');
+    % display cue + slider for confidence estimate
+    thumbValue = currentValue;
+    confValue = 0;
+    while isnan(confidence) 
 
-    % draw & display confidence screen
-    scale = '1                          2                          3                          4';
-    labels = '\n\n not confident                                                              quite confident';
-    DrawFormattedText(mainWindow, 'Confidence?', 'center', screenY*0.35, textColor, 70);
-    DrawFormattedText(mainWindow, [scale, labels], 'center', screenY*0.55, textColor);
-    confFlip = Screen('Flip', mainWindow);
+        % draw the prompt
+        DrawFormattedText(mainWindow, 'Indicate how certain you are in this estimate', 'center', screenY*0.3, textColor, 70);
 
-    % keep it on for confidenceDuration amount of time
-    while (1)
-        % scan for response
-        if isnan(confidence)
-            [keyIsDown, secs, keyCode] = KbCheck(-1);
-            % remove screen when key is pressed
-            if any(keyCode(confidenceResponseKeys))
-                confRT = secs - confFlip;
-                confidence = find(keyCode(confidenceResponseKeys));
-                if size(confidence, 2) > 1
-                    confidence = mean(confidence);
-                end
-                break
-            end % if any...
-        end % if isnan()
-    end % while(1)
+        % draw the cue
+        Screen('FrameRect', mainWindow, thisCue, borderRect, 10);
+
+        % Draw the slider
+        drawSlider_conf(mainWindow, centerY, centerX, minValue, maxValue, thumbValue, confValue, sliderLength, sliderWidth, sliderHeight, rightImageIdx, leftImageIdx, feedbackRect, randFeedbackTex, thisCue);
+
+        % Check for keyboard input
+        [keyIsDown, ~, keyCode] = KbCheck(-1);
+
+        if keyIsDown
+            if keyCode(KbName('LeftArrow'))  % Move thumb left
+                confValue = max(minValue, confValue - sliderStep);
+            elseif keyCode(KbName('RightArrow'))  % Move thumb right
+                confValue = min(maxValue, confValue + sliderStep);
+            elseif keyCode(KbName('C'))  % Exit when spacebar is pressed
+                break;
+            end
+        end
+        WaitSecs(0.05);
+    end
+
+
 
     % write trial data
     data_learningValidation.cueString(i) = cueStrings(rIdx(i));

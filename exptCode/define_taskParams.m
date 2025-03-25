@@ -19,7 +19,7 @@ feedbackDuration = 1.5; % seconds
 if debugging
     cohFeedbackTotalN = 8;
 else
-    cohFeedbackTotalN = 30;
+    cohFeedbackTotalN = 40;
 end
 pFeedbackTrial = 0.25;
 nFeedbackTrial = ceil(cohFeedbackTotalN * pFeedbackTrial);
@@ -27,11 +27,11 @@ nConfidenceTrial = cohFeedbackTotalN - nFeedbackTrial;
 
 %%% cue learning
 learningCriterion = 0.6; % what level of accuracy per cue is needed to move on from cue learning
-learnImgDuration = 2;
+learnImgDuration = 1.5;
 if debugging
-    learnTrialPerCue = 5;
+    learnTrialPerCue = 6;
 else
-    learnTrialPerCue = 25;
+    learnTrialPerCue = 30;
 end
 learnTrialN = nCues * learnTrialPerCue;
 
@@ -39,7 +39,7 @@ learnTrialN = nCues * learnTrialPerCue;
 if debugging
     inferenceTrialPerCue = 10;
 else
-    inferenceTrialPerCue = 100;
+    inferenceTrialPerCue = 150;
 end
 halfNeutral = 1; % boolean: do you want to have half as many neutral cue trials?
 inferenceITI = 1;

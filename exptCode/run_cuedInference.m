@@ -317,7 +317,7 @@ for trial = 1:inferenceTrialN
     data_cuedInference.signal2frames_design(trial) = signal2frames;
 
     % store evidence dynamics
-    if respFrame > signal2onset % if they respond anytime after the second noise period
+    if respFrame >= signal2onset % if they respond anytime after the second noise period
         data_cuedInference.totalEv_signal1(trial) = sum(trialEvidence(1:noise2onset) > 0);
         data_cuedInference.targetEv_signal1(trial) = sum(trialEvidence(1:noise2onset) == trialTarget);
         data_cuedInference.totalEv_signal2(trial) = sum(trialEvidence(signal2onset:respFrame) > 0);
@@ -326,7 +326,7 @@ for trial = 1:inferenceTrialN
         data_cuedInference.signal1frames_obs(trial) = signal1frames;
         data_cuedInference.noise2frames_obs(trial) = noise2frames;
         data_cuedInference.signal2frames_obs(trial) = length(trialEvidence(signal2onset:respFrame));
-    elseif respFrame > noise2onset && respFrame < signal2onset % if they respond during the second noise period
+    elseif respFrame >= noise2onset && respFrame < signal2onset % if they respond during the second noise period
         data_cuedInference.noise2frames_obs(trial) = length(trialEvidence(noise2onset:respFrame));
         data_cuedInference.totalEv_signal1(trial) = sum(trialEvidence(1:respFrame) > 0);
         data_cuedInference.targetEv_signal1(trial) = sum(trialEvidence(1:respFrame) == trialTarget);
@@ -365,8 +365,9 @@ writetable(data_cuedInference, [datadir filesep 'block', num2str(block), '_cuedI
 Priority(0);
 
 % display goodbye screen
+clear string
 string = 'Experiment complete! Thanks for your participation. \n\n Please get the experimenter.';
-DrawFormattedText(mainWindow, string, 'center', 'cmmenter', textColor, 80);
+DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
 Screen('Flip', mainWindow);
 while(1)
     temp = GetChar;
@@ -375,5 +376,4 @@ while(1)
     end
     WaitSecs(0.05);
 end
-clear string
 sca;

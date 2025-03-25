@@ -196,8 +196,8 @@ while needToLearn == 1
                 learnFileName2 = [datadir, filesep 'block', num2str(block), '_learning2.csv'];
                 learnFile2 = fopen(learnFileName2, 'wt+');
                 fprintf(learnFile2, ...
-                    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s',  ...
-                    'subID', 'block', 'trial', 'image', 'imageIdx', 'cue', 'congruent', 'response', 'accuracy', 'RT', 'cueDuration', 'learningRound');
+                    '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s',  ...
+                    'subID', 'block', 'trial', 'image', 'imageIdx', 'cueIdx','cue_string', 'congruent', 'response', 'accuracy', 'RT', 'cueDuration', 'learningRound');
 
                 % tell them that they didn't meet criterion and remind them
                 % of the instructions

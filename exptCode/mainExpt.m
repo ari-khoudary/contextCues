@@ -22,8 +22,9 @@ if block > 1
 end
 
 % generate directory for subject's data
+exptID ='condition_65cue';
 sID = ['s', num2str(subID)];
-datadir = ['..' filesep 'data' filesep sID];
+datadir = ['..' filesep 'data' filesep exptID filesep sID];
 if ~exist(datadir, 'dir')
     mkdir(datadir);
 end
@@ -36,7 +37,7 @@ nImages = 2; % unique images on which decisions are to be made, per block
 pCatchTrial = 0.1; % what proportion of total inference trials do you want to be ADDED ON as catch trials?
 
 % evidence reliabilities
-memReliability = 0.8;
+memReliability = 0.65;
 vizAccuracy = 0.7;
 % vision reliability is technically given by the evidence coherence. to
 % control for differences in how the images are processed by different
@@ -58,6 +59,14 @@ setup_trials;
 setup_durations;
 
 %% run experiment
+% turn off keyboard responses in the command window
+ListenChar(2);
+
+% make arrow keys for navigating instructions
+rightString = 'more instructions ->';
+leftString = '<- previous instructions ';
+rightPosition = screenX-350;
+leftPosition = screenX - 1200;
 
 dbstop if error
 
@@ -65,17 +74,8 @@ for block = 1:nBlocks
 
     try
 
-        % turn off keyboard responses in the command window
-        ListenChar(2);
-
-        % make arrow keys for navigating instructions
-        rightString = 'more instructions ->';
-        leftString = '<- previous instructions ';
-        rightPosition = screenX-350;
-        leftPosition = screenX - 1200;
-
             %%% present general instructions %%%%
-            run_welcomeInstructions;
+            run_welcomeInstructions; 
 
             clear string
             %%%% display response training instructions %%%%
@@ -114,9 +114,10 @@ for block = 1:nBlocks
             clear string
             string = ['FLICKER PRACTICE INSTRUCTIONS: \n\n\n' ...
                 'In this part of the experiment, you will practice the "flicker" part of the task: deciding which of the two images was presented more frequently in a rapidly alternating image stream. \n\n' ...
-                'You should respond as soon as you feel like you have an answer -- the goal is to respond as quickly and accurately as possible. \n' ...
-                'You will get feedback about your respeonses on each trial. \n\n' ...
-                'Press spacebar to begin.'];
+                'You should make this decision as quickly and accurately as you can. \n\n' ...
+                'You have up to 4 seconds to make a response on each trial.\n\n\n' ...
+                'Press spacebar when you are ready to begin.'];
+
             DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
             Screen('Flip',mainWindow);
             FlushEvents('keyDown');
@@ -193,10 +194,10 @@ for block = 1:nBlocks
         end
         clear string
 
-        %%%% run coherenceValidation %%%%
+        % run coherenceValidation %%%%
         run_coherenceValidation;
 
-        %%%% phase pivot to learning & give instructions %%%%
+        %% phase pivot to learning & give instructions %%%%
         clear string
         string = 'Flicker training complete';
         DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
@@ -250,10 +251,9 @@ for block = 1:nBlocks
         end
         clear string
 
-        %% run cue learning %%%
+        %%%% run cue learning %%%
         run_cueLearning;
-
-        %%%% phase pivot and display learning validation instructions %%%%
+        
         clear string
         string{1} = ['Almost done with Border Learning! \n\n\n' ...
             'Before you begin the last part of this experiment, we would like to know what you learned about each border.'];
@@ -264,6 +264,7 @@ for block = 1:nBlocks
             'For example, if one of the cues always predicts seeing scene image 1, you would move the slider all the way to the left endpoint. \n\n'];
 
         string{3} = ['Once you are satisfied with your answer, press C to lock it in. \n\n' ...
+            'You must move the slider at least once in order for the experiment to lock in your response. \n\n' ...
             'After you make each estimate, we will ask you to rate how confident you are that you correctly estimated the predictiveness of that border. \n\n' ...
             'This portion is self-timed. Make sure to ask the experimenter if you have any questions. \n\n' ...
             'Press spacebar when you are ready to begin.'];
@@ -272,7 +273,7 @@ for block = 1:nBlocks
         page = 1;
         while page < length(string) + 1
             DrawFormattedText(mainWindow, string{page}, 'center', 'center', textColor, 80);
-            if page == 1
+            if page >= 1 && page < length(string)
                 DrawFormattedText(mainWindow, rightString, rightPosition, screenY-100, textColor);
             end
             if page > 1
@@ -295,11 +296,11 @@ for block = 1:nBlocks
         end
         clear string
 
-        %%%% run learning validation %%%%
+        % run learning validation %%%%
         FlushEvents('keyDown');
         run_learningValidation;
 
-        %%% phase pivot and display inference instructions %%%%
+        %% phase pivot and display inference instructions %%%%
         clear string
         string = ['All done with Border Learning! \n\n'...
             'Use this time to take a short break before reading the instructions for Decision Making.'];
@@ -324,9 +325,9 @@ for block = 1:nBlocks
             'Please make sure to use the whole range of confidence ratings when responding.'];
 
         string{4} = ['DECISION MAKING INSTRUCTIONS: \n\n\n' ...
-            'This is the final and most important part of the experiment. It is crucial that you are alert and engaged w   hen completing the task.\n\n' ...
+            'This is the final and most important part of the experiment. It is crucial that you are alert and engaged when completing the task.\n\n' ...
             'You will get several breaks. During the breaks, we encourage you to rest your eyes, stretch a bit, and drink some water. \n\n' ...
-            'Breaks are also a good time to ask the experimenter any questions that might arise. \n\n\n' ...
+            'Remember: your goal is to respond as quickly and accurately as you can. \n\n\n' ...
             'If you don''t have questions at this time, press spacebar to begin the Decision Making phase.'];
         FlushEvents('keyDown');
         page = 1;
@@ -376,21 +377,6 @@ for block = 1:nBlocks
         clear string
         run_cuedInference;
 
-        % display goodbye screen
-        clear string
-        string = 'Experiment complete! Thanks for your participation. \n\n Please get the experimenter.';
-        DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
-        Screen('Flip', mainWindow);
-        while(1)
-            temp = GetChar;
-            if (temp == ' ')
-                break
-            end
-            WaitSecs(0.05);
-        end
-        clear string
-        sca;
-
         % what to do if this script bugs out at any point -
     catch
         % save response training CSV
@@ -433,10 +419,11 @@ for block = 1:nBlocks
         % save the whole matlab workspace
         save([datadir filesep 'block' num2str(block) 'workspace.mat']);
 
-        % turn ListenChar back on
+        % turn ListenChar ba23ck on
         ListenChar(1);
 
-    end % try
+    end % try             b                                                                                                                         
+                                                                                                                                                                                                                                                                                                                                          
 end % for block = 1:nBlocks..
 
-
+ListenChar(1);

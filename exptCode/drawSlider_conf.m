@@ -1,4 +1,4 @@
-function drawSlider(w, centerY, centerX, minValue, maxValue, currentValue, sliderLength, sliderWidth, sliderHeight, rightImageIdx, leftImageIdx, feedbackRect, randFeedbackTex, thisCue)
+function drawSlider_conf(w, centerY, centerX, minValue, maxValue, thumbValue, confValue, sliderLength, sliderWidth, sliderHeight, rightImageIdx, leftImageIdx, feedbackRect, randFeedbackTex, thisCue)
 
 % define coordinates
     sliderY = centerY*1.5;
@@ -18,14 +18,14 @@ function drawSlider(w, centerY, centerX, minValue, maxValue, currentValue, slide
      Screen('DrawLine', w, [150 150  150], centerX, centerY*1.5 - sliderHeight/2, centerX, centerY*1.5+sliderHeight/2, 2);
 
     % Calculate thumb position
-    thumbX = sliderStartX + ((currentValue - minValue) / (maxValue - minValue)) * (sliderEndX - sliderStartX);
+    thumbX = sliderStartX + ((thumbValue - minValue) / (maxValue - minValue)) * (sliderEndX - sliderStartX);
     thumbPosition = [thumbX - sliderWidth/2, sliderY - sliderHeight/2, thumbX + sliderWidth/2, sliderY + sliderHeight/2];
 
     % Define text properties
-    if currentValue < 50
-        valueText = num2str(100-currentValue);
+    if confValue < 50
+        valueText = num2str(100-confValue);
     else
-        valueText = num2str(currentValue); 
+        valueText = num2str(confValue); 
     end
     textX = thumbX-10;   % Center text above thumb
     textY = sliderY+30;                % Position text above the slider

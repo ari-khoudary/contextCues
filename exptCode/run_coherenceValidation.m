@@ -85,7 +85,7 @@ for trial = 1:cohFeedbackTotalN
         Screen('Flip', mainWindow);
         while(1)
             [~,~,keyCode] = KbCheck(-1);
-            if keyCode(spaceKey)
+            if keyCode(spaceKey) 
                 break;
             end
             WaitSecs(0.05);
@@ -250,11 +250,12 @@ for trial = 1:cohFeedbackTotalN
     end
 
     %%% write data to table %%%
+    trialTarget = trialTargets_v(trial);
     data_coherenceValidation.subID(trial) = subID;
     data_coherenceValidation.block(trial) = block;
     data_coherenceValidation.trial(trial) = trial;
     data_coherenceValidation.targetName(trial) = imagePath(trialTargets_v(trial));
-    data_coherenceValidation.targetIdx(trial) = trialTargets_v(trial);
+    data_coherenceValidation.targetIdx(trial) = trialTarget;
     data_coherenceValidation.response(trial) = response;
     data_coherenceValidation.accuracy(trial) = accuracy;
     data_coherenceValidation.RT(trial) = RT;
@@ -285,6 +286,9 @@ for trial = 1:cohFeedbackTotalN
     data_coherenceValidation.signal2frames_design(trial) = signal2frames;
 
    % update evidence dynamics based on responseFrame
+    if isnan(respFrame)
+        respFrame = nFrames;
+    end
     if respFrame > signal2onset % if they respond anytime after the second noise period
         data_coherenceValidation.totalEv_signal1(trial) = sum(trialEvidence(1:noise2onset) > 0);
         data_coherenceValidation.targetEv_signal1(trial) = sum(trialEvidence(1:noise2onset) == trialTarget);
