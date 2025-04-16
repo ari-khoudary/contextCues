@@ -1,0 +1,8 @@
+Subject: 36
+Loss: 490.4507548095115
+Parameters:
+drift: {'mw80_noise1': Fitted(0.03321984107080667, minval=-1, maxval=1), 'mw50_noise1': Fitted(0.17527248672871146, minval=-1, maxval=1), 'mw80_signal1': Fitted(0.8001703134186716, minval=-1, maxval=1), 'mw50_signal1': Fitted(1.0, minval=-1, maxval=1), 'mw80_noise2': Fitted(0.9577890708754371, minval=-1, maxval=1), 'mw50_noise2': Fitted(-0.8180132130914612, minval=-1, maxval=1), 'mw80_signal2': Fitted(1.0, minval=-1, maxval=1), 'mw50_signal2': Fitted(1.0, minval=-1, maxval=1), 'vw80_signal1': Fitted(1.0, minval=-1, maxval=1), 'vw50_signal1': Fitted(1.0, minval=-1, maxval=1), 'vw80_signal2': Fitted(1.0, minval=-1, maxval=1), 'vw50_signal2': Fitted(1.0, minval=-1, maxval=1)}
+noise: {'noise': 1}
+bound: {'B': Fitted(1.2726273318573051, minval=0.01, maxval=10)}
+IC: {'x0': 0}
+overlay: {'nondectime': Fitted(0.39404181805882443, minval=0, maxval=0.4), 'umixturecoef': 0.02}

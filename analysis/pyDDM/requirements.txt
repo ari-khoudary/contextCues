@@ -1,0 +1,4 @@
+pyddm>=0.5.0
+pandas
+numpy
+matplotlib 

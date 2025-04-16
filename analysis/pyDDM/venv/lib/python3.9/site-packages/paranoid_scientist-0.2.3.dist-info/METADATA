@@ -1,0 +1,52 @@
+Metadata-Version: 2.1
+Name: paranoid-scientist
+Version: 0.2.3
+Summary: Runtime verification and automated testing for scientific code
+Home-page: https://github.com/mwshinn/paranoidscientist
+Author: Max Shinn
+Author-email: maxwell.shinn@yale.edu
+Maintainer: Max Shinn
+Maintainer-email: maxwell.shinn@yale.edu
+License: MIT
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Education :: Testing
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Quality Assurance
+Classifier: Topic :: Software Development :: Testing
+Requires-Python: >=3.5
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+
+# <img alt="Paranoid Scientist" src="https://raw.githubusercontent.com/mwshinn/paranoidscientist/master/doc/images/paranoid_scientist_mini_small.png" width="400">
+
+Paranoid Scientist is a Python module for verifying scientific
+software which provides:
+
+- Runtime **verification of entry and exit conditions** written in
+  pure Python, including hyperproperties.
+- Conditions specified using pure Python **refinement types**,
+  i.e. types are defined by predicates.
+- **Automated unit testing** of individual functions.
+
+To learn more, read the [documentation](https://paranoid-scientist.readthedocs.io/en/latest/), [conceptual FAQs](https://paranoid-scientist.readthedocs.io/en/latest/conceptfaq.html), [technical FAQs](https://paranoid-scientist.readthedocs.io/en/latest/techfaq.html), or [tutorial](https://paranoid-scientist.readthedocs.io/en/latest/tutorial.html), or see the [paper](https://link.springer.com/chapter/10.1007%2F978-3-030-41600-3_10)/[preprint](https://arxiv.org/abs/1909.00427) for more technical details.
+
+If you use Paranoid Scientist in an academic work, please cite:
+
+> Shinn M. (2020) Refinement Type Contracts for Verification of Scientific Investigative Software. In: Chakraborty S., Navas J. (eds) Verified Software. Theories, Tools, and Experiments. VSTTE 2019. Lecture Notes in Computer Science, vol 12031. Springer, Cham. DOI: 10.1007/978-3-030-41600-3_10
+
+## System requirements
+
+- Python 3.5 or above
+- Optional: Numpy (for Numpy types support)
+
+
+## License
+
+All code is available under the MIT license.  See LICENSE.txt for more
+information.  Paranoid Scientist is copyright 2018-2020 Max Shinn.
+The logo is copyright 2018 Anastasia Ershova.
+
