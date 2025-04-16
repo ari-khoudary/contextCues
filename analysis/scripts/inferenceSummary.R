@@ -2,39 +2,42 @@ library(tidyverse)
 library(patchwork)
 library(emmeans)
 
-outdir <- '../figures/'
-model_df <- read.csv('../tidied_data/model.csv')
-inference_df <- read.csv('../tidied_data/condition_80cue/inference.csv')
-
-# convert & order factors
-# inference_df <- inference_df %>%
-#   mutate(cueIdx = factor(cueIdx),
-#          targetIdx = factor(targetIdx),
-#          respLabel = factor(respLabel, levels=c('noise1', 'signal1', 'noise2', 'signal2')),
-#          congCue = factor(congCue, levels=c(0.8, 0.2, 0.5)))
-
+outdir <- '../figures/allconditions/'
+inference_df <- read.csv('../tidied_data/all_conditions/inference.csv')
 
 inference_df <- inference_df %>% 
-  mutate(noise1Resp = ifelse(respPeriod==1, 1, 0),
-         cueConf_factor = factor(cueConfidence),
-         subjectiveCue = subjectiveCue/100,
-         trueCue = trueCue/100,
-         trueCongruence = factor(trueCongruence, levels=c('incongruent', 'neutral', 'congruent')),
-         subjectiveCongCue = case_when(trueCongruence=='incongruent' ~ 1-subjectiveCue,
-                                       trueCongruence=='congruent' ~ subjectiveCue,
-                                       trueCongruence=='neutral' ~ subjectiveCue)) %>%
   filter(subID != c(33), catch_trial==0, zlogRT > -10) %>%
   group_by(subID) %>%
-  mutate(cueCorr = cor(subjectiveCue, trueCue),
+  mutate(condition = ifelse(subID < 55, '80/50', '65/50'),
+         cueCorr = cor(subjectiveCue, trueCue),
          cueDiff = subjectiveCue - trueCue,
          cueCorr_spearman = cor(subjectiveCue, trueCue, method = 'spearman'),
          cueCorr_q = ntile(cueCorr, n=2),
          cueCorr_sign = case_when(cueCorr < 0 ~ 'negative',
-                                  cueCorr > 0 ~ 'positive'))
+                                  cueCorr > 0 ~ 'positive'),
+         noise1resp = ifelse(RT <= noise1_duration, 1, 0))
 
-model_df <- model_df %>%
-  mutate(trueCue = factor(cue, levels=c(0.5, 0.8), labels=c('50%', '80%')),
-         respLabel = factor(respLabel, levels=c('noise1', 'signal1', 'noise2', 'signal2')))
+#### plot response probabilities ####
+noise1acc_df <- glm(accuracy ~ factor(trueCue) + subjectiveCue + cueCorr, family='binomial', filter(inference_df, condition=='80/50' & noise1resp==1)) %>% 
+  emmip(., ~ trueCue, CIs=T, type='response', plotit=F) 
+
+inference_df %>% 
+  filter(condition == '80/50') %>%
+  mutate(noise1resp = ifelse(RT <= noise1_duration, 1, 0)) %>%
+  filter(noise1resp==1) %>%
+  group_by(subID, trueCue) %>%
+  summarise(propCorrect = mean(accuracy)) %>%
+  ggplot(aes(x=trueCue, y=propCorrect)) +
+  theme_minimal() + ylim(0,1) +
+  geom_hline(yintercept = 0.5, linetype='dashed') +
+  geom_col(aes(y=yvar), data=noise1acc_df, fill='gray') +
+  geom_pointrange(aes(y=yvar, ymin=LCL, ymax=UCL), data=noise1acc_df, fatten=10, linewidth=1) +
+  geom_point() + 
+  geom_line(aes(group=subID), linewidth=0.2)
+
+
+
+
 
 #### plot accuracy as a function of true cue values #### 
 p1 <- inference_df %>%
@@ -70,8 +73,8 @@ ggsave(paste0(outdir, 'inferenceAccuracy_byEpoch_trueCue.png'), width=8, height=
 #### plot accuracy as a function of subjective cue values ####
 p1 <- inference_df %>%
   mutate(subjectiveCue = factor(case_when(subjectiveCueOrder == 3 ~ 'weakest cue',
-                                     subjectiveCueOrder < 3 ~ 'stronger cues'),
-         levels = c('weakest cue', 'stronger cues'))) %>%
+                                          subjectiveCueOrder < 3 ~ 'stronger cues'),
+                                levels = c('weakest cue', 'stronger cues'))) %>%
   filter(is.na(subjectiveCue)==0) %>%
   group_by(subID, respLabel, subjectiveCue, catch_label) %>%
   summarise(propCorrect = mean(accuracy, na.rm=T)) %>%

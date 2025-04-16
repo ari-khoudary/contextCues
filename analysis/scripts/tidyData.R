@@ -186,12 +186,13 @@ for (cond_string in conditions) {
            noise2_onset = noise2Onset_design / conversionFactor,
            noise2_duration = noise2frames_obs / conversionFactor,
            signal2_onset = signal2Onset_design / conversionFactor,
-           signal2_duration = signal2frames_obs / conversionFactor) %>%
+           signal2_duration = signal2frames_obs / conversionFactor,
+           condition = cond_string) %>%
     group_by(subID) %>%
     mutate(zlogRT = scale(log(RT))) %>%
     select(c(subID, block, trial, cueName, targetName, cueIdx, targetIdx, response, accuracy, RT, confidence, confRT, flickerDuration, coherence, catch_trial,
              cueConfidence, imgIdx_subjective, subjectiveCue, subjectiveCongCue, trueCue, congCue, noise1_duration, signal1_onset, noise2_onset, noise2_duration,
-             signal2_onset, signal2_duration, zlogRT))
+             signal2_onset, signal2_duration, zlogRT, condition))
   
   # store
   inference_all[[cond_string]] <- inference_df
