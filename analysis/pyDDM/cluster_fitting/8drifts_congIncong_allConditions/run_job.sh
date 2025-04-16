@@ -6,11 +6,14 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH -c 48
-#SBATCH --error=slurm-%A_%a.err
+#SBATCH --output=slurm_messages/slurm-%A_%a.out 
+#SBATCH --error=slurm_messages/slurm-%A_%a.err
 #SBATCH -t 1-00:00:00
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=makhouda@uci.edu
 #SBATCH --array=0-40  # Adjust the range based on your subject list length
+
+mkdir -p slurm_messages
 
 source ~/.bashrc
 module load python/3.10.2
