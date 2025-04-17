@@ -16,7 +16,7 @@ def plot_model_fit(results_dir):
     subjects = df['subID'].unique()
     
     # Create output directory
-    output_dir = os.path.join(results_dir, "/plots")
+    output_dir = os.path.join(results_dir, "../plots")
     os.makedirs(output_dir, exist_ok=True)
     # output_dir = os.getcwd()
     
@@ -104,6 +104,8 @@ def plot_model_fit(results_dir):
         signal1_onset = subject_df['signal1_onset'].median()
         noise2_onset = subject_df['noise2_onset'].median()
         signal2_onset = subject_df['signal2_onset'].median()
+        median_rt = subject_df.loc[subject_df['RT'] > subject_df['signal2_onset'], 'RT'].median()
+        max_rt = subject_df.loc[subject_df['RT'] > subject_df['signal2_onset'], 'RT'].max()
         
         # Create figure
         fig = plt.figure(figsize=(12, 10))
@@ -116,7 +118,9 @@ def plot_model_fit(results_dir):
                 xlim = ax.get_xlim()
                 # add boxes
                 ax.axvspan(signal1_onset, noise2_onset, alpha=0.25, color='lightblue', zorder=0)
-                ax.axvspan(signal2_onset, xlim[1], alpha=0.25, color='lightblue', zorder=0)
+                ax.axvspan(signal2_onset, median_rt, alpha=0.25, color='lightblue', zorder=0)
+                if max_rt > median_rt:
+                    ax.axvspan(signal2_onset, max_rt, alpha=0.25, color='lightpink', zorder=0)
                 # add labels
                 if second_ax:
                     label_y_pos = ylim[0] + (ylim[1] - ylim[0]) * 0.07
@@ -124,8 +128,11 @@ def plot_model_fit(results_dir):
                     ax.text((signal1_onset+noise2_onset)/2, label_y_pos, 'median signal 1', 
                     ha='center', va='top', backgroundcolor='white', alpha=0.7, zorder=5)
                     # label signal 2
-                    ax.text((signal2_onset+xlim[1])/2, label_y_pos, 'median signal 2', 
+                    ax.text((signal2_onset+median_rt)/2, label_y_pos, 'median signal 2', 
                     ha='center', va='top', backgroundcolor='white', alpha=0.7, zorder=5)
+                    if max_rt > median_rt:
+                        ax.text((signal2_onset+max_rt)/2, label_y_pos, 'max signal 2', 
+                        ha='center', va='top', backgroundcolor='white', alpha=0.7, zorder=5)
                     # label noise 1 
                     ax.text((signal1_onset+0)/2, label_y_pos, 'median noise 1', 
                     ha='center', va='top', backgroundcolor='white', alpha=0.7, zorder=5)
@@ -158,4 +165,4 @@ def plot_model_fit(results_dir):
         plt.close()
 
 
-plot_model_fit(os.getcwd())
+plot_model_fit('results/')
