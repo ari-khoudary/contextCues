@@ -179,7 +179,7 @@ for block = 1:nBlocks
         %%%%%%% initiate button reminder %%%%%%%
         run_buttonReminder;
 
-        % initiate calibration validation with spacebar press
+        %% initiate calibration validation with spacebar press
         clear string
         string = 'Press spacebar to begin the flicker task.';
         DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
@@ -197,7 +197,7 @@ for block = 1:nBlocks
         % run coherenceValidation %%%%
         run_coherenceValidation;
 
-        %% phase pivot to learning & give instructions %%%%
+        % phase pivot to learning & give instructions %%%%
         clear string
         string = 'Flicker training complete';
         DrawFormattedText(mainWindow, string, 'center', 'center', textColor, 80);
@@ -254,6 +254,7 @@ for block = 1:nBlocks
         %%%% run cue learning %%%
         run_cueLearning;
         
+        %
         clear string
         string{1} = ['Almost done with Border Learning! \n\n\n' ...
             'Before you begin the last part of this experiment, we would like to know what you learned about each border.'];
@@ -300,7 +301,7 @@ for block = 1:nBlocks
         FlushEvents('keyDown');
         run_learningValidation;
 
-        %% phase pivot and display inference instructions %%%%
+        % phase pivot and display inference instructions %%%%
         clear string
         string = ['All done with Border Learning! \n\n'...
             'Use this time to take a short break before reading the instructions for Decision Making.'];
