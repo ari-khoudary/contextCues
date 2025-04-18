@@ -71,7 +71,7 @@ try:
                     'm50_signal1': (0, 10), 'v_signal1': (0, 10), 'v50_signal1': (0, 10),
                     'm_noise2': (0, 10), 'm50_noise2': (0,10), 'm_signal2': (0,10),
                     'm50_signal2': (0, 10), 'v_signal2': (0, 10), 'v50_signal2': (0,10)},
-        conditions = ['congCue', 'signal1_onset', 'noise2_onset', 'signal2_onset']
+        conditions = ['congCue', 'coherence', 'signal1_onset', 'noise2_onset', 'signal2_onset']
     )
 
     # fit
