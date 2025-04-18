@@ -29,7 +29,7 @@ subject_id_int = int(subject_id)
 
 # specify drift function
 def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
-                noise1_cong, noise1_incong, noise1_neut, signal1_cong, signal1_incong, signal1_neut,
+                noise1_cong, noise1_neut, signal1_cong, signal1_incong, signal1_neut,
                 noise2_cong, noise2_incong, noise2_neut, signal2_cong, signal2_incong, signal2_neut):
   # drift rate during first noise period
   if t < signal1_onset:
@@ -91,8 +91,8 @@ try:
         bound="B",
         T_dur = 4.1,
         nondecision='ndt',
-        parameters={'B': (0.5, 25), 'ndt': (0.01, 1.5),
-                    'noise1_cong': (0, 10), 'noise1_incong': (0,10), 'noise1_neut': (0,10),
+        parameters={'B': (0.5, 12), 'ndt': (0.01, 1.5),
+                    'noise1_cong': (0, 10), 'noise1_neut': (0,10),
                     'signal1_cong': (0, 10), 'signal1_incong': (0, 10), 'signal1_neut': (0, 10),
                     'noise2_cong': (0, 10), 'noise2_incong': (0,10), 'noise2_neut': (0,10),
                     'signal2_cong': (0, 10), 'signal2_incong': (0, 10), 'signal2_neut': (0,10)},
