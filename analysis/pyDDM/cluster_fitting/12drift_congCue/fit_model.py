@@ -28,17 +28,17 @@ subject_id_str = str(subject_id)
 subject_id_int = int(subject_id) 
 
 # specify drift function
-def drift_weights(t, trueCue, coherence, signal1_onset, noise2_onset, signal2_onset,
+def drift_weights(t, congCue, coherence, signal1_onset, noise2_onset, signal2_onset,
                       m_noise1, m50_noise1, m_signal1, m50_signal1, v_signal1, v50_signal1,
                       m_noise2, m50_noise2, m_signal2, m50_signal2, v_signal2, v50_signal2):
     if t < signal1_onset:
-        return trueCue * (m_noise1 if abs(trueCue) > 0.5 else m50_noise1)
+        return congCue * (m_noise1 if abs(congCue) > 0.5 else m50_noise1)
     elif t < noise2_onset:
-        return trueCue * (m_signal1 if abs(trueCue) > 0.8 else m50_signal1) + coherence * (v_signal1 if abs(trueCue) > 0.8 else v50_signal1)
+        return congCue * (m_signal1 if abs(congCue) > 0.8 else m50_signal1) + coherence * (v_signal1 if abs(congCue) > 0.8 else v50_signal1)
     elif t < signal2_onset:
-        return trueCue * (m_noise2 if abs(trueCue) > 0.8 else m50_noise2)
+        return congCue * (m_noise2 if abs(congCue) > 0.8 else m50_noise2)
     else:
-        return trueCue * (m_signal2 if abs(trueCue) > 0.5 else m50_signal2) + coherence * (v_signal2 if abs(trueCue) > 0.8 else v50_signal2)
+        return congCue * (m_signal2 if abs(congCue) > 0.5 else m50_signal2) + coherence * (v_signal2 if abs(congCue) > 0.8 else v50_signal2)
     
 try:
     # Load and filter data
@@ -71,7 +71,7 @@ try:
                     'm50_signal1': (0, 10), 'v_signal1': (0, 10), 'v50_signal1': (0, 10),
                     'm_noise2': (0, 10), 'm50_noise2': (0,10), 'm_signal2': (0,10),
                     'm50_signal2': (0, 10), 'v_signal2': (0, 10), 'v50_signal2': (0,10)},
-        conditions = ['trueCongruence', 'signal1_onset', 'noise2_onset', 'signal2_onset']
+        conditions = ['congCue', 'signal1_onset', 'noise2_onset', 'signal2_onset']
     )
 
     # fit
