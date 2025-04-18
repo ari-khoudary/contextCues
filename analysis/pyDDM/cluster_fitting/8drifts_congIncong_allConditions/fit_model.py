@@ -25,7 +25,7 @@ os.makedirs(results_dir, exist_ok=True)
 
 # make df filtering robust against type mismatches in bash and python
 subject_id_str = str(subject_id)
-subject_id_int = int(subject_id) if subject_id.isdigit() else None
+subject_id_int = int(subject_id) 
 
 # specify drift function
 def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
@@ -33,10 +33,8 @@ def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
                 noise2_cong, noise2_incong, noise2_neut, signal2_cong, signal2_incong, signal2_neut):
   # drift rate during first noise period
   if t < signal1_onset:
-    if trueCongruence == 'congruent':
+    if trueCongruence == 'congruent' or 'incongruent':
       return noise1_cong
-    elif trueCongruence == 'incongruent':
-      return -noise1_incong
     else:
       return noise1_neut
 
@@ -71,6 +69,7 @@ try:
     # Load and filter data
     df = pd.read_csv('../../inference_all.csv')
     df = df.dropna(subset=['RT'])
+    df[['signal1_onset', 'noise2_onset', 'signal2_onset']] = df[['signal1_onset', 'noise2_onset', 'signal2_onset']].fillna(0)
     subject_df = df[(df['subID'] == subject_id_str) | 
                 (df['subID'] == subject_id_int)].copy()
     
@@ -92,7 +91,7 @@ try:
         bound="B",
         T_dur = 4.1,
         nondecision='ndt',
-        parameters={'B': (0.5, 10), 'ndt': (0.01, 1.5),
+        parameters={'B': (0.5, 25), 'ndt': (0.01, 1.5),
                     'noise1_cong': (0, 10), 'noise1_incong': (0,10), 'noise1_neut': (0,10),
                     'signal1_cong': (0, 10), 'signal1_incong': (0, 10), 'signal1_neut': (0, 10),
                     'noise2_cong': (0, 10), 'noise2_incong': (0,10), 'noise2_neut': (0,10),

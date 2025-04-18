@@ -36,3 +36,8 @@ fi
 
 # Run the fitting code
 python -u fit_model.py ${SUBJECT}
+
+# Push to github
+git add results/
+git commit -m 'fitted results for subject ${SUBJECT}"
+git push
