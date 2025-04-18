@@ -34,11 +34,11 @@ def drift_weights(t, congCue, coherence, signal1_onset, noise2_onset, signal2_on
     if t < signal1_onset:
         return congCue * (m_noise1 if abs(congCue) > 0.5 else m50_noise1)
     elif t < noise2_onset:
-        return congCue * (m_signal1 if abs(congCue) > 0.8 else m50_signal1) + coherence * (v_signal1 if abs(congCue) > 0.8 else v50_signal1)
+        return congCue * (m_signal1 if abs(congCue) > 0.5 else m50_signal1) + coherence * (v_signal1 if abs(congCue) > 0.5 else v50_signal1)
     elif t < signal2_onset:
-        return congCue * (m_noise2 if abs(congCue) > 0.8 else m50_noise2)
+        return congCue * (m_noise2 if abs(congCue) > 0.5 else m50_noise2)
     else:
-        return congCue * (m_signal2 if abs(congCue) > 0.5 else m50_signal2) + coherence * (v_signal2 if abs(congCue) > 0.8 else v50_signal2)
+        return congCue * (m_signal2 if abs(congCue) > 0.5 else m50_signal2) + coherence * (v_signal2 if abs(congCue) > 0.5 else v50_signal2)
     
 try:
     # Load and filter data
