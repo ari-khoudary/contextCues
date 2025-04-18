@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=12drifts
+#SBATCH --job-name=contCue
 #SBATCH -A bornstea_lab
 #SBATCH -p standard
 #SBATCH --nodes=1
