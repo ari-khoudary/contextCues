@@ -1,8 +1,8 @@
 Subject: 37
-Loss: 593.134834557625
+Loss: 592.4601323122247
 Parameters:
-drift: {'noise1_cong': Fitted(0.42084537794025517, minval=0, maxval=10), 'noise1_incong': Fitted(8.966091350451823, minval=0, maxval=10), 'noise1_neut': Fitted(7.291849712241408, minval=0, maxval=10), 'signal1_cong': Fitted(0.41195388405034244, minval=0, maxval=10), 'signal1_incong': Fitted(0.5154618572923846, minval=0, maxval=10), 'signal1_neut': Fitted(0.39726566156476106, minval=0, maxval=10), 'noise2_cong': Fitted(0.20129201698052707, minval=0, maxval=10), 'noise2_incong': Fitted(0.0, minval=0, maxval=10), 'noise2_neut': Fitted(0.0, minval=0, maxval=10), 'signal2_cong': Fitted(6.433064102404494, minval=0, maxval=10), 'signal2_incong': Fitted(5.023546034805919, minval=0, maxval=10), 'signal2_neut': Fitted(0.0, minval=0, maxval=10)}
+drift: {'noise1_cong': Fitted(0.42620477858881795, minval=0, maxval=10), 'noise1_neut': Fitted(1.2383816983957177, minval=0, maxval=10), 'signal1_cong': Fitted(0.4264150108243386, minval=0, maxval=10), 'signal1_incong': Fitted(0.4761579353392414, minval=0, maxval=10), 'signal1_neut': Fitted(0.39868210837996354, minval=0, maxval=10), 'noise2_cong': Fitted(0.19270545771502934, minval=0, maxval=10), 'noise2_incong': Fitted(0.0, minval=0, maxval=10), 'noise2_neut': Fitted(0.0, minval=0, maxval=10), 'signal2_cong': Fitted(6.436018562132473, minval=0, maxval=10), 'signal2_incong': Fitted(2.6380787063149675, minval=0, maxval=10), 'signal2_neut': Fitted(0.0, minval=0, maxval=10)}
 noise: {'noise': 1}
-bound: {'B': Fitted(0.8893770528121561, minval=0.5, maxval=25)}
+bound: {'B': Fitted(0.9081089222495837, minval=0.5, maxval=12)}
 IC: {'x0': 0}
-overlay: {'nondectime': Fitted(1.0752202089932996, minval=0.01, maxval=1.5), 'umixturecoef': 0.02}
+overlay: {'nondectime': Fitted(1.0716934576061354, minval=0.01, maxval=1.5), 'umixturecoef': 0.02}
