@@ -1,0 +1,8 @@
+Subject: 52
+Loss: 675.2537038215161
+Parameters:
+drift: {'drift': 0}
+noise: {'noise': 1}
+bound: {'B': Fitted(1.132911422243469, minval=0.5, maxval=15)}
+IC: {'bias': Fitted(0.12053259674040545, minval=0, maxval=1), 'bias50': Fitted(0.18944669971646394, minval=0, maxval=1)}
+overlay: {'nondectime': Fitted(1.4980814596333958, minval=0.01, maxval=1.5), 'umixturecoef': 0.02}
