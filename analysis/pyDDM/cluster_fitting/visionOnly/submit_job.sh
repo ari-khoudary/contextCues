@@ -22,7 +22,7 @@ module load python/3.10.2
 # Get the subject ID for this task
 SUBJECT=$(python -c "
 import pandas as pd
-df = pd.read_csv('../../inference_all.csv')
+df = pd.read_csv('../../calibration.csv')
 subjects = df['subID'].unique().tolist()
 if $SLURM_ARRAY_TASK_ID < len(subjects):
     print(subjects[$SLURM_ARRAY_TASK_ID])
