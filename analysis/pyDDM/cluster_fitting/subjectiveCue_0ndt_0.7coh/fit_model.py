@@ -44,7 +44,7 @@ def drift_weights(t, subjectiveCue, targetIdx, imgIdx_subjective, signal1_onset,
         elif targetIdx != imgIdx_subjective:
             return -subjectiveCue * m_signal1 + coherence * v_signal1
         else:
-            return subjectiveCue * m50_signal1
+            return subjectiveCue * m50_signal1 + coherence * v50_signal1
     if t > noise2_onset and t < signal2_onset:
         if targetIdx == imgIdx_subjective:
             return subjectiveCue * m_noise2
@@ -54,11 +54,11 @@ def drift_weights(t, subjectiveCue, targetIdx, imgIdx_subjective, signal1_onset,
             return subjectiveCue * m50_noise2
     if t >= signal2_onset:
         if targetIdx == imgIdx_subjective:
-            return subjectiveCue * m_signal2
+            return subjectiveCue * m_signal2 + coherence * v_signal2
         elif targetIdx != imgIdx_subjective:
-            return -subjectiveCue * m_signal2
+            return -subjectiveCue * m_signal2 + coherence * v_signal2
         else:
-            return subjectiveCue * m50_signal2
+            return subjectiveCue * m50_signal2 + coherence * v50_signal2
     
 try:
     # Load and filter data
