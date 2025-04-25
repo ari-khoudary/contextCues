@@ -54,11 +54,11 @@ def drift_weights(t, trueCue, trueCongruence, signal1_onset, noise2_onset, signa
             return trueCue * m50_noise2
     if t >= signal2_onset:
         if trueCongruence == 'congruent':
-            return trueCue * m_signal2
+            return trueCue * m_signal2 + coherence * v_signal2
         elif trueCongruence == 'incongruent':
-            return -trueCue * m_signal2
+            return -trueCue * m_signal2 + coherence * v_signal2
         else:
-            return trueCue * m50_signal2
+            return trueCue * m50_signal2 + coherence * v50_signal2
     
 try:
     # Load and filter data
