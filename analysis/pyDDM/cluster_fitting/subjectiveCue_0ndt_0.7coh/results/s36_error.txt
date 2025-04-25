@@ -1,0 +1,1 @@
+Error processing subject 36: Invalid argument 'imgIdx_subjective' to the drift function.  All arguments to drift must be parameters, conditions, or the special values x or t.  Did you forget to add 'imgIdx_subjective' to the list of parameters or conditions passed to the model?
