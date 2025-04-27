@@ -29,13 +29,13 @@ subject_id_int = int(subject_id)
 
 # specify drift function
 def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
-                noise1_cong, noise1_50, signal1, signal1_50, noise2, noise2_50, signal2, signal2_50):
+                noise1, noise1_50, signal1, signal1_50, noise2, noise2_50, signal2, signal2_50):
   # drift rate during first noise period
   if t < signal1_onset:
     if trueCongruence == 'congruent': 
-      return noise1_cong
+      return noise1
     elif trueCongruence == 'incongruent':
-       return -noise1_cong
+       return -noise1
     else:
       return noise1_50
 
