@@ -29,7 +29,8 @@ subject_id_int = int(subject_id)
 
 # specify drift function
 def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
-                noise1_cong, noise1_50, signal1, signal1_50, noise2, noise2_50, signal2, signal2_50):
+                noise1_cong, noise1_neut, signal1_cong, signal1_incong, signal1_neut,
+                noise2_cong, noise2_incong, noise2_neut, signal2_cong, signal2_incong, signal2_neut):
   # drift rate during first noise period
   if t < signal1_onset:
     if trueCongruence == 'congruent': 
@@ -37,34 +38,34 @@ def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
     elif trueCongruence == 'incongruent':
        return -noise1_cong
     else:
-      return noise1_50
+      return noise1_neut
 
   # drift rates during first signal period
   if t >= signal1_onset and t < noise2_onset:
     if trueCongruence == 'congruent':
-      return signal1
+      return signal1_cong
     elif trueCongruence == 'incongruent':
-      return -signal1
+      return -signal1_incong
     else:
-      return signal1_50
+      return signal1_neut
 
   # drift rates during the second noise period
   if t >= noise2_onset and t < signal2_onset:
     if trueCongruence == 'congruent':
-      return noise2
+      return noise2_cong
     elif trueCongruence == 'incongruent':
-      return -noise2
+      return -noise2_incong
     else:
-      return noise2_50
+      return noise2_neut
 
   # drift rates during the second signal period
   if t >= signal2_onset:
     if trueCongruence == 'congruent':
-      return signal2
+      return signal2_cong
     elif trueCongruence == 'incongruent':
-      return -signal2
+      return -signal2_incong
     else:
-      return signal2_50
+      return signal2_neut
 
 try:
     # Load and filter data
@@ -93,10 +94,10 @@ try:
         T_dur = 4.1,
         nondecision=0,
         parameters={'B': (0.5, 12), 
-                    'noise1': (0, 10), 'noise1_50': (0,10),
-                    'signal1': (0, 10), 'signal1_50': (0, 10),
-                    'noise2': (0, 10), 'noise2_50': (0,10),
-                    'signal2': (0, 10), 'signal2_50': (0,10)},
+                    'noise1_cong': (0, 10), 'noise1_neut': (0,10),
+                    'signal1_cong': (0, 10), 'signal1_incong': (0, 10), 'signal1_neut': (0, 10),
+                    'noise2_cong': (0, 10), 'noise2_incong': (0,10), 'noise2_neut': (0,10),
+                    'signal2_cong': (0, 10), 'signal2_incong': (0, 10), 'signal2_neut': (0,10)},
         conditions = ['trueCongruence', 'signal1_onset', 'noise2_onset', 'signal2_onset']
     )
 

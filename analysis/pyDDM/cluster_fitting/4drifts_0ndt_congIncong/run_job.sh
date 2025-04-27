@@ -5,7 +5,7 @@
 #SBATCH -p standard
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH -c 16
+#SBATCH -c 12
 #SBATCH --output=slurm_messages/slurm-%A_%a.out 
 #SBATCH --error=slurm_messages/slurm-%A_%a.err
 #SBATCH -t 1-00:00:00
