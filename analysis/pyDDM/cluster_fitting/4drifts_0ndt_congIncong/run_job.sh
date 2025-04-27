@@ -35,4 +35,8 @@ if [ -z "$SUBJECT" ]; then
 fi
 
 # Run the fitting code
+<<<<<<< HEAD
 python -u fit_model.py ${SUBJECT}
+=======
+python -u fit_model.py ${SUBJECT}
+>>>>>>> 0cd9647 (make new directory)
