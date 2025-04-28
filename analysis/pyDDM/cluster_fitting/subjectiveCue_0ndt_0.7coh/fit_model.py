@@ -36,35 +36,35 @@ def drift_weights(t, subjectiveCue, targetIdx, imgIdx_subjective, signal1_onset,
             return subjectiveCue * m_noise1
         elif targetIdx != imgIdx_subjective:
             return -subjectiveCue * m_noise1
-        elif imgIdx_subjective.isna():
+        elif imgIdx_subjective == 0:
             return subjectiveCue * m50_noise1
     if t <= noise2_onset and t >= signal1_onset:
         if targetIdx == imgIdx_subjective:
             return subjectiveCue * m_signal1 + coherence * v_signal1 
         elif targetIdx != imgIdx_subjective:
             return -subjectiveCue * m_signal1 + coherence * v_signal1
-        elif imgIdx_subjective.isna():
+        elif imgIdx_subjective == 0:
             return subjectiveCue * m50_signal1 + coherence * v50_signal1
     if t > noise2_onset and t < signal2_onset:
         if targetIdx == imgIdx_subjective:
             return subjectiveCue * m_noise2
         elif targetIdx != imgIdx_subjective:
             return -subjectiveCue * m_noise2
-        elif imgIdx_subjective.isna():
+        elif imgIdx_subjective == 0:
             return subjectiveCue * m50_noise2
     if t >= signal2_onset:
         if targetIdx == imgIdx_subjective:
             return subjectiveCue * m_signal2 + coherence * v_signal2
         elif targetIdx != imgIdx_subjective:
             return -subjectiveCue * m_signal2 + coherence * v_signal2
-        elif imgIdx_subjective.isna():
+        elif imgIdx_subjective == 0:
             return subjectiveCue * m50_signal2 + coherence * v50_signal2
     
 try:
     # Load and filter data
     df = pd.read_csv('../../inference_all.csv')
     df = df.dropna(subset=['RT'])
-    df[['signal1_onset', 'noise2_onset', 'signal2_onset']] = df[['signal1_onset', 'noise2_onset', 'signal2_onset']].fillna(0)
+    df[['signal1_onset', 'noise2_onset', 'signal2_onset', 'imgIdx_subjective']] = df[['signal1_onset', 'noise2_onset', 'signal2_onset', 'imgIdx_subjective']].fillna(0)
     subject_df = df[(df['subID'] == subject_id_str) | 
                 (df['subID'] == subject_id_int)].copy()
     
