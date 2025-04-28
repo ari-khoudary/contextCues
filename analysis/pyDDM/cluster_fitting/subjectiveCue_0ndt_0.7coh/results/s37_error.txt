@@ -1,1 +1,1 @@
-Error processing subject 37: frozenset({('imgIdx_subjective', nan), ('noise2_onset', 1.189510441), ('subjectiveCue', 0.5), ('signal1_onset', 0.691575838), ('targetIdx', 2.0), ('signal2_onset', 0.0)})
+Error processing subject 37: frozenset({('noise2_onset', 1.369952505), ('targetIdx', 1.0), ('signal1_onset', 0.761084725), ('subjectiveCue', 0.5), ('imgIdx_subjective', nan), ('signal2_onset', 0.0)})

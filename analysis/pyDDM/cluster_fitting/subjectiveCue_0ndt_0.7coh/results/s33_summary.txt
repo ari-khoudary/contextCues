@@ -3,18 +3,18 @@ Choices: 'correct' (upper boundary), 'error' (lower boundary)
 Drift component DriftEasy:
     easy_drift
     Fitted parameters:
-    - m_noise1: 0.045911 (WARNING: AT BOUNDARY)
-    - m50_noise1: 0.000000 (WARNING: AT BOUNDARY)
-    - m_signal1: 0.000000 (WARNING: AT BOUNDARY)
-    - m50_signal1: 0.817390
-    - v_signal1: 0.177710
-    - v50_signal1: 0.169202
-    - m_noise2: 0.301025
-    - m50_noise2: 0.000000 (WARNING: AT BOUNDARY)
-    - m_signal2: 0.000000 (WARNING: AT BOUNDARY)
-    - m50_signal2: 0.624246
-    - v_signal2: 1.695379
-    - v50_signal2: 1.230267
+    - m_noise1: 1.409879
+    - m50_noise1: 6.805627
+    - m_signal1: 5.040803
+    - m50_signal1: 2.867706
+    - v_signal1: 8.920478
+    - v50_signal1: 4.322650
+    - m_noise2: 0.000000 (WARNING: AT BOUNDARY)
+    - m50_noise2: 6.509908
+    - m_signal2: 1.070920
+    - m50_signal2: 6.329394
+    - v_signal2: 8.400086
+    - v50_signal2: 5.909106
 Noise component NoiseConstant:
     constant
     Fixed parameters:
@@ -22,7 +22,7 @@ Noise component NoiseConstant:
 Bound component BoundConstant:
     constant
     Fitted parameters:
-    - B: 1.510523
+    - B: 4.026389
 IC component ICPointRatio:
     An arbitrary starting point expressed as a proportion of the distance between the bounds.
     Fixed parameters:
@@ -38,11 +38,11 @@ Overlay component OverlayChain:
         - umixturecoef: 0.020000
 Fit information:
     Loss function: Negative log likelihood
-    Loss function value: 778.3020776627902
+    Loss function value: 419.81550626207195
     Fitting method: differential_evolution
     Solver: auto
     Other properties:
         - nparams: 13
-        - samplesize: 413
+        - samplesize: 276
         - mess: ''
 

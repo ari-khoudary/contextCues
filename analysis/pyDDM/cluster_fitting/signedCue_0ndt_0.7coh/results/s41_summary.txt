@@ -5,16 +5,16 @@ Drift component DriftEasy:
     Fitted parameters:
     - m_noise1: 0.000000 (WARNING: AT BOUNDARY)
     - m50_noise1: 0.000000 (WARNING: AT BOUNDARY)
-    - m_signal1: 0.000000 (WARNING: AT BOUNDARY)
-    - m50_signal1: 8.758243
-    - v_signal1: 5.641715
-    - v50_signal1: 2.288743
+    - m_signal1: 3.939195
+    - m50_signal1: 4.018664
+    - v_signal1: 0.916479
+    - v50_signal1: 3.221051
     - m_noise2: 0.000000 (WARNING: AT BOUNDARY)
     - m50_noise2: 0.000000 (WARNING: AT BOUNDARY)
-    - m_signal2: 0.627756
-    - m50_signal2: 5.182758
-    - v_signal2: 7.221562
-    - v50_signal2: 4.072442
+    - m_signal2: 6.977633
+    - m50_signal2: 4.953799
+    - v_signal2: 0.000000 (WARNING: AT BOUNDARY)
+    - v50_signal2: 4.210845
 Noise component NoiseConstant:
     constant
     Fixed parameters:
@@ -22,7 +22,7 @@ Noise component NoiseConstant:
 Bound component BoundConstant:
     constant
     Fitted parameters:
-    - B: 5.978736
+    - B: 5.902862
 IC component ICPointRatio:
     An arbitrary starting point expressed as a proportion of the distance between the bounds.
     Fixed parameters:
@@ -38,7 +38,7 @@ Overlay component OverlayChain:
         - umixturecoef: 0.020000
 Fit information:
     Loss function: Negative log likelihood
-    Loss function value: 696.9958295766412
+    Loss function value: 861.3584957393565
     Fitting method: differential_evolution
     Solver: auto
     Other properties:
