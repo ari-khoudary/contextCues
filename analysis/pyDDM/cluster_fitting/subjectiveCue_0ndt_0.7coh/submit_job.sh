@@ -35,7 +35,7 @@ module load python/3.10.2
 #fi
 
 # run subjects who had a 50% subjective cue
-SUBJECT_LIST=("s33" "s37" "s40" "s64")
+SUBJECT_LIST=("33" "37" "40" "64")
 SUBJECT=${SUBJECT_LIST[$SLURM_ARRAY_TASK_ID]}
 
 # Run the fitting code
