@@ -27,38 +27,37 @@ os.makedirs(results_dir, exist_ok=True)
 subject_id_str = str(subject_id)
 subject_id_int = int(subject_id) 
 
-def drift_weights(t, subjectiveCue, targetIdx, imgIdx_subjective, signal1_onset, noise2_onset, signal2_onset,
+def drift_weights(t, trueCue, trueCongruence, coherence, signal1_onset, noise2_onset, signal2_onset,
                       m_noise1, m50_noise1, m_signal1, m50_signal1, v_signal1, v50_signal1,
                       m_noise2, m50_noise2, m_signal2, m50_signal2, v_signal2, v50_signal2):
-    coherence = 0.7
     if t < signal1_onset:
-        if targetIdx == imgIdx_subjective:
-            return subjectiveCue * m_noise1
-        elif targetIdx != imgIdx_subjective:
-            return -subjectiveCue * m_noise1
-        elif imgIdx_subjective.isna():
-            return subjectiveCue * m50_noise1
-    if t <= noise2_onset and t >= signal1_onset:
-        if targetIdx == imgIdx_subjective:
-            return subjectiveCue * m_signal1 + coherence * v_signal1 
-        elif targetIdx != imgIdx_subjective:
-            return -subjectiveCue * m_signal1 + coherence * v_signal1
-        elif imgIdx_subjective.isna():
-            return subjectiveCue * m50_signal1 + coherence * v50_signal1
-    if t > noise2_onset and t < signal2_onset:
-        if targetIdx == imgIdx_subjective:
-            return subjectiveCue * m_noise2
-        elif targetIdx != imgIdx_subjective:
-            return -subjectiveCue * m_noise2
-        elif imgIdx_subjective.isna():
-            return subjectiveCue * m50_noise2
+        if trueCongruence == 'congruent':
+            return trueCue * m_noise1
+        elif trueCongruence == 'incongruent':
+            return -trueCue * m_noise1
+        else:
+            return trueCue * m50_noise1
+    if t < noise2_onset and t >= signal1_onset:
+        if trueCongruence == 'congruent':
+            return trueCue * m_signal1 + coherence * v_signal1 
+        elif trueCongruence == 'incongruent':
+            return -trueCue * m_signal1 + coherence * v_signal1
+        else:
+            return trueCue * m50_signal1 + coherence * v50_signal1
+    if t >= noise2_onset and t < signal2_onset:
+        if trueCongruence == 'congruent':
+            return trueCue * m_noise2
+        elif trueCongruence == 'incongruent':
+            return -trueCue * m_noise2
+        else:
+            return trueCue * m50_noise2
     if t >= signal2_onset:
-        if targetIdx == imgIdx_subjective:
-            return subjectiveCue * m_signal2 + coherence * v_signal2
-        elif targetIdx != imgIdx_subjective:
-            return -subjectiveCue * m_signal2 + coherence * v_signal2
-        elif imgIdx_subjective.isna():
-            return subjectiveCue * m50_signal2 + coherence * v50_signal2
+        if trueCongruence == 'congruent':
+            return trueCue * m_signal2 + coherence * v_signal2
+        elif trueCongruence == 'incongruent':
+            return -trueCue * m_signal2 + coherence * v_signal2
+        else:
+            return trueCue * m50_signal2 + coherence * v50_signal2
     
 try:
     # Load and filter data
@@ -75,7 +74,8 @@ try:
         sys.exit(1)
     
     # Create sample
-    sample = pyddm.Sample.from_pandas_dataframe(subject_df, rt_column_name='RT', choice_column_name='accuracy')
+    sample = pyddm.Sample.from_pandas_dataframe(
+        subject_df, rt_column_name='RT', choice_column_name='accuracy')
     
     # initialize model
     model = pyddm.gddm(
@@ -89,7 +89,7 @@ try:
                     'm50_signal1': (0, 10), 'v_signal1': (0, 10), 'v50_signal1': (0, 10),
                     'm_noise2': (0, 10), 'm50_noise2': (0,10), 'm_signal2': (0,10),
                     'm50_signal2': (0, 10), 'v_signal2': (0, 10), 'v50_signal2': (0,10)},
-        conditions = ['subjectiveCue', 'imgIdx_subjective','targetIdx', 'signal1_onset', 'noise2_onset', 'signal2_onset'])
+        conditions = ['trueCue', 'trueCongruence', 'signal1_onset', 'noise2_onset', 'signal2_onset'])
 
     # fit
     model.fit(sample, verbose=True)
