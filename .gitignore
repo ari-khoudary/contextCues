@@ -1,0 +1,28 @@
+# ignore all autosave files
+*.asv
+*.DS_Store
+*.Rhistory
+*.RData
+
+# ignore all google docs, google sheets, and PDFs
+*.gdoc
+*.gsheet
+*.PDF
+*.gslides
+*.gform
+
+# ignore the mex file for Shuffle
+Shuffle.mexw64
+
+# ignore everything in piloting_2023
+piloting_2023/
+.Rproj.user
+
+# misc
+analysis/tidied_data_og/
+summerInstitute_2024/
+
+# ignore slurm
+*/*/slurm_messages
+slurm*.err
+slurm*.out
