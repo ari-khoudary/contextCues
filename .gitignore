@@ -3,6 +3,9 @@
 *.DS_Store
 *.Rhistory
 *.RData
+*.png
+analysis/pyDDM/*.Rhistory
+analysis/pyDDM/*.RData
 
 # ignore all google docs, google sheets, and PDFs
 *.gdoc
