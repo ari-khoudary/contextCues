@@ -1,8 +1,8 @@
 Subject: 51
-Loss: 596.0386099183786
+Loss: 596.0363486657094
 Parameters:
-drift: {'m_noise1': Fitted(0.0, minval=0, maxval=10), 'm50_noise1': Fitted(0.0, minval=0, maxval=10), 'm_signal1': Fitted(0.1630898095954427, minval=0, maxval=10), 'm50_signal1': Fitted(0.3576609305116783, minval=0, maxval=10), 'v_signal1': Fitted(0.0, minval=0, maxval=10), 'v50_signal1': Fitted(7.649270420667406, minval=0, maxval=10), 'm_noise2': Fitted(0.011090272866576177, minval=0, maxval=10), 'm50_noise2': Fitted(0.12175130374692252, minval=0, maxval=10), 'm_signal2': Fitted(0.0, minval=0, maxval=10), 'm50_signal2': Fitted(0.0, minval=0, maxval=10), 'v_signal2': Fitted(0.2333536445176164, minval=0, maxval=10), 'v50_signal2': Fitted(0.0, minval=0, maxval=10)}
+drift: {'m_noise1': Fitted(0.0, minval=0, maxval=10), 'm50_noise1': Fitted(0.0, minval=0, maxval=10), 'm_signal1': Fitted(0.16618123883632047, minval=0, maxval=10), 'm50_signal1': Fitted(0.24473290927656802, minval=0, maxval=10), 'v_signal1': Fitted(0.0, minval=0, maxval=10), 'v50_signal1': Fitted(0.07722204999115599, minval=0, maxval=10), 'm_noise2': Fitted(0.009011898486041722, minval=0, maxval=10), 'm50_noise2': Fitted(0.1233742478437749, minval=0, maxval=10), 'm_signal2': Fitted(0.0, minval=0, maxval=10), 'm50_signal2': Fitted(0.0, minval=0, maxval=10), 'v_signal2': Fitted(0.23262798396900877, minval=0, maxval=10), 'v50_signal2': Fitted(0.0, minval=0, maxval=10)}
 noise: {'noise': 1}
-bound: {'B': Fitted(1.038011142368326, minval=0.5, maxval=25)}
+bound: {'B': Fitted(1.0370582023270183, minval=0.5, maxval=15)}
 IC: {'x0': 0}
 overlay: {'nondectime': 0, 'umixturecoef': 0.02}
