@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=subjectiveCue
+#SBATCH --job-name=startpoint
 #SBATCH -A bornstea_lab
 #SBATCH -p standard
 #SBATCH --nodes=1
@@ -11,7 +11,7 @@
 #SBATCH -t 1-00:00:00
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=makhouda@uci.edu
-#SBATCH --array=0-3  # Adjust the range based on your subject list length
+#SBATCH --array=0-40  # Adjust the range based on your subject list length
 
 mkdir -p slurm_messages
 
@@ -20,19 +20,19 @@ module load python/3.10.2
 
 # get unique subject IDs
 # Get the subject ID for this task
-#SUBJECT=$(python -c "
-#import pandas as pd
-#df = pd.read_csv('../../inference_all.csv')
-#subjects = df['subID'].unique().tolist()
-#if $SLURM_ARRAY_TASK_ID < len(subjects):
-#    print(subjects[$SLURM_ARRAY_TASK_ID])
-#")
+# SUBJECT=$(python -c "
+# import pandas as pd
+# df = pd.read_csv('../../inference_all.csv')
+# subjects = df['subID'].unique().tolist()
+# if $SLURM_ARRAY_TASK_ID < len(subjects):
+#     print(subjects[$SLURM_ARRAY_TASK_ID])
+# ")
 
-# Skip if no subject found
+# # Skip if no subject found
 # if [ -z "$SUBJECT" ]; then
-#    echo "No subject found for task ID $SLURM_ARRAY_TASK_ID. Exiting."
-#    exit 0
-#fi
+#     echo "No subject found for task ID $SLURM_ARRAY_TASK_ID. Exiting."
+#     exit 0
+# fi
 
 # fit last subjects of experiment 1
 SUBJECT_LIST=("73" "75" "76" "77")
