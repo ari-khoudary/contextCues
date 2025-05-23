@@ -10,6 +10,7 @@ cohVal_all <- list()
 learning_all <- list()
 estimates_all <- list()
 inference_all <- list()
+inference_test <- list()
 
 # define condition dirs
 conditions <- c("condition_80cue", "condition_65cue")
@@ -180,6 +181,7 @@ for (cond_string in conditions) {
            conversionFactor = respFrame / RT,
            conversionFactor = case_when(is.na(RT) ~ mean(conversionFactor, na.rm=T),
                                         is.na(RT)==0 ~ conversionFactor),
+           noise1_design = noise1frames_design / conversionFactor,
            noise1_duration = noise1frames_obs / conversionFactor,
            signal1_onset = signal1Onset_design / conversionFactor,
            signal1_duration = signal1frames_obs / conversionFactor,
@@ -191,14 +193,23 @@ for (cond_string in conditions) {
     group_by(subID) %>%
     mutate(zlogRT = scale(log(RT))) %>%
     select(c(subID, block, trial, cueName, targetName, cueIdx, targetIdx, response, accuracy, RT, confidence, confRT, flickerDuration, coherence, catch_trial,
-             trueCongruence, cueConfidence, imgIdx_subjective, subjectiveCue, subjectiveCongCue, trueCue, congCue, noise1_duration, signal1_onset, noise2_onset, noise2_duration,
+             trueCongruence, cueConfidence, imgIdx_subjective, subjectiveCue, subjectiveCongCue, trueCue, congCue, 
+             noise1_design, noise1_duration, signal1_onset, signal1_duration, noise2_onset, noise2_duration,
              signal2_onset, signal2_duration, zlogRT, condition))
   
   # store
   inference_all[[cond_string]] <- inference_df
   
-  # write out tidied inference data
-  write.csv(inference_df, paste0(outdir, 'inference.csv'), row.names = F)
+  # write out tidied inference data -- all trial types
+  write.csv(inference_df, paste0(outdir, 'inference_all.csv'), row.names = F)
+  
+  # write out tidied inference data -- excluding catch trials
+  inference_df <- inference_df %>%
+    filter(catch_trial == 0)
+  
+  inference_test[[cond_string]] <- inference_df
+  write.csv(inference_df, paste0(outdir, 'inference_test.csv'), row.names = F)
+  
 }
 
 # Combine and write out combined data files
@@ -207,3 +218,4 @@ write.csv(do.call(rbind, cohVal_all), paste0(all_outdir, 'coherenceValidation.cs
 write.csv(do.call(rbind, learning_all), paste0(all_outdir, 'learning.csv'), row.names = F)
 write.csv(do.call(rbind, estimates_all), paste0(all_outdir, 'estimates.csv'), row.names = F)
 write.csv(do.call(rbind, inference_all), paste0(all_outdir, 'inference.csv'), row.names = F)
+write.csv(do.call(rbind, inference_test), paste0(all_outdir, 'inference_test.csv'), row.names = F)
