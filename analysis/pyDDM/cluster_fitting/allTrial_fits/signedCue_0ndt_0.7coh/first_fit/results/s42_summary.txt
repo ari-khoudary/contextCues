@@ -1,0 +1,48 @@
+Model information:
+Choices: 'correct' (upper boundary), 'error' (lower boundary)
+Drift component DriftEasy:
+    easy_drift
+    Fitted parameters:
+    - m_noise1: 3.520361
+    - m50_noise1: 5.576833
+    - m_signal1: 2.968567
+    - m50_signal1: 8.616808
+    - v_signal1: 1.475477
+    - v50_signal1: 2.888456
+    - m_noise2: 0.000000 (WARNING: AT BOUNDARY)
+    - m50_noise2: 0.000000 (WARNING: AT BOUNDARY)
+    - m_signal2: 7.215465
+    - m50_signal2: 10.000000 (WARNING: AT BOUNDARY)
+    - v_signal2: 9.059178
+    - v50_signal2: 1.867909
+Noise component NoiseConstant:
+    constant
+    Fixed parameters:
+    - noise: 1.000000
+Bound component BoundConstant:
+    constant
+    Fitted parameters:
+    - B: 8.861070
+IC component ICPointRatio:
+    An arbitrary starting point expressed as a proportion of the distance between the bounds.
+    Fixed parameters:
+    - x0: 0.000000
+Overlay component OverlayChain:
+    Overlay component OverlayNonDecision:
+        Add a non-decision by shifting the histogram
+        Fixed parameters:
+        - nondectime: 0.000000
+    Overlay component OverlayUniformMixture:
+        Uniform distribution mixture model
+        Fixed parameters:
+        - umixturecoef: 0.020000
+Fit information:
+    Loss function: Negative log likelihood
+    Loss function value: 570.1066127705777
+    Fitting method: differential_evolution
+    Solver: auto
+    Other properties:
+        - nparams: 13
+        - samplesize: 391
+        - mess: ''
+
