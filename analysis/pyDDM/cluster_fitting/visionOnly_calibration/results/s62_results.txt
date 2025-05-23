@@ -1,8 +1,0 @@
-Subject: 62
-Loss: 88.82487497369993
-Parameters:
-drift: {'drift': Fitted(0.8966996129915192, minval=0, maxval=15)}
-noise: {'noise': 1}
-bound: {'B': Fitted(0.9464398120370242, minval=0.5, maxval=12)}
-IC: {'x0': 0}
-overlay: {'nondectime': Fitted(0.6461766402983866, minval=0.01, maxval=1.5), 'umixturecoef': 0.02}

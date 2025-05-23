@@ -1,8 +1,0 @@
-Subject: 39
-Loss: 698.0153802141197
-Parameters:
-drift: {'drift_cued': Fitted(0.40863731957645194, minval=0, maxval=10), 'drift_neut': Fitted(0.27413384368482296, minval=0, maxval=10)}
-noise: {'noise': 1}
-bound: {'B': Fitted(2.0784725610585486, minval=0.25, maxval=12)}
-IC: {'a': Fitted(0.0641806860045725, minval=-0.5, maxval=0.5), 'b': Fitted(0.3947528192924085, minval=0.01, maxval=0.49), 'a50': Fitted(-0.05938522992330442, minval=-0.5, maxval=0.5), 'b50': Fitted(0.42109780809836705, minval=0.01, maxval=0.49)}
-overlay: {'nondectime': 0, 'umixturecoef': 0.02}

@@ -1,8 +1,0 @@
-Subject: 69
-Loss: 510.0671822241358
-Parameters:
-drift: {'m_noise1': Fitted(0.17516539641338238, minval=0, maxval=10), 'm50_noise1': Fitted(4.3374580805687915, minval=0, maxval=10), 'm_signal1': Fitted(0.27161488689791796, minval=0, maxval=10), 'm50_signal1': Fitted(7.817330922479668, minval=0, maxval=10), 'v_signal1': Fitted(0.0, minval=0, maxval=10), 'v50_signal1': Fitted(1.9131210785326673, minval=0, maxval=10), 'm_noise2': Fitted(0.10849296354400223, minval=0, maxval=10), 'm50_noise2': Fitted(8.121220105365865, minval=0, maxval=10), 'm_signal2': Fitted(1.1523922907697792, minval=0, maxval=10), 'm50_signal2': Fitted(8.354692236776728, minval=0, maxval=10), 'v_signal2': Fitted(0.0, minval=0, maxval=10), 'v50_signal2': Fitted(3.6994173887571016, minval=0, maxval=10)}
-noise: {'noise': 1}
-bound: {'B': Fitted(1.0075457076179664, minval=0.5, maxval=20)}
-IC: {'x0': 0}
-overlay: {'nondectime': 0, 'umixturecoef': 0.02}
