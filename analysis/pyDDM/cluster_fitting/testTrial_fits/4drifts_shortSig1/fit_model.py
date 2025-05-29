@@ -51,7 +51,7 @@ def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset, signal1
 
   # drift rates during the second noise period
   if t >= noise2_onset and t < signal2_onset:
-    if signal1_duration < 0.61:
+    if signal1_duration < 0.61 and signal1_duration > 0:
       if trueCongruence == 'congruent':
         return noise2_shortS1
       elif trueCongruence == 'incongruent':
@@ -79,7 +79,7 @@ try:
     # Load and filter data
     df = pd.read_csv('../../../inference_test.csv')
     df = df.dropna(subset=['RT'])
-    df[['signal1_onset', 'noise2_onset', 'signal2_onset']] = df[['signal1_onset', 'noise2_onset', 'signal2_onset']].fillna(0)
+    df[['signal1_onset', 'noise2_onset', 'signal2_onset', 'signal1_duration']] = df[['signal1_onset', 'noise2_onset', 'signal2_onset', 'signal1_duration']].fillna(0)
     subject_df = df[(df['subID'] == subject_id_str) | 
                 (df['subID'] == subject_id_int)].copy()
     
