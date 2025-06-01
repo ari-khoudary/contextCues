@@ -1,0 +1,8 @@
+Subject: 39
+Loss: 657.2435488914593
+Parameters:
+drift: {'noise1': Fitted(-0.010812140590642033, minval=-20, maxval=20), 'noise1_50': Fitted(-0.07082761395345201, minval=-20, maxval=20), 'signal1': Fitted(1.8475358832719, minval=-20, maxval=20), 'signal1_50': Fitted(1.3900170693011464, minval=-20, maxval=20), 'noise2': Fitted(-0.7868704259199052, minval=-20, maxval=20), 'noise2_50': Fitted(-1.433694610579471, minval=-20, maxval=20), 'signal2': Fitted(6.422883095226123, minval=-20, maxval=20), 'signal2_50': Fitted(6.5025834857425755, minval=-20, maxval=20)}
+noise: {'noise': 1}
+bound: {'B': Fitted(3.0690677709438683, minval=0.5, maxval=15)}
+IC: {'x0': 0}
+overlay: {'nondectime': 0, 'umixturecoef': 0.02}
