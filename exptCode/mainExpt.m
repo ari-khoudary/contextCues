@@ -254,7 +254,7 @@ for block = 1:nBlocks
         %%%% run cue learning %%%
         run_cueLearning;
         
-        %
+        %%
         clear string
         string{1} = ['Almost done with Border Learning! \n\n\n' ...
             'Before you begin the last part of this experiment, we would like to know what you learned about each border.'];

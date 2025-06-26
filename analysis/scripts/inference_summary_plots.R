@@ -2,7 +2,7 @@ library(tidyverse)
 library(patchwork)
 
 outdir <- 'results_april2025/'
-inference <- read.csv('../tidied_data/all_conditions/inference.csv') %>% filter(subID > 0)
+inference <- read.csv('../tidied_data/all_conditions/inference.csv') 
 
 # compute cueCorr & cueDiff
 inference <- inference %>%
@@ -43,7 +43,7 @@ for (subject in 1:length(unique(inference$subID))) {
     geom_density(data = df %>% filter(accuracy == 0), aes(x=RT, y=-after_stat(density), group=trueCongruence, color=factor(trueCongruence)), linewidth=0.75) +
     #geom_density(data = inference %>% filter(accuracy == 1), aes(x=RT, y=after_stat(density)), linewidth=0.5) +
     #geom_density(data = inference %>% filter(accuracy == 0), aes(x=RT, y=-after_stat(density)), linewidth=0.5) +
-    scale_y_continuous(name = "scaled density", labels = function(x) abs(x), n.breaks = 6) +
+    #scale_y_continuous(labels = function(x) abs(x), n.breaks = 6) +
     geom_hline(yintercept = 0, linetype = "solid", color = "black") +
     labs(title = paste0('subject ', unique(inference$subID)[subject]), subtitle = 'boxes=median signal durations', x='RT (s)') +
     xlim(0,4) 
@@ -69,7 +69,7 @@ for (subject in 1:length(unique(inference$subID))) {
     geom_density(data = df %>% filter(accuracy == 0), aes(x=RT, y=-after_stat(density), group=trueCue, color=factor(trueCue))) +
     geom_density(data = df %>% filter(accuracy == 1), aes(x=RT, y=after_stat(density)), linewidth=1) +
     geom_density(data = df %>% filter(accuracy == 0), aes(x=RT, y=-after_stat(density)), linewidth=1) +
-    scale_y_continuous(name = "scaled density", labels = function(x) abs(x), n.breaks = 6) +
+    #scale_y_continuous(name = "scaled density", labels = function(x) abs(x), n.breaks = 6) +
     geom_hline(yintercept = 0, linetype = "solid", color = "black") +
     labs(title = paste0('subject ', unique(inference_df$subID)[subject]), subtitle = 'boxes=mode noise durations', x='RT (s)') +
     xlim(0,4)

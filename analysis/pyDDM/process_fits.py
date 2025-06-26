@@ -51,7 +51,7 @@ def extract_sample_size_from_summary(summary_file):
     return sample_size, n_params
 
 
-def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_process=None, startPoint=0, uniform=1, cueComb=0, simple_congIncong=0, simple4=0):
+def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_process=None, startPoint=0, uniform=0, cueComb=0, simple_congIncong=0, simple4=1, uniform_wDrift=0):
     """Process subjects data and generate fits.csv and optional plots.
     
     Parameters:
@@ -138,7 +138,7 @@ def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_proc
                 else:
                     return bias50
                 
-        if uniform == 1:
+        if uniform == 1 or uniform_wDrift == 1:
             import scipy.stats
             def start_point(x, a, b, a50, b50, trueCongruence):
                 if trueCongruence == 'congruent':
@@ -226,6 +226,34 @@ def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_proc
                         return -signal2
                     else:
                         return signal2_50    
+
+        if uniform_wDrift == 1:
+            def drift_rate(t, coherence, trueCongruence, drift_cued, drift_neut,
+               signal1_onset, noise2_onset, signal2_onset):
+                # drift rate during first noise period
+                if t < signal1_onset:
+                    return 0
+                # drift rates during first signal period
+                if t >= signal1_onset and t < noise2_onset:
+                    if trueCongruence == 'congruent':
+                        return drift_cued * coherence
+                    elif trueCongruence == 'incongruent':
+                        return -drift_cued * coherence
+                    else:
+                        return drift_neut * coherence
+
+                # drift rates during the second noise period
+                if t >= noise2_onset and t < signal2_onset:
+                    return 0
+
+                # drift rates during the second signal period
+                if t >= signal2_onset:
+                    if trueCongruence == 'congruent':
+                        return drift_cued * coherence
+                    elif trueCongruence == 'incongruent':
+                        return -drift_cued * coherence
+                    else:
+                        return drift_neut * coherence
 
     # Initialize list to store parameter data
     all_param_data = []
@@ -337,6 +365,14 @@ def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_proc
                    bound = 'B',
                    parameters=fitted_params,
                     conditions = {"trueCongruence": ['congruent', 'incongruent', 'neutral']})
+                
+            elif uniform_wDrift == 1:
+                  model = pyddm.gddm(starting_position= start_point,
+                   T_dur=4.1,
+                   bound = 'B',
+                   drift = drift_rate,
+                    parameters=fitted_params,
+                    conditions = {"trueCongruence", 'coherence', 'signal1_onset', 'noise2_onset', 'signal2_onset'})
             
             # Create pyDDM sample object
             samp = pyddm.Sample.from_pandas_dataframe(subject_df, rt_column_name='RT', choice_column_name='accuracy')
@@ -431,7 +467,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process DDM results and generate fits.csv')
     parser.add_argument('--results_dir', type=str, required=True,
                         help='Directory containing results and summary files')
-    parser.add_argument('--data_csv', type=str, default='inference_all.csv',
+    parser.add_argument('--data_csv', type=str, default='inference_test.csv',
                         help='Path to the CSV file with subject data')
     parser.add_argument('--plot_results', action='store_true',
                         help='Whether to generate diagnostic plots for each subject')

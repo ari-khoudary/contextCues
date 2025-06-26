@@ -110,4 +110,6 @@ noise1max = max(noise1Frames*ifi);
 signal1max = max(signal1Frames*ifi);
 noise2max = max(noise2Frames*ifi);
 minFlicker = noise1max + signal1max + noise2max;
-nFrames = round(minFlicker) / ifi;
+%nFrames = round(minFlicker) / ifi; % "bug" found on 06.25: misplaced round() command 
+% rounded down the "minFlicker" duration to 4 instead of 4.25
+nFrames = round(minFlicker / ifi);
