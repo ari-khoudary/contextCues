@@ -29,3 +29,6 @@ summerInstitute_2024/
 */*/slurm_messages
 slurm*.err
 slurm*.out
+
+# ignore venv
+venv/
