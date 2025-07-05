@@ -1,0 +1,3 @@
+condition,mean_boundary_diff,mean_nondecision_diff,count
+condition_80cue,0.6573858186636274,-0.21586958433735248,22
+condition_65cue,0.01056177659838944,-0.11513554864423574,18

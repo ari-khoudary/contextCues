@@ -51,7 +51,7 @@ def extract_sample_size_from_summary(summary_file):
     return sample_size, n_params
 
 
-def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_process=None, startPoint=0, uniform=0, cueComb=0, simple_congIncong=0, simple4=1):
+def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_process=None):
     """Process subjects data and generate fits.csv and optional plots.
     
     Parameters:
@@ -61,7 +61,7 @@ def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_proc
         subjects_to_process (list or None): List of subject IDs to process; if None, process all subjects
     """
     # Extract model name from results directory path
-    model_name_match = re.search(r'cluster_fitting/([^/]+)/results', results_dir)
+    model_name_match = re.search(r'/([^/]+)$', os.getcwd())
     model_name = model_name_match.group(1) if model_name_match else "unknown_model"
     
     # Read the data file
@@ -94,139 +94,53 @@ def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_proc
         plots_dir = os.path.join(results_dir, "plots/")
         os.makedirs(plots_dir, exist_ok=True)
 
-        if cueComb == 1:
-            # define drift function
-            def drift_weights(t, trueCue, trueCongruence, coherence, signal1_onset, noise2_onset, signal2_onset,
-                        m_noise1, m50_noise1, m_signal1, m50_signal1, v_signal1, v50_signal1,
-                        m_noise2, m50_noise2, m_signal2, m50_signal2, v_signal2, v50_signal2):
-                #coherence = 0.7
-                if t < signal1_onset:
-                    if trueCongruence == 'congruent':
-                        return trueCue * m_noise1
-                    elif trueCongruence == 'incongruent':
-                        return -trueCue * m_noise1
-                    else:
-                        return trueCue * m50_noise1
-                if t <= noise2_onset and t >= signal1_onset:
-                    if trueCongruence == 'congruent':
-                        return trueCue * m_signal1 + coherence * v_signal1 
-                    elif trueCongruence == 'incongruent':
-                        return -trueCue * m_signal1 + coherence * v_signal1
-                    else:
-                        return trueCue * m50_signal1 + coherence * v50_signal1
-                if t > noise2_onset and t < signal2_onset:
-                    if trueCongruence == 'congruent':
-                        return trueCue * m_noise2
-                    elif trueCongruence == 'incongruent':
-                        return -trueCue * m_noise2
-                    else:
-                        return trueCue * m50_noise2
-                if t >= signal2_onset:
-                    if trueCongruence == 'congruent':
-                        return trueCue * m_signal2 + coherence * v_signal2
-                    elif trueCongruence == 'incongruent':
-                        return -trueCue * m_signal2 + coherence * v_signal2
-                    else:
-                        return trueCue * m50_signal2 + coherence * v50_signal2
-        
-        if startPoint == 1:
-             def start_point(trueCongruence, bias, bias50):
-                if trueCongruence == 'congruent':
-                    return bias
-                elif trueCongruence == 'incongruent':
-                    return -bias
-                else:
-                    return bias50
-                
-        if uniform == 1:
-            import scipy.stats
-            def start_point(x, a, b, a50, b50, trueCongruence):
-                if trueCongruence == 'congruent':
-                     return scipy.stats.uniform(a,b).pdf(x)
-                elif trueCongruence == 'incongruent':
-                    return scipy.stats.uniform(-a,b).pdf(x)
-                else:
-                    return scipy.stats.uniform(a50,b50).pdf(x)
-                
-        if simple_congIncong==1:
-            def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
+        def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
                 noise1_cong, noise1_neut, signal1_cong, signal1_incong, signal1_neut,
                 noise2_cong, noise2_incong, noise2_neut, signal2_cong, signal2_incong, signal2_neut):
-                # drift rate during first noise period
-                if t < signal1_onset:
-                    if trueCongruence == 'congruent': 
-                        return noise1_cong
-                    elif trueCongruence == 'incongruent':
-                        return -noise1_cong
-                    else:
-                        return noise1_neut
+            # drift rate during first noise period
+            if t < signal1_onset:
+                if trueCongruence == 'congruent': 
+                    return noise1_cong
+                elif trueCongruence == 'incongruent':
+                    return -noise1_cong
+                else:
+                    return noise1_neut
 
-                # drift rates during first signal period
-                if t >= signal1_onset and t < noise2_onset:
-                    if trueCongruence == 'congruent':
-                        return signal1_cong
-                    elif trueCongruence == 'incongruent':
-                        return -signal1_incong
-                    else:
-                        return signal1_neut
+            # drift rates during first signal period
+            if t >= signal1_onset and t < noise2_onset:
+                if trueCongruence == 'congruent':
+                    return signal1_cong
+                elif trueCongruence == 'incongruent':
+                    return -signal1_incong
+                else:
+                    return signal1_neut
 
-                # drift rates during the second noise period
-                if t >= noise2_onset and t < signal2_onset:
-                    if trueCongruence == 'congruent':
-                        return noise2_cong
-                    elif trueCongruence == 'incongruent':
-                        return -noise2_incong
-                    else:
-                        return noise2_neut
+            # drift rates during the second noise period
+            if t >= noise2_onset and t < signal2_onset:
+                if trueCongruence == 'congruent':
+                    return noise2_cong
+                elif trueCongruence == 'incongruent':
+                    return -noise2_incong
+                else:
+                    return noise2_neut
 
-                # drift rates during the second signal period
-                if t >= signal2_onset:
-                    if trueCongruence == 'congruent':
-                        return signal2_cong
-                    elif trueCongruence == 'incongruent':
-                        return -signal2_incong
-                    else:
-                        return signal2_neut
-
-        if simple4 == 1:
-            def drift(t, trueCongruence, signal1_onset, noise2_onset, signal2_onset,
-                noise1, noise1_50, signal1, signal1_50, noise2, noise2_50, signal2, signal2_50):
-                # drift rate during first noise period
-                if t < signal1_onset:
-                    if trueCongruence == 'congruent': 
-                        return noise1
-                    elif trueCongruence == 'incongruent':
-                        return -noise1
-                    else:
-                        return noise1_50
-
-                # drift rates during first signal period
-                if t >= signal1_onset and t < noise2_onset:
-                    if trueCongruence == 'congruent':
-                        return signal1
-                    elif trueCongruence == 'incongruent':
-                        return -signal1
-                    else:
-                        return signal1_50
-
-                # drift rates during the second noise period
-                if t >= noise2_onset and t < signal2_onset:
-                    if trueCongruence == 'congruent':
-                        return noise2
-                    elif trueCongruence == 'incongruent':
-                        return -noise2
-                    else:
-                        return noise2_50
-
-                # drift rates during the second signal period
-                if t >= signal2_onset:
-                    if trueCongruence == 'congruent':
-                        return signal2
-                    elif trueCongruence == 'incongruent':
-                        return -signal2
-                    else:
-                        return signal2_50    
-
+            # drift rates during the second signal period
+            if t >= signal2_onset:
+                if trueCongruence == 'congruent':
+                    return signal2_cong
+                elif trueCongruence == 'incongruent':
+                    return -signal2_incong
+                else:
+                    return signal2_neut
+                
+        def boundary(cueIdx, B_cue1, B_cue2, B_cue3):
+            if cueIdx==1:
+                return B_cue1
+            elif cueIdx==2:
+                return B_cue2
+            else:
+                return B_cue3
+    
     # Initialize list to store parameter data
     all_param_data = []
     
@@ -293,50 +207,14 @@ def process_subjects(results_dir, data_csv, plot_results=False, subjects_to_proc
                 param_text += f"n_params: {n_params}"
 
             # Initialize model object
-            if startPoint == 1:
-                 model = pyddm.gddm(
-                starting_position = start_point,
-                bound="B",
-                T_dur = 4.1,
-                nondecision=0,
-                parameters=fitted_params,
-                conditions = ['trueCongruence'])
-            
-            elif cueComb==1:
-                model = pyddm.gddm(
-                    drift = drift_weights,
-                    starting_position = 0,
-                    bound="B",
-                    T_dur = 4.1,
-                    parameters=fitted_params,
-                    conditions = ['trueCue', 'trueCongruence', 'coherence', 'signal1_onset', 'noise2_onset', 'signal2_onset'])
-                
-            elif simple_congIncong==1:
-                model = pyddm.gddm(
-                drift = drift,
-                starting_position = 0,
-                bound="B",
-                T_dur = 4.1,
-                nondecision=0,
-                parameters=fitted_params,
-                conditions = ['trueCongruence', 'signal1_onset', 'noise2_onset', 'signal2_onset'] )
-
-            elif simple4 == 1:
-                 model = pyddm.gddm(
-                drift = drift,
-                starting_position = 0,
-                bound="B",
-                T_dur = 4.1,
-                nondecision=0,
-                parameters=fitted_params,
-                conditions = ['trueCongruence', 'signal1_onset', 'noise2_onset', 'signal2_onset'])
-            
-            elif uniform == 1:
-                model = pyddm.gddm(starting_position= start_point,
-                   T_dur=4.1,
-                   bound = 'B',
-                   parameters=fitted_params,
-                    conditions = {"trueCongruence": ['congruent', 'incongruent', 'neutral']})
+            model = pyddm.gddm(
+            drift = drift,
+            starting_position = 0,
+            bound=boundary,
+            T_dur = 4.1,
+            nondecision=0,
+            parameters=fitted_params,
+            conditions = ['trueCongruence', 'signal1_onset', 'noise2_onset', 'signal2_onset', 'cueIdx'])
             
             # Create pyDDM sample object
             samp = pyddm.Sample.from_pandas_dataframe(subject_df, rt_column_name='RT', choice_column_name='accuracy')
@@ -431,7 +309,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process DDM results and generate fits.csv')
     parser.add_argument('--results_dir', type=str, required=True,
                         help='Directory containing results and summary files')
-    parser.add_argument('--data_csv', type=str, default='inference_test.csv',
+    parser.add_argument('--data_csv', type=str, default='../../../inference_test.csv',
                         help='Path to the CSV file with subject data')
     parser.add_argument('--plot_results', action='store_true',
                         help='Whether to generate diagnostic plots for each subject')
